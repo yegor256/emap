@@ -19,7 +19,7 @@ First, add this to `Cargo.toml`:
 
 ```toml
 [dependencies]
-emap = "0.0.1"
+emap = "0.0.2"
 ```
 
 Then, use it like a standard hash map... well, almost:
