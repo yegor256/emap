@@ -6,11 +6,12 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/emap/blob/master/LICENSE.txt)
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
-It is an alternative implementation of a map in Rust, which works much faster under the following conditions:
+It is an alternative implementation of a map in Rust, which works much faster if the following conditions are met:
 
-  * Keys are `usize`
-  * Keys used sequentially (e.g., the 5th key is inserted only when 0..4th are in the map)
+  * Keys are of type `usize`
+  * Keys are used sequentially (e.g., the 5th key is inserted only when 0..4th are in the map)
   * Values implement `Copy`
+  * The function `get()` is not used before `insert()`
 
 See the [benchmarking results](#benchmark) below.
 
