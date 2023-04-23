@@ -21,11 +21,11 @@
 use crate::Item::{Absent, Present};
 use crate::{IntoIter, Iter, Map};
 
-// impl<V: Clone + Copy, const N: usize> Default for Map<V, N> {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }
+impl<V: Clone + Copy, const N: usize> Default for Map<V, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<V: Clone + Copy, const N: usize> Map<V, N> {
     /// Make an iterator over all items.
@@ -72,7 +72,7 @@ impl<V: Clone + Copy, const N: usize> Map<V, N> {
 
     /// Does the map contain this key?
     #[inline]
-    pub fn contains_key(&self, k: &usize) -> bool {
+    pub const fn contains_key(&self, k: &usize) -> bool {
         self.items[*k].is_some()
     }
 
@@ -98,9 +98,9 @@ impl<V: Clone + Copy, const N: usize> Map<V, N> {
     /// Get a reference to a single value.
     #[inline]
     #[must_use]
-    pub fn get(&self, k: &usize) -> Option<&V> {
+    pub const fn get(&self, k: &usize) -> Option<&V> {
         if let Present(p) = &self.items[*k] {
-            return Some(&p);
+            return Some(p);
         }
         None
     }
@@ -201,6 +201,8 @@ fn checks_key() -> Result<()> {
 fn gets_missing_key() -> Result<()> {
     let mut m: Map<&str, 10> = Map::new();
     m.insert(0, "one");
+    m.insert(1, "one");
+    m.remove(&1);
     assert!(m.get(&1).is_none());
     Ok(())
 }
@@ -209,6 +211,8 @@ fn gets_missing_key() -> Result<()> {
 fn mut_gets_missing_key() -> Result<()> {
     let mut m: Map<&str, 10> = Map::new();
     m.insert(0, "one");
+    m.insert(1, "one");
+    m.remove(&1);
     assert!(m.get_mut(&1).is_none());
     Ok(())
 }

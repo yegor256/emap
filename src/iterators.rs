@@ -30,7 +30,7 @@ impl<'a, V: Clone + Copy, const N: usize> Iterator for Iter<'a, V, N> {
             if let Present(p) = &self.items[self.pos] {
                 let i = self.pos;
                 self.pos += 1;
-                return Some((i, &p));
+                return Some((i, p));
             }
             self.pos += 1;
         }
@@ -46,7 +46,7 @@ impl<'a, V: Clone + Copy, const N: usize> Iterator for IntoIter<'a, V, N> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.next {
             if self.items[self.pos].is_some() {
-                let v = self.items[self.pos].clone().unwrap();
+                let v = self.items[self.pos].unwrap();
                 let i = self.pos;
                 self.pos += 1;
                 return Some((i, v));
@@ -57,7 +57,7 @@ impl<'a, V: Clone + Copy, const N: usize> Iterator for IntoIter<'a, V, N> {
     }
 }
 
-impl<'a, V: Clone + Copy + Copy, const N: usize> IntoIterator for &'a Map<V, N> {
+impl<'a, V: Clone + Copy, const N: usize> IntoIterator for &'a Map<V, N> {
     type Item = (usize, V);
     type IntoIter = IntoIter<'a, V, N>;
 
