@@ -193,6 +193,8 @@ fn checks_key() -> Result<()> {
     let mut m: Map<&str, 10> = Map::new();
     m.insert(0, "one");
     assert!(m.contains_key(&0));
+    m.insert(8, "");
+    m.remove(&8);
     assert!(!m.contains_key(&8));
     Ok(())
 }

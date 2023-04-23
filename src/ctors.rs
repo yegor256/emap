@@ -29,7 +29,7 @@ impl<V: Clone + Copy, const N: usize> Map<V, N> {
         unsafe {
             Self {
                 filled: 0,
-                items: *MaybeUninit::<[Item<V>; N]>::uninit().as_mut_ptr(),
+                items: *MaybeUninit::<[Item<V>; N]>::uninit().assume_init_mut(),
             }
         }
     }
