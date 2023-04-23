@@ -65,6 +65,8 @@ fn index_mut() -> Result<()> {
 fn wrong_index() -> () {
     let mut m: Map<&str, 10> = Map::new();
     m.insert(2, "first");
+    m.insert(8, "second");
+    m.remove(&8);
     m[8];
 }
 
