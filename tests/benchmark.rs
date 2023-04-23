@@ -126,6 +126,12 @@ fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
         litemap::LiteMap::<usize, i64>::new(),
         total
     );
+    insert!(
+        "micromap::Map",
+        ret,
+        micromap::Map::<usize, i64, CAPACITY>::new(),
+        total
+    );
     insert!("emap::Map", ret, emap::Map::<i64, CAPACITY>::new(), total);
     ret
 }
