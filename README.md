@@ -55,20 +55,20 @@ while the numbers below 1.0 demonstrate performance loss.
 | | 1 | 10 | 100 | 1000 | 10000 |
 | --- | --: | --: | --: | --: | --: |
 | `emap::Map` 👍 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
-| `hashbrown::HashMap` | 32.00 | 14.05 | 9.00 | 8.59 | 8.82 |
-| `indexmap::IndexMap` | 36.00 | 27.91 | 22.64 | 21.61 | 22.01 |
-| `linear_map::LinearMap` | 7.00 | 4.73 | 29.85 | 241.30 | 2K |
-| `linked_hash_map::LinkedHashMap` | 59.00 | 34.77 | 30.12 | 28.29 | 28.40 |
-| `litemap::LiteMap` | 12.00 | 7.55 | 12.16 | 34.10 | 472.24 |
-| `nohash_hasher::BuildNoHashHasher` | 23.00 | 16.73 | 8.55 | 7.83 | 7.66 |
-| `rustc_hash::FxHashMap` | 25.00 | 13.09 | 8.64 | 8.07 | 8.12 |
-| `std::collections::BTreeMap` | 44.00 | 24.77 | 23.37 | 44.26 | 49.86 |
-| `std::collections::HashMap` | 43.00 | 25.23 | 21.80 | 20.63 | 21.03 |
-| `tinymap::array_map::ArrayMap` | 3.00 | 16.23 | 116.53 | 1K | 9K |
+| `hashbrown::HashMap` | 20.00 | 18.89 | 12.33 | 10.79 | 9.59 |
+| `indexmap::IndexMap` | 20.00 | 35.16 | 28.13 | 26.98 | 24.60 |
+| `linear_map::LinearMap` | 4.00 | 6.16 | 34.09 | 318.60 | 2K |
+| `linked_hash_map::LinkedHashMap` | 29.50 | 42.05 | 37.62 | 35.20 | 31.82 |
+| `litemap::LiteMap` | 5.50 | 8.37 | 14.19 | 1K | 10K |
+| `nohash_hasher::BuildNoHashHasher` | 12.50 | 23.37 | 11.69 | 11.16 | 9.87 |
+| `rustc_hash::FxHashMap` | 15.00 | 18.58 | 11.19 | 10.23 | 9.48 |
+| `std::collections::BTreeMap` | 21.50 | 32.16 | 27.31 | 49.90 | 56.03 |
+| `std::collections::HashMap` | 25.00 | 32.10 | 27.08 | 25.81 | 23.72 |
+| `tinymap::array_map::ArrayMap` | 1.50 | 16.89 | 164.16 | 1K | 12K |
 
 The experiment was performed on 23-04-2023.
  There were 100 repetition cycles.
- The entire benchmark took 108s.
+ The entire benchmark took 158s.
 
 <!-- benchmark -->
 
