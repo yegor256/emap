@@ -51,6 +51,24 @@ the numbers over 1.0 indicate performance gain,
 while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
+| | 1 | 10 | 100 | 1000 | 10000 |
+| --- | --: | --: | --: | --: | --: |
+| `emap::Map` 👍 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| `hashbrown::HashMap` | 16.22 | 13.38 | 12.05 | 20.00 | 11.71 |
+| `indexmap::IndexMap` | 30.44 | 33.09 | 28.01 | 27.86 | 29.58 |
+| `linear_map::LinearMap` | 4.24 | 9.04 | 42.00 | 321.38 | 2K |
+| `linked_hash_map::LinkedHashMap` | 51.90 | 48.22 | 51.18 | 46.07 | 45.94 |
+| `litemap::LiteMap` | 2.99 | 7.96 | 19.59 | 89.11 | 774.03 |
+| `nohash_hasher::BuildNoHashHasher` | 14.22 | 8.76 | 8.86 | 12.61 | 6.28 |
+| `rustc_hash::FxHashMap` | 15.97 | 9.40 | 9.44 | 15.06 | 7.29 |
+| `std::collections::BTreeMap` | 68.11 | 26.74 | 38.15 | 105.29 | 73.55 |
+| `std::collections::HashMap` | 31.19 | 40.14 | 48.90 | 86.33 | 51.76 |
+| `tinymap::array_map::ArrayMap` | 2.99 | 19.91 | 276.63 | 1K | 14K |
+
+The experiment was performed on 23-04-2023.
+ There were 100 repetition cycles.
+ The entire benchmark took 30s.
+
 <!-- benchmark -->
 
 ## How to Contribute

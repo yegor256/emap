@@ -9,8 +9,8 @@ cp tests/benchmark.rs src/bin/benchmark.rs
 sed -E -i 's/\[dev-dependencies\]//g' Cargo.toml
 
 emap="emap::Map"
-capacities="1 2 4 8 16 32 64 128"
-cycles=1000000
+capacities="1 10 100 1000 10000"
+cycles=100
 
 rm -rf target/benchmark
 mkdir -p target/benchmark
@@ -33,7 +33,7 @@ lapsed=$SECONDS
     echo -n " --: |"
   done
   echo ''
-  maps=$(cut -f 1 target/benchmark/2.out)
+  maps=$(cut -f 1 target/benchmark/1.out)
   for map in ${maps}; do
     echo -n "| \`${map}\`"
       if [ "${map}" == "${emap}" ]; then
