@@ -21,21 +21,22 @@
 use crate::{Item, Map};
 use std::mem::MaybeUninit;
 
-impl<V: Clone + Copy, const N: usize> Default for Map<V, N> {
+impl<V: Clone, const N: usize> Default for Map<V, N> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<V: Clone + Copy, const N: usize> Map<V, N> {
+impl<V: Clone, const N: usize> Map<V, N> {
     /// Make it.
     #[inline]
     #[must_use]
-    pub fn new() -> Self {
+    #[allow(clippy::uninit_assumed_init)]
+    pub const fn new() -> Self {
         unsafe {
             Self {
                 filled: 0,
-                items: *MaybeUninit::<[Item<V>; N]>::uninit().assume_init_mut(),
+                items: MaybeUninit::<[Item<V>; N]>::uninit().assume_init(),
             }
         }
     }

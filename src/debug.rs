@@ -22,13 +22,13 @@ use crate::Map;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 
-impl<V: Clone + Copy + Display, const N: usize> Display for Map<V, N> {
+impl<V: Clone + Display, const N: usize> Display for Map<V, N> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         <&Self as Debug>::fmt(&self, f)
     }
 }
 
-impl<V: Clone + Copy + Display, const N: usize> Debug for Map<V, N> {
+impl<V: Clone + Display, const N: usize> Debug for Map<V, N> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let mut parts = vec![];
         for i in 0..self.filled {

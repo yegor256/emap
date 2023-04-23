@@ -20,7 +20,7 @@
 
 use crate::{IntoIter, Iter, Map};
 
-impl<'a, V: Clone + Copy, const N: usize> Iterator for Iter<'a, V, N> {
+impl<'a, V: Clone, const N: usize> Iterator for Iter<'a, V, N> {
     type Item = (usize, &'a V);
 
     #[inline]

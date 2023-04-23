@@ -20,7 +20,7 @@
 
 use crate::Map;
 
-impl<V: Clone + Copy, const N: usize> Map<V, N> {
+impl<V: Clone, const N: usize> Map<V, N> {
     /// Get the next key available for insertion.
     #[inline]
     #[must_use]

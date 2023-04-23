@@ -61,7 +61,7 @@ enum Item<V> {
 
 /// A map with a fixed capacity and integers as keys.
 #[derive(Clone, Copy)]
-pub struct Map<V: Clone + Copy, const N: usize> {
+pub struct Map<V: Clone, const N: usize> {
     filled: usize,
     items: [Item<V>; N],
 }
