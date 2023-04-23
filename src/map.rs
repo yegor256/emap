@@ -21,12 +21,6 @@
 use crate::Item::{Absent, Present};
 use crate::{IntoIter, Iter, Map};
 
-impl<V: Clone + Copy, const N: usize> Default for Map<V, N> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<V: Clone + Copy, const N: usize> Map<V, N> {
     /// Make an iterator over all items.
     #[inline]

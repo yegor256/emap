@@ -21,6 +21,12 @@
 use crate::{Item, Map};
 use std::mem::MaybeUninit;
 
+impl<V: Clone + Copy, const N: usize> Default for Map<V, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<V: Clone + Copy, const N: usize> Map<V, N> {
     /// Make it.
     #[inline]
