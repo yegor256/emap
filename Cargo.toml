@@ -1,6 +1,6 @@
 [package]
 name = "emap"
-version = "0.0.0"
+version = "0.0.1"
 edition = "2021"
 repository = "https://github.com/yegor256/emap"
 description = "A map with a fixed capacity and integers as keys"
