@@ -1,0 +1,29 @@
+[package]
+name = "emap"
+version = "0.0.0"
+edition = "2021"
+repository = "https://github.com/yegor256/emap"
+description = "A map with a fixed capacity and integers as keys"
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/yegor256/emap"
+keywords = ["memory", "map"]
+categories = ["data-structures", "memory-management"]
+
+[dependencies]
+serde = { version = "1.0.160", optional = true, default-features = false }
+
+[dev-dependencies]
+anyhow = "1.0.70"
+bincode = "1.3.3"
+simple_logger = "4.1.0"
+log = "0.4.17"
+ctor = "0.2.0"
+hashbrown = "0.13.2"
+rustc-hash = "1.1.0"
+nohash-hasher = "0.2.0"
+tinymap = "0.4.0"
+linked-hash-map = "0.5.6"
+linear-map = "1.2.0"
+indexmap = "1.9.3"
+litemap = "0.7.0"

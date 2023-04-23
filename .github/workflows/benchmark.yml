@@ -1,0 +1,19 @@
+---
+name: benchmark
+on:
+  push:
+    branches:
+      - master
+    paths-ignore: [ 'README.md', '.github' ]
+jobs:
+  pr:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./rebuild_benchmark.sh
+      - uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: 'new benchmark results'
+          delete-branch: true
+          title: 'New results of benchmarking'
+          assignees: yegor256

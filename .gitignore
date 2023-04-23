@@ -1,0 +1,7 @@
+.idea/
+target/
+*.relf
+*.svg
+bin/
+*.bak
+tmp/
