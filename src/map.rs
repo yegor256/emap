@@ -97,10 +97,6 @@ impl<V: Clone> Map<V> {
     }
 
     /// Get a reference to a single value.
-    ///
-    /// # Panics
-    ///
-    /// May panic if something wrong with the internal pointer.
     #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
