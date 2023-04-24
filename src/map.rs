@@ -105,10 +105,6 @@ impl<V: Clone> Map<V> {
     }
 
     /// Insert a single pair into the map.
-    ///
-    /// # Panics
-    ///
-    /// It may panic if there are too many items in the map already.
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
         unsafe {
