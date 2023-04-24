@@ -6,15 +6,18 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/emap/blob/master/LICENSE.txt)
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
-It is an alternative on-heap implementation of a Rust map with keys of type `usize`
-and a limited capacity.
-The map works much faster, see the [benchmarking results](#benchmark) below.
-It is faster because it allocates space for all keys at once and then the cost
+It is an alternative on-heap implementation of a map with keys of type `usize`
+and a fixed capacity. It works much faster than a standard `HashMap` 
+because it allocates memory for all keys at once and then the cost
 of `get()` is _O(1)_. Obviously, with this design, the cost of `iter()` increases because the iterator
 has to jump through empty keys. However, there
 is a supplementary function `next_key()`, which returns the next available key in the map. 
 It is recommended to use it in order to ensure sequential order of the keys, which
 will guarantee _O(1)_ cost of `next()` in iterators.
+
+If `usize` keys are placed sequentially, the only true competitor of ours is 
+[`std::vec::Vec`](https://doc.rust-lang.org/std/vec/struct.Vec.html).
+We beat it too, see the [benchmarking results](#benchmark) below.
 
 First, add this to `Cargo.toml`:
 
@@ -34,7 +37,8 @@ assert_eq!(2, m.len());
 ```
 
 If more than 100 keys will be added to the map, it will panic. 
-The map doesn't increase its size automatically.
+The map doesn't increase its size automatically, like `Vec` does 
+(this is one of the reasons why we are faster).
 
 Read [the API documentation](https://docs.rs/emap/latest/emap/). 
 The struct

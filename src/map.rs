@@ -104,6 +104,13 @@ impl<V: Clone> Map<V> {
         }
     }
 
+    /// Push to the rightmost position and return the key.
+    #[inline]
+    pub fn push(&mut self, v: V) -> usize {
+        self.insert(self.max, v);
+        self.max
+    }
+
     /// Insert a single pair into the map.
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
