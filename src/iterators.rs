@@ -38,7 +38,7 @@ impl<'a, V: Clone, const N: usize> Iterator for Iter<'a, V, N> {
     }
 }
 
-impl<'a, V: Clone + Copy, const N: usize> Iterator for IntoIter<'a, V, N> {
+impl<'a, V: Copy, const N: usize> Iterator for IntoIter<'a, V, N> {
     type Item = (usize, V);
 
     #[inline]
@@ -57,7 +57,7 @@ impl<'a, V: Clone + Copy, const N: usize> Iterator for IntoIter<'a, V, N> {
     }
 }
 
-impl<'a, V: Clone + Copy, const N: usize> IntoIterator for &'a Map<V, N> {
+impl<'a, V: Copy, const N: usize> IntoIterator for &'a Map<V, N> {
     type Item = (usize, V);
     type IntoIter = IntoIter<'a, V, N>;
 

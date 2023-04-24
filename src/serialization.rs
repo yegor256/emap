@@ -25,7 +25,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Formatter;
 use std::marker::PhantomData;
 
-impl<V: Clone + Copy + Serialize, const N: usize> Serialize for Map<V, N> {
+impl<V: Copy + Serialize, const N: usize> Serialize for Map<V, N> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
