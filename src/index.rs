@@ -71,7 +71,7 @@ fn wrong_index() -> () {
 }
 
 #[cfg(test)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 struct Container {
     pub t: i32,
 }
