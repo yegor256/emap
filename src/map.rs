@@ -239,7 +239,7 @@ fn insert_struct() -> Result<()> {
 }
 
 #[cfg(test)]
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct Composite {
     r: Map<u8, 1>,
 }
@@ -249,12 +249,9 @@ fn insert_composite() -> Result<()> {
     let mut m: Map<Composite, 8> = Map::new();
     let c = Composite { r: Map::new() };
     m.insert(0, c);
-    assert_eq!(0, m.into_iter().next().unwrap().1.r.len());
+    assert_eq!(0, m.iter().next().unwrap().1.r.len());
     Ok(())
 }
-
-#[derive(Clone, Copy)]
-struct Bar {}
 
 #[test]
 fn large_map_in_heap() -> Result<()> {
