@@ -54,12 +54,12 @@ while the numbers below 1.0 demonstrate performance loss.
 <!-- benchmark -->
 | | 1 | 10 | 100 | 1000 | 10000 |
 | --- | --: | --: | --: | --: | --: |
-| `Vec` | 0.34 | 0.34 | 0.37 | 0.34 | 0.34 |
+| `Vec` | 186K | 212K | 233K | 226K | 213K |
 | `emap::Map` 👍 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
 
 The experiment was performed on 24-04-2023.
- There were 10000000 repetition cycles.
- The entire benchmark took 22s.
+ There were 100000 repetition cycles.
+ The entire benchmark took 35s.
 
 <!-- benchmark -->
 

@@ -41,29 +41,27 @@ macro_rules! measure {
 
 fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
     let mut ret = HashMap::new();
-    measure!("Vec", ret, total, {
+    measure!("std::Vec", ret, total, {
         let mut sum = 0;
-        let len = 64;
-        let mut v = Vec::with_capacity(len);
-        for i in 0..len {
+        let mut v = Vec::with_capacity(total);
+        for i in 0..total {
             v.push(&"hello!");
             if !v[i].is_empty() {
-                sum += v.len();
+                sum += 1;
             }
         }
-        sum
+        std::hint::black_box(sum)
     });
     measure!("emap::Map", ret, total, {
         let mut sum = 0;
-        let len = 64;
-        let mut v = Map::with_capacity(len);
-        for i in 0..len {
+        let mut v = Map::with_capacity(total);
+        for i in 0..total {
             v.insert(i, &"hello!");
             if !v[i].is_empty() {
-                sum += v.len();
+                sum += 1;
             }
         }
-        sum
+        std::hint::black_box(sum)
     });
     ret
 }
@@ -81,7 +79,7 @@ pub fn benchmark_and_print() {
         if d == ours {
             continue;
         }
-        assert!(!d.cmp(ours).is_gt());
+        assert!(d.cmp(ours).is_gt());
     }
 }
 
