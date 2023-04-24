@@ -111,10 +111,6 @@ impl<V: Clone> Map<V> {
     }
 
     /// Get a mutable reference to a single value.
-    ///
-    /// # Panics
-    ///
-    /// If can't turn it into a mutable state.
     #[inline]
     #[must_use]
     pub fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
