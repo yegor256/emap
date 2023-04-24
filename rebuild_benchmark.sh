@@ -9,8 +9,8 @@ cp tests/benchmark.rs src/bin/benchmark.rs
 sed -E -i 's/\[dev-dependencies\]//g' Cargo.toml
 
 emap="emap::Map"
-capacities="1 10 100 1000 10000"
-cycles=100000
+capacities="1 10 100"
+cycles=10000
 
 rm -rf target/benchmark
 mkdir -p target/benchmark

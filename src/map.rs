@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use crate::Item::{Absent, Present};
-use crate::{IntoIter, Iter, Map};
+use crate::{IntoIter, IntoValues, Iter, Map, Values};
 use std::marker::PhantomData;
 
 impl<V: Clone> Map<V> {
@@ -40,6 +40,29 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub const fn into_iter(&self) -> IntoIter<V> {
         IntoIter {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+        }
+    }
+
+    /// Make an iterator over all values.
+    #[inline]
+    #[must_use]
+    pub const fn values(&self) -> Values<V> {
+        Values {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Make an iterator over all items.
+    #[inline]
+    #[must_use]
+    pub const fn into_values(&self) -> IntoValues<V> {
+        IntoValues {
             max: self.max,
             pos: 0,
             head: self.head,

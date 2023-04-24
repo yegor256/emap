@@ -46,7 +46,7 @@ fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
         let mut v = Vec::with_capacity(total);
         for i in 0..total {
             v.push(&"hello!");
-            if !v[i].is_empty() {
+            if !std::hint::black_box(v[i]).is_empty() {
                 sum += 1;
             }
         }
@@ -62,11 +62,11 @@ fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
         let mut v = Map::with_capacity(total);
         for i in 0..total {
             v.insert(i, &"hello!");
-            if !v[i].is_empty() {
+            if !std::hint::black_box(v[i]).is_empty() {
                 sum += 1;
             }
         }
-        for (_, v) in v.into_iter() {
+        for v in v.into_values() {
             if !v.is_empty() {
                 sum += 1;
             }

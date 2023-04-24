@@ -52,14 +52,14 @@ the numbers over 1.0 indicate performance gain,
 while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
-| | 1 | 10 | 100 | 1000 | 10000 |
-| --- | --: | --: | --: | --: | --: |
-| `Vec` | 186K | 212K | 233K | 226K | 213K |
-| `emap::Map` 👍 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| | 1 | 10 | 100 |
+| --- | --: | --: | --: |
+| `emap::Map` 👍 | 1.00 | 1.00 | 1.00 |
+| `std::Vec` | 1.13 | 1.13 | 1.13 |
 
 The experiment was performed on 24-04-2023.
- There were 100000 repetition cycles.
- The entire benchmark took 35s.
+ There were 10000 repetition cycles.
+ The entire benchmark took 2s.
 
 <!-- benchmark -->
 

@@ -50,6 +50,7 @@ mod map;
 mod next_key;
 #[cfg(feature = "serde")]
 mod serialization;
+mod values;
 
 use std::alloc::Layout;
 use std::marker::PhantomData;
@@ -79,6 +80,21 @@ pub struct Iter<'a, V> {
 
 /// Into-iterator over the [`Map`].
 pub struct IntoIter<V> {
+    max: usize,
+    pos: usize,
+    head: *mut Item<V>,
+}
+
+/// Iterator over the values of a [`Map`].
+pub struct Values<'a, V> {
+    max: usize,
+    pos: usize,
+    head: *mut Item<V>,
+    _marker: PhantomData<&'a V>,
+}
+
+/// Into-iterator over the values of a [`Map`].
+pub struct IntoValues<V> {
     max: usize,
     pos: usize,
     head: *mut Item<V>,
