@@ -18,25 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::{Item, Map};
-use std::mem::MaybeUninit;
+use crate::Map;
+use std::alloc::{alloc, dealloc, Layout};
+use std::ptr::NonNull;
 
-impl<V: Clone, const N: usize> Default for Map<V, N> {
-    fn default() -> Self {
-        Self::new()
+impl<V> Drop for Map<V> {
+    fn drop(&mut self) {
+        unsafe {
+            dealloc(self.head.as_ptr().cast(), self.layout);
+        }
     }
 }
 
-impl<V: Clone, const N: usize> Map<V, N> {
+impl<V: Clone> Map<V> {
     /// Make it.
+    ///
+    /// # Panics
+    ///
+    /// May panic if out of memory.
     #[inline]
     #[must_use]
-    #[allow(clippy::uninit_assumed_init)]
-    pub const fn new() -> Self {
+    pub fn with_capacity(cap: usize) -> Self {
         unsafe {
+            let layout = Layout::array::<V>(cap).unwrap();
+            let ptr = alloc(layout);
             Self {
-                filled: 0,
-                items: MaybeUninit::<[Item<V>; N]>::uninit().assume_init(),
+                max: 0,
+                layout,
+                head: NonNull::new_unchecked(ptr.cast()),
             }
         }
     }
@@ -47,7 +56,7 @@ use anyhow::Result;
 
 #[test]
 fn makes_new_map() -> Result<()> {
-    let m: Map<&str, 8> = Map::new();
+    let m: Map<&str> = Map::with_capacity(16);
     assert_eq!(0, m.len());
     Ok(())
 }

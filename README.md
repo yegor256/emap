@@ -6,14 +6,15 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/emap/blob/master/LICENSE.txt)
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
-It is an alternative implementation of a map in Rust, which works much faster if the following conditions are met:
-
-  * Keys are of type `usize`
-  * Keys are used sequentially (e.g., the 5th key is inserted only when 0..4th are in the map)
-  * Values implement `Copy`
-  * The function `get()` is not used before `insert()`
-
-See the [benchmarking results](#benchmark) below.
+It is an alternative on-heap implementation of a Rust map with keys of type `usize`
+and a limited capacity.
+The map works much faster, see the [benchmarking results](#benchmark) below.
+It is faster because it allocates space for all keys at once and then the cost
+of `get()` is _O(1)_. Obviously, with this design, the cost of `iter()` increases because the iterator
+has to jump through empty keys. However, there
+is a supplementary function `next_key()`, which returns the next available key in the map. 
+It is recommended to use it in order to ensure sequential order of the keys, which
+will guarantee _O(1)_ cost of `next()` in iterators.
 
 First, add this to `Cargo.toml`:
 
@@ -26,15 +27,14 @@ Then, use it like a standard hash map... well, almost:
 
 ```rust
 use emap::Map;
-let mut m : Map<&str, 100> = Map::new(); // allocation on stack
-m.insert(1, "foo");
-m.insert(42, "bar");
+let mut m : Map<&str> = Map::with_capacity(100); // allocation on heap
+m.insert(m.next_key(), "foo");
+m.insert(m.next_key(), "bar");
 assert_eq!(2, m.len());
 ```
 
-Pay attention, here the map is created with an extra generic argument `100`. This is 
-the total size of the map, which is allocated on stack when `::new()` is called. 
-If more than 100 keys will be added to the map, it will panic.
+If more than 100 keys will be added to the map, it will panic. 
+The map doesn't increase its size automatically.
 
 Read [the API documentation](https://docs.rs/emap/latest/emap/). 
 The struct

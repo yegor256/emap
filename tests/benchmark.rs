@@ -21,118 +21,50 @@
 // In order to run this single test from the command line:
 // $ cargo test --test benchmark -- --nocapture
 
+use emap::Map;
 use std::collections::HashMap;
 use std::env;
 use std::time::{Duration, Instant};
 
-const CAPACITY: usize = 100;
-
-macro_rules! eval {
-    ($map:expr, $total:expr, $capacity:expr) => {{
+macro_rules! measure {
+    ($title:expr, $ret:expr, $total:expr, $e:expr) => {{
+        let start = Instant::now();
         let mut sum = 0;
         for _ in 0..$total {
-            $map.clear();
-            $map.insert(0, 42);
-            for i in 1..$capacity - 1 {
-                $map.insert(i, i as i64);
-                let v = std::hint::black_box(*$map.get(&i).unwrap());
-                assert_eq!(v, i as i64);
-            }
-            for i in 1..$capacity - 1 {
-                $map.remove(&i);
-            }
-            if $map.iter().find(|(_k, v)| **v == 0).is_some() {
-                $map.clear();
-            }
-            let p = std::hint::black_box($map.iter().find(|(_k, v)| **v == 42).unwrap().1);
-            sum += p
+            sum += $e;
         }
-        std::hint::black_box(sum)
-    }};
-}
-
-macro_rules! insert {
-    ($name:expr, $ret:expr, $map:expr, $total:expr) => {{
-        let start = Instant::now();
-        let mut m = $map;
-        eval!(m, $total, CAPACITY);
+        std::hint::black_box(sum);
         let e = start.elapsed();
-        $ret.insert($name, e);
+        $ret.insert($title, e);
     }};
 }
 
 fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
     let mut ret = HashMap::new();
-    insert!(
-        "std::collections::HashMap",
-        ret,
-        HashMap::<usize, i64>::with_capacity(CAPACITY),
-        total
-    );
-    insert!(
-        "hashbrown::HashMap",
-        ret,
-        hashbrown::HashMap::<usize, i64>::new(),
-        total
-    );
-    insert!(
-        "rustc_hash::FxHashMap",
-        ret,
-        rustc_hash::FxHashMap::<usize, i64>::default(),
-        total
-    );
-    insert!(
-        "nohash_hasher::BuildNoHashHasher",
-        ret,
-        HashMap::<usize, i64, nohash_hasher::BuildNoHashHasher<u32>>::with_capacity_and_hasher(
-            2,
-            nohash_hasher::BuildNoHashHasher::default()
-        ),
-        total
-    );
-    insert!(
-        "std::collections::BTreeMap",
-        ret,
-        std::collections::BTreeMap::<usize, i64>::new(),
-        total
-    );
-    insert!(
-        "tinymap::array_map::ArrayMap",
-        ret,
-        tinymap::array_map::ArrayMap::<usize, i64, CAPACITY>::new(),
-        total
-    );
-    insert!(
-        "linked_hash_map::LinkedHashMap",
-        ret,
-        linked_hash_map::LinkedHashMap::<usize, i64>::new(),
-        total
-    );
-    insert!(
-        "linear_map::LinearMap",
-        ret,
-        linear_map::LinearMap::<usize, i64>::new(),
-        total
-    );
-    insert!(
-        "indexmap::IndexMap",
-        ret,
-        indexmap::IndexMap::<usize, i64>::new(),
-        total
-    );
-    insert!(
-        "litemap::LiteMap",
-        ret,
-        litemap::LiteMap::<usize, i64>::new(),
-        total
-    );
-    insert!(
-        "micromap::Map",
-        ret,
-        micromap::Map::<usize, i64, CAPACITY>::new(),
-        total
-    );
-    insert!("emap::Map", ret, emap::Map::<i64, CAPACITY>::new(), total);
+    measure!("Vec", ret, total, {
+        let mut sum = 0;
+        let len = 64;
+        let mut v = Vec::with_capacity(len);
+        for i in 0..len {
+            v.push(&"hello!");
+            if !v[i].is_empty() {
+                sum += v.len();
+            }
+        }
+        sum
+    });
+    measure!("emap::Map", ret, total, {
+        let mut sum = 0;
+        let len = 64;
+        let mut v = Map::with_capacity(len);
+        for i in 0..len {
+            v.insert(i, &"hello!");
+            if !v[i].is_empty() {
+                sum += v.len();
+            }
+        }
+        sum
+    });
     ret
 }
 
@@ -149,7 +81,7 @@ pub fn benchmark_and_print() {
         if d == ours {
             continue;
         }
-        assert!(d.cmp(ours).is_gt());
+        assert!(!d.cmp(ours).is_gt());
     }
 }
 

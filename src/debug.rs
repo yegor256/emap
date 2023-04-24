@@ -22,31 +22,28 @@ use crate::Map;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 
-impl<V: Clone + Display, const N: usize> Display for Map<V, N> {
+impl<V: Clone + Display> Display for Map<V> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         <&Self as Debug>::fmt(&self, f)
     }
 }
 
-impl<V: Clone + Display, const N: usize> Debug for Map<V, N> {
+impl<V: Clone + Display> Debug for Map<V> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let mut parts = vec![];
-        for i in 0..self.filled {
-            if let Present(v) = &self.items[i] {
-                parts.push(format!("{i}: {v}"));
-            }
+        for (k, v) in self.iter() {
+            parts.push(format!("{k}: {v}"));
         }
         f.write_str(format!("{{{}}}", parts.join(", ").as_str()).as_str())
     }
 }
 
-use crate::Item::Present;
 #[cfg(test)]
 use anyhow::Result;
 
 #[test]
 fn debugs_map() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.insert(1, "two");
     assert_eq!("{0: one, 1: two}", format!("{:?}", m));
@@ -55,7 +52,7 @@ fn debugs_map() -> Result<()> {
 
 #[test]
 fn displays_map() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.insert(1, "two");
     assert_eq!("{0: one, 1: two}", format!("{}", m));

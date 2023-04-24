@@ -20,53 +20,58 @@
 
 use crate::{IntoIter, Iter, Map};
 
-impl<'a, V: Clone, const N: usize> Iterator for Iter<'a, V, N> {
+impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     type Item = (usize, &'a V);
 
     #[inline]
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.filled {
-            if let Present(p) = &self.items[self.pos] {
-                let i = self.pos;
+        unsafe {
+            while self.pos < self.max {
+                let item = &*self.head.as_ptr().add(self.pos);
+                if let Present(p) = item {
+                    let i = self.pos;
+                    self.pos += 1;
+                    return Some((i, p));
+                }
                 self.pos += 1;
-                return Some((i, p));
             }
-            self.pos += 1;
+            None
         }
-        None
     }
 }
 
-impl<'a, V: Copy, const N: usize> Iterator for IntoIter<'a, V, N> {
+impl<V: Copy> Iterator for IntoIter<V> {
     type Item = (usize, V);
 
     #[inline]
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.next {
-            if self.items[self.pos].is_some() {
-                let v = self.items[self.pos].unwrap();
-                let i = self.pos;
+        unsafe {
+            while self.pos < self.max {
+                let item = self.head.as_ptr().add(self.pos).as_ref().unwrap();
+                if let Present(v) = item {
+                    let i = self.pos;
+                    self.pos += 1;
+                    return Some((i, *v));
+                }
                 self.pos += 1;
-                return Some((i, v));
             }
-            self.pos += 1;
+            None
         }
-        None
     }
 }
 
-impl<'a, V: Copy, const N: usize> IntoIterator for &'a Map<V, N> {
+impl<'a, V: Copy> IntoIterator for &'a Map<V> {
     type Item = (usize, V);
-    type IntoIter = IntoIter<'a, V, N>;
+    type IntoIter = IntoIter<V>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
-            next: self.filled,
+            max: self.max,
             pos: 0,
-            items: &self.items,
+            head: self.head,
         }
     }
 }
@@ -77,14 +82,14 @@ use anyhow::Result;
 
 #[test]
 fn empty_iterator() -> Result<()> {
-    let m: Map<u32, 4> = Map::new();
+    let m: Map<u32> = Map::with_capacity(16);
     assert!(m.into_iter().next().is_none());
     Ok(())
 }
 
 #[test]
 fn insert_and_jump_over_next() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "foo");
     let mut iter = m.into_iter();
     assert_eq!("foo", iter.next().unwrap().1);
@@ -94,7 +99,7 @@ fn insert_and_jump_over_next() -> Result<()> {
 
 #[test]
 fn insert_and_iterate() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.insert(1, "two");
     m.insert(2, "three");
@@ -111,7 +116,7 @@ fn insert_and_iterate() -> Result<()> {
 
 #[test]
 fn insert_and_into_iterate() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.insert(1, "two");
     m.insert(2, "three");

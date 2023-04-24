@@ -20,27 +20,29 @@
 
 use crate::Item::{Absent, Present};
 use crate::{IntoIter, Iter, Map};
+use std::marker::PhantomData;
 
-impl<V: Clone, const N: usize> Map<V, N> {
+impl<V: Clone> Map<V> {
     /// Make an iterator over all items.
     #[inline]
     #[must_use]
-    pub const fn iter(&self) -> Iter<V, N> {
+    pub const fn iter(&self) -> Iter<V> {
         Iter {
-            filled: self.filled,
+            max: self.max,
             pos: 0,
-            items: &self.items,
+            head: self.head,
+            _marker: PhantomData,
         }
     }
 
     /// Make an iterator over all items.
     #[inline]
     #[must_use]
-    pub const fn into_iter(&self) -> IntoIter<V, N> {
+    pub const fn into_iter(&self) -> IntoIter<V> {
         IntoIter {
-            next: self.filled,
+            max: self.max,
             pos: 0,
-            items: &self.items,
+            head: self.head,
         }
     }
 
@@ -56,8 +58,8 @@ impl<V: Clone, const N: usize> Map<V, N> {
     #[must_use]
     pub fn len(&self) -> usize {
         let mut busy = 0;
-        for i in 0..self.filled {
-            if self.items[i].is_some() {
+        for i in 0..self.max {
+            if self.get(&i).is_some() {
                 busy += 1;
             }
         }
@@ -66,14 +68,17 @@ impl<V: Clone, const N: usize> Map<V, N> {
 
     /// Does the map contain this key?
     #[inline]
-    pub const fn contains_key(&self, k: &usize) -> bool {
-        self.items[*k].is_some()
+    #[must_use]
+    pub fn contains_key(&self, k: &usize) -> bool {
+        self.get(k).is_some()
     }
 
     /// Remove by key.
     #[inline]
     pub fn remove(&mut self, k: &usize) {
-        self.items[*k] = Absent;
+        unsafe {
+            *(self.head.as_ptr().add(*k)) = Absent;
+        }
     }
 
     /// Insert a single pair into the map.
@@ -83,20 +88,29 @@ impl<V: Clone, const N: usize> Map<V, N> {
     /// It may panic if there are too many items in the map already.
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
-        self.items[k] = Present(v);
-        if self.filled <= k {
-            self.filled = k + 1;
+        unsafe {
+            *(self.head.as_ptr().add(k)) = Present(v);
+        }
+        if self.max <= k {
+            self.max = k + 1;
         }
     }
 
     /// Get a reference to a single value.
+    ///
+    /// # Panics
+    ///
+    /// May panic if something wrong with the internal pointer.
     #[inline]
     #[must_use]
-    pub const fn get(&self, k: &usize) -> Option<&V> {
-        if let Present(p) = &self.items[*k] {
-            return Some(p);
+    pub fn get(&self, k: &usize) -> Option<&V> {
+        unsafe {
+            let item = self.head.as_ptr().add(*k).as_ref().unwrap();
+            if let Present(p) = item {
+                return Some(p);
+            }
+            None
         }
-        None
     }
 
     /// Get a mutable reference to a single value.
@@ -107,25 +121,31 @@ impl<V: Clone, const N: usize> Map<V, N> {
     #[inline]
     #[must_use]
     pub fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
-        if let Present(v) = &mut self.items[*k] {
-            return Some(v);
+        unsafe {
+            let item = &mut *(self.head.as_ptr().add(*k));
+            if let Present(p) = item {
+                return Some(p);
+            }
+            None
         }
-        None
     }
 
     /// Remove all items from it, but keep the space intact for future use.
     #[inline]
     pub fn clear(&mut self) {
-        self.filled = 0;
+        self.max = 0;
     }
 
     /// Retains only the elements specified by the predicate.
     #[inline]
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
-        for i in 0..self.filled {
-            if let Present(p) = &self.items[i] {
-                if !f(&i, p) {
-                    self.items[i] = Absent;
+        unsafe {
+            for i in 0..self.max {
+                let item = &*(self.head.as_ptr().add(i));
+                if let Present(p) = item {
+                    if !f(&i, p) {
+                        *(self.head.as_ptr().add(i)) = Absent;
+                    }
                 }
             }
         }
@@ -137,7 +157,7 @@ use anyhow::Result;
 
 #[test]
 fn insert_and_check_length() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "zero");
     assert_eq!(1, m.len());
     m.insert(1, "first");
@@ -149,14 +169,14 @@ fn insert_and_check_length() -> Result<()> {
 
 #[test]
 fn empty_length() -> Result<()> {
-    let m: Map<u32, 10> = Map::new();
+    let m: Map<u32> = Map::with_capacity(16);
     assert_eq!(0, m.len());
     Ok(())
 }
 
 #[test]
 fn is_empty_check() -> Result<()> {
-    let mut m: Map<u32, 10> = Map::new();
+    let mut m: Map<u32> = Map::with_capacity(16);
     assert!(m.is_empty());
     m.insert(0, 42);
     assert!(!m.is_empty());
@@ -165,7 +185,7 @@ fn is_empty_check() -> Result<()> {
 
 #[test]
 fn insert_and_gets() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "zero");
     m.insert(1, "one");
     assert_eq!("one", *m.get(&1).unwrap());
@@ -174,7 +194,7 @@ fn insert_and_gets() -> Result<()> {
 
 #[test]
 fn insert_and_gets_mut() -> Result<()> {
-    let mut m: Map<[i32; 3], 10> = Map::new();
+    let mut m: Map<[i32; 3]> = Map::with_capacity(16);
     m.insert(0, [1, 2, 3]);
     let a = m.get_mut(&0).unwrap();
     a[0] = 500;
@@ -184,7 +204,7 @@ fn insert_and_gets_mut() -> Result<()> {
 
 #[test]
 fn checks_key() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     assert!(m.contains_key(&0));
     m.insert(8, "");
@@ -195,7 +215,7 @@ fn checks_key() -> Result<()> {
 
 #[test]
 fn gets_missing_key() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.insert(1, "one");
     m.remove(&1);
@@ -205,7 +225,7 @@ fn gets_missing_key() -> Result<()> {
 
 #[test]
 fn mut_gets_missing_key() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.insert(1, "one");
     m.remove(&1);
@@ -215,7 +235,7 @@ fn mut_gets_missing_key() -> Result<()> {
 
 #[test]
 fn removes_simple_pair() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.remove(&0);
     m.remove(&1);
@@ -231,38 +251,23 @@ struct Foo {
 
 #[test]
 fn insert_struct() -> Result<()> {
-    let mut m: Map<Foo, 8> = Map::new();
+    let mut m: Map<Foo> = Map::with_capacity(16);
     let foo = Foo { v: [1, 2, 100] };
     m.insert(0, foo);
     assert_eq!(100, m.into_iter().next().unwrap().1.v[2]);
     Ok(())
 }
 
-#[cfg(test)]
-#[derive(Clone)]
-struct Composite {
-    r: Map<u8, 1>,
-}
-
-#[test]
-fn insert_composite() -> Result<()> {
-    let mut m: Map<Composite, 8> = Map::new();
-    let c = Composite { r: Map::new() };
-    m.insert(0, c);
-    assert_eq!(0, m.iter().next().unwrap().1.r.len());
-    Ok(())
-}
-
 #[test]
 fn large_map_in_heap() -> Result<()> {
-    let m: Box<Map<[u64; 10], 10>> = Box::new(Map::new());
+    let m: Box<Map<[u64; 10]>> = Box::new(Map::with_capacity(16));
     assert_eq!(0, m.len());
     Ok(())
 }
 
 #[test]
 fn clears_it_up() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(7, "one");
     m.clear();
     assert_eq!(0, m.len());

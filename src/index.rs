@@ -21,19 +21,19 @@
 use crate::Map;
 use std::ops::{Index, IndexMut};
 
-impl<V: Clone, const N: usize> Index<usize> for Map<V, N> {
+impl<V: Clone> Index<usize> for Map<V> {
     type Output = V;
 
     #[inline]
     fn index(&self, key: usize) -> &V {
-        self.get(&key).expect("no entry found for key")
+        self.get(&key).expect("No entry found for key")
     }
 }
 
-impl<V: Clone, const N: usize> IndexMut<usize> for Map<V, N> {
+impl<V: Clone> IndexMut<usize> for Map<V> {
     #[inline]
     fn index_mut(&mut self, key: usize) -> &mut V {
-        self.get_mut(&key).expect("no entry found for key")
+        self.get_mut(&key).expect("No entry found for key")
     }
 }
 
@@ -45,7 +45,7 @@ use std::borrow::Borrow;
 
 #[test]
 fn index() -> Result<()> {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(1, "first");
     assert_eq!("first", m[1]);
     Ok(())
@@ -53,7 +53,7 @@ fn index() -> Result<()> {
 
 #[test]
 fn index_mut() -> Result<()> {
-    let mut m: Map<i32, 10> = Map::new();
+    let mut m: Map<i32> = Map::with_capacity(16);
     m.insert(1, 10);
     m[1] += 55;
     assert_eq!(65, m[1]);
@@ -63,7 +63,7 @@ fn index_mut() -> Result<()> {
 #[test]
 #[should_panic]
 fn wrong_index() -> () {
-    let mut m: Map<&str, 10> = Map::new();
+    let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(2, "first");
     m.insert(8, "second");
     m.remove(&8);
@@ -85,7 +85,7 @@ impl Borrow<i32> for Container {
 
 #[test]
 fn index_by_borrow() -> Result<()> {
-    let mut m: Map<Container, 10> = Map::new();
+    let mut m: Map<Container> = Map::with_capacity(16);
     m.insert(2, Container { t: 10 });
     assert_eq!(10, m[2].t);
     Ok(())

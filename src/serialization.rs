@@ -25,7 +25,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Formatter;
 use std::marker::PhantomData;
 
-impl<V: Clone + Serialize, const N: usize> Serialize for Map<V, N> {
+impl<V: Clone + Serialize> Serialize for Map<V> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -38,10 +38,10 @@ impl<V: Clone + Serialize, const N: usize> Serialize for Map<V, N> {
     }
 }
 
-struct Vi<V, const N: usize>(PhantomData<V>);
+struct Vi<V>(PhantomData<V>);
 
-impl<'de, V: Clone + Deserialize<'de>, const N: usize> Visitor<'de> for Vi<V, N> {
-    type Value = Map<V, N>;
+impl<'de, V: Clone + Deserialize<'de>> Visitor<'de> for Vi<V> {
+    type Value = Map<V>;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
         formatter.write_str("a Map")
@@ -51,7 +51,7 @@ impl<'de, V: Clone + Deserialize<'de>, const N: usize> Visitor<'de> for Vi<V, N>
     where
         M: MapAccess<'de>,
     {
-        let mut m: Self::Value = Map::new();
+        let mut m: Self::Value = Map::with_capacity(16);
         while let Some((key, value)) = access.next_entry()? {
             m.insert(key, value);
         }
@@ -59,7 +59,7 @@ impl<'de, V: Clone + Deserialize<'de>, const N: usize> Visitor<'de> for Vi<V, N>
     }
 }
 
-impl<'de, V: Clone + Deserialize<'de>, const N: usize> Deserialize<'de> for Map<V, N> {
+impl<'de, V: Clone + Deserialize<'de>> Deserialize<'de> for Map<V> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -76,10 +76,10 @@ use bincode::{deserialize, serialize};
 
 #[test]
 fn serialize_and_deserialize() -> Result<()> {
-    let mut before: Map<u8, 8> = Map::new();
+    let mut before: Map<u8> = Map::with_capacity(16);
     before.insert(0, 42);
     let bytes: Vec<u8> = serialize(&before)?;
-    let after: Map<u8, 8> = deserialize(&bytes)?;
+    let after: Map<u8> = deserialize(&bytes)?;
     assert_eq!(42, after.into_iter().next().unwrap().1);
     Ok(())
 }

@@ -28,13 +28,6 @@ impl<V> Item<V> {
             Present(_) => true,
         }
     }
-
-    pub(crate) fn unwrap(self) -> V {
-        match self {
-            Present(v) => v,
-            Absent => panic!("Oops"),
-        }
-    }
 }
 
 #[cfg(test)]

@@ -20,17 +20,20 @@
 
 use crate::Map;
 
-impl<V: Clone, const N: usize> Map<V, N> {
+impl<V: Clone> Map<V> {
     /// Get the next key available for insertion.
     #[inline]
     #[must_use]
     pub fn next_key(&self) -> usize {
-        for i in 0..self.filled {
-            if !self.items[i].is_some() {
-                return i;
+        unsafe {
+            for i in 0..self.max {
+                let item = &*self.head.as_ptr().add(i);
+                if !item.is_some() {
+                    return i;
+                }
             }
+            self.max
         }
-        self.filled
     }
 }
 
@@ -39,14 +42,14 @@ use anyhow::Result;
 
 #[test]
 fn get_next_key_empty_map() -> Result<()> {
-    let m: Map<&str, 10> = Map::new();
+    let m: Map<&str> = Map::with_capacity(16);
     assert_eq!(0, m.next_key());
     Ok(())
 }
 
 #[test]
 fn get_next_in_the_middle() -> Result<()> {
-    let mut m: Map<u32, 10> = Map::new();
+    let mut m: Map<u32> = Map::with_capacity(16);
     m.insert(0, 42);
     m.insert(1, 42);
     m.remove(&1);
