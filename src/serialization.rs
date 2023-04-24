@@ -25,13 +25,13 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Formatter;
 use std::marker::PhantomData;
 
-impl<V: Copy + Serialize, const N: usize> Serialize for Map<V, N> {
+impl<V: Clone + Serialize, const N: usize> Serialize for Map<V, N> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         let mut map = serializer.serialize_map(Some(self.len()))?;
-        for (a, v) in self {
+        for (a, v) in self.iter() {
             map.serialize_entry(&a, &v)?;
         }
         map.end()
