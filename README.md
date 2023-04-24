@@ -54,21 +54,12 @@ while the numbers below 1.0 demonstrate performance loss.
 <!-- benchmark -->
 | | 1 | 10 | 100 | 1000 | 10000 |
 | --- | --: | --: | --: | --: | --: |
+| `Vec` | 0.34 | 0.34 | 0.37 | 0.34 | 0.34 |
 | `emap::Map` 👍 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
-| `hashbrown::HashMap` | 32.00 | 14.05 | 9.00 | 8.59 | 8.82 |
-| `indexmap::IndexMap` | 36.00 | 27.91 | 22.64 | 21.61 | 22.01 |
-| `linear_map::LinearMap` | 7.00 | 4.73 | 29.85 | 241.30 | 2K |
-| `linked_hash_map::LinkedHashMap` | 59.00 | 34.77 | 30.12 | 28.29 | 28.40 |
-| `litemap::LiteMap` | 12.00 | 7.55 | 12.16 | 34.10 | 472.24 |
-| `nohash_hasher::BuildNoHashHasher` | 23.00 | 16.73 | 8.55 | 7.83 | 7.66 |
-| `rustc_hash::FxHashMap` | 25.00 | 13.09 | 8.64 | 8.07 | 8.12 |
-| `std::collections::BTreeMap` | 44.00 | 24.77 | 23.37 | 44.26 | 49.86 |
-| `std::collections::HashMap` | 43.00 | 25.23 | 21.80 | 20.63 | 21.03 |
-| `tinymap::array_map::ArrayMap` | 3.00 | 16.23 | 116.53 | 1K | 9K |
 
-The experiment was performed on 23-04-2023.
- There were 100 repetition cycles.
- The entire benchmark took 108s.
+The experiment was performed on 24-04-2023.
+ There were 10000000 repetition cycles.
+ The entire benchmark took 22s.
 
 <!-- benchmark -->
 

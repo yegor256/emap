@@ -10,7 +10,7 @@ sed -E -i 's/\[dev-dependencies\]//g' Cargo.toml
 
 emap="emap::Map"
 capacities="1 10 100 1000 10000"
-cycles=100
+cycles=100000
 
 rm -rf target/benchmark
 mkdir -p target/benchmark
@@ -87,3 +87,4 @@ perl -e '
 '
 
 git restore Cargo.toml
+rm -rf src/bin

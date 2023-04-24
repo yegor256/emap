@@ -40,6 +40,7 @@
 #![allow(clippy::multiple_inherent_impl)]
 #![allow(clippy::multiple_crate_versions)]
 
+mod clone;
 mod ctors;
 mod debug;
 mod index;
@@ -98,16 +99,4 @@ fn init() {
         .with_level(LevelFilter::Trace)
         .init()
         .unwrap();
-}
-
-#[cfg(test)]
-use anyhow::Result;
-
-#[test]
-#[ignore]
-fn map_can_be_cloned() -> Result<()> {
-    let mut m: Map<u8> = Map::with_capacity(16);
-    m.insert(0, 42);
-    // assert_eq!(42, *m.clone().get(&0).unwrap());
-    Ok(())
 }
