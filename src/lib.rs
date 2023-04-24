@@ -61,7 +61,7 @@ enum Item<V> {
 
 /// A map with a fixed capacity and integers as keys.
 #[derive(Clone, Copy)]
-pub struct Map<V: Clone, const N: usize> {
+pub struct Map<V, const N: usize> {
     filled: usize,
     items: [Item<V>; N],
 }
@@ -94,4 +94,15 @@ fn init() {
         .with_level(LevelFilter::Trace)
         .init()
         .unwrap();
+}
+
+#[cfg(test)]
+use anyhow::Result;
+
+#[test]
+fn map_can_be_cloned() -> Result<()> {
+    let mut m: Map<u8, 8> = Map::new();
+    m.insert(0, 42);
+    assert_eq!(42, *m.clone().get(&0).unwrap());
+    Ok(())
 }
