@@ -53,7 +53,6 @@ mod serialization;
 
 use std::alloc::Layout;
 use std::marker::PhantomData;
-use std::ptr::NonNull;
 
 /// An item in the Map.
 #[derive(Clone, Default, Eq, PartialEq)]
@@ -66,7 +65,7 @@ enum Item<V> {
 /// A map with a fixed capacity and `usize` as keys.
 pub struct Map<V> {
     max: usize,
-    head: NonNull<Item<V>>,
+    head: *mut Item<V>,
     layout: Layout,
 }
 
@@ -74,7 +73,7 @@ pub struct Map<V> {
 pub struct Iter<'a, V> {
     max: usize,
     pos: usize,
-    head: NonNull<Item<V>>,
+    head: *mut Item<V>,
     _marker: PhantomData<&'a V>,
 }
 
@@ -82,7 +81,7 @@ pub struct Iter<'a, V> {
 pub struct IntoIter<V> {
     max: usize,
     pos: usize,
-    head: NonNull<Item<V>>,
+    head: *mut Item<V>,
 }
 
 #[cfg(test)]

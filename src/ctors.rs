@@ -20,12 +20,11 @@
 
 use crate::Map;
 use std::alloc::{alloc, dealloc, Layout};
-use std::ptr::NonNull;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
         unsafe {
-            dealloc(self.head.as_ptr().cast(), self.layout);
+            dealloc(self.head.cast(), self.layout);
         }
     }
 }
@@ -45,7 +44,7 @@ impl<V: Clone> Map<V> {
             Self {
                 max: 0,
                 layout,
-                head: NonNull::new_unchecked(ptr.cast()),
+                head: ptr.cast(),
             }
         }
     }

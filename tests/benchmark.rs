@@ -50,6 +50,11 @@ fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
                 sum += 1;
             }
         }
+        for v in v.into_iter() {
+            if !v.is_empty() {
+                sum += 1;
+            }
+        }
         std::hint::black_box(sum)
     });
     measure!("emap::Map", ret, total, {
@@ -58,6 +63,11 @@ fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
         for i in 0..total {
             v.insert(i, &"hello!");
             if !v[i].is_empty() {
+                sum += 1;
+            }
+        }
+        for (_, v) in v.into_iter() {
+            if !v.is_empty() {
                 sum += 1;
             }
         }

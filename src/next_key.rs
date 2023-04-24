@@ -27,7 +27,7 @@ impl<V: Clone> Map<V> {
     pub fn next_key(&self) -> usize {
         unsafe {
             for i in 0..self.max {
-                let item = &*self.head.as_ptr().add(i);
+                let item = &*self.head.add(i);
                 if !item.is_some() {
                     return i;
                 }

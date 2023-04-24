@@ -77,7 +77,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn remove(&mut self, k: &usize) {
         unsafe {
-            *(self.head.as_ptr().add(*k)) = Absent;
+            *self.head.add(*k) = Absent;
         }
     }
 
@@ -89,7 +89,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
         unsafe {
-            *(self.head.as_ptr().add(k)) = Present(v);
+            *self.head.add(k) = Present(v);
         }
         if self.max <= k {
             self.max = k + 1;
@@ -103,10 +103,11 @@ impl<V: Clone> Map<V> {
     /// May panic if something wrong with the internal pointer.
     #[inline]
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn get(&self, k: &usize) -> Option<&V> {
         unsafe {
-            let item = self.head.as_ptr().add(*k).as_ref().unwrap();
-            if let Present(p) = item {
+            let item = self.head.add(*k);
+            if let Present(p) = &*item {
                 return Some(p);
             }
             None
@@ -122,7 +123,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
         unsafe {
-            let item = &mut *(self.head.as_ptr().add(*k));
+            let item = &mut *(self.head.add(*k));
             if let Present(p) = item {
                 return Some(p);
             }
@@ -141,10 +142,10 @@ impl<V: Clone> Map<V> {
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
         unsafe {
             for i in 0..self.max {
-                let item = &*(self.head.as_ptr().add(i));
+                let item = &*(self.head.add(i));
                 if let Present(p) = item {
                     if !f(&i, p) {
-                        *(self.head.as_ptr().add(i)) = Absent;
+                        *(self.head.add(i)) = Absent;
                     }
                 }
             }
