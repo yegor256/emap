@@ -93,8 +93,9 @@ impl<V: Clone> Map<V> {
     /// Does the map contain this key?
     #[inline]
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn contains_key(&self, k: &usize) -> bool {
-        self.get(k).is_some()
+        matches!(unsafe { &*self.head.add(*k) }, Present(_))
     }
 
     /// Remove by key.
