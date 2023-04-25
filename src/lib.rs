@@ -114,3 +114,29 @@ fn init() {
         .init()
         .unwrap();
 }
+
+#[cfg(test)]
+use anyhow::Result;
+
+#[cfg(test)]
+use std::time::Instant;
+
+#[test]
+fn perf() -> Result<()> {
+    let mut m: Map<&str> = Map::with_capacity(256);
+    let start = Instant::now();
+    for _ in 0..10000000 {
+        for _ in 0..m.len() {
+            m.push("Hello, world!");
+        }
+        for i in 0..m.len() {
+            m.remove(&i);
+        }
+        for (k, _) in m.into_iter() {
+            m.remove(&k);
+        }
+    }
+    let d = start.elapsed();
+    println!("Total time: {}", d.as_millis());
+    Ok(())
+}
