@@ -27,9 +27,10 @@ impl<'a, V: Clone + 'a> Iterator for Values<'a, V> {
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
-            if let Some(p) = unsafe { &*self.head.add(self.pos) } {
+            let opt = unsafe { &*self.head.add(self.pos) };
+            if opt.is_some() {
                 self.pos += 1;
-                return Some(p);
+                return opt.as_ref();
             }
             self.pos += 1;
         }
