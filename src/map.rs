@@ -21,6 +21,7 @@
 use crate::Item::{Absent, Present};
 use crate::{IntoIter, IntoValues, Iter, Map, Values};
 use std::marker::PhantomData;
+use std::ptr;
 
 impl<V: Clone> Map<V> {
     /// Make an iterator over all items.
@@ -100,7 +101,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn remove(&mut self, k: &usize) {
         unsafe {
-            *self.head.add(*k) = Absent;
+            ptr::write(self.head.add(*k), Absent);
         }
     }
 
