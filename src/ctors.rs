@@ -20,6 +20,7 @@
 
 use crate::Map;
 use std::alloc::{alloc, dealloc, Layout};
+use std::mem;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
@@ -48,6 +49,13 @@ impl<V: Clone> Map<V> {
             }
         }
     }
+
+    /// Return capacity.
+    #[inline]
+    #[must_use]
+    pub const fn capacity(&self) -> usize {
+        self.layout.size() / mem::size_of::<V>()
+    }
 }
 
 #[cfg(test)]
@@ -57,6 +65,13 @@ use anyhow::Result;
 fn makes_new_map() -> Result<()> {
     let m: Map<&str> = Map::with_capacity(16);
     assert_eq!(0, m.len());
+    Ok(())
+}
+
+#[test]
+fn returns_capacity() -> Result<()> {
+    let m: Map<&str> = Map::with_capacity(16);
+    assert_eq!(16, m.capacity());
     Ok(())
 }
 

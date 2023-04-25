@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::Item::Present;
 use crate::{IntoValues, Values};
 
 impl<'a, V: Clone + 'a> Iterator for Values<'a, V> {
@@ -28,7 +27,7 @@ impl<'a, V: Clone + 'a> Iterator for Values<'a, V> {
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
-            if let Present(p) = unsafe { &*self.head.add(self.pos) } {
+            if let Some(p) = unsafe { &*self.head.add(self.pos) } {
                 self.pos += 1;
                 return Some(p);
             }
@@ -45,9 +44,10 @@ impl<V: Copy> Iterator for IntoValues<V> {
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
-            if let Present(v) = unsafe { &*self.head.add(self.pos) } {
+            let opt = unsafe { &*self.head.add(self.pos) };
+            if opt.is_some() {
                 self.pos += 1;
-                return Some(*v);
+                return *opt;
             }
             self.pos += 1;
         }

@@ -49,46 +49,71 @@ macro_rules! compare {
 
 fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
     let mut ret = vec![];
-    compare!(
-        "i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {s > 0;};}",
-        ret,
-        total,
-        |v: &mut Vec<_>| {
-            for _ in 0..CAP {
-                v.push(&42);
-                for s in v.into_iter() {
-                    std::hint::black_box(*s > &0);
-                }
-            }
-        },
-        |v: &mut Map<_>| {
-            for i in 0..CAP {
-                v.insert(i, &42);
-                for s in v.into_values() {
-                    std::hint::black_box(*s > 0);
-                }
-            }
-        }
-    );
+    // compare!(
+    //     "i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}",
+    //     ret,
+    //     total,
+    //     |v: &mut Vec<_>| {
+    //         let mut sum = 0;
+    //         for _ in 0..CAP {
+    //             v.push(&42);
+    //             for s in v.into_iter() {
+    //                 sum += *s;
+    //             }
+    //         }
+    //         std::hint::black_box(sum)
+    //     },
+    //     |v: &mut Map<_>| {
+    //         let mut sum = 0;
+    //         for i in 0..CAP {
+    //             v.insert(i, &42);
+    //             for s in v.into_values() {
+    //                 sum += *s;
+    //             }
+    //         }
+    //         std::hint::black_box(sum)
+    //     }
+    // );
     compare!(
         "i ∈ 0..CAP {M.insert(i, &42);} i ∈ CAP-1..0 {M.remove(&i);}",
         ret,
         total,
         |v: &mut Vec<_>| {
             for _ in 0..CAP {
-                std::hint::black_box(v.push(&42));
+                v.push(&42);
             }
             for i in CAP - 1..0 {
-                std::hint::black_box(v.remove(i));
+                v.remove(i);
             }
+            std::hint::black_box(v.capacity())
         },
         |v: &mut Map<_>| {
             for i in 0..CAP {
-                std::hint::black_box(v.insert(i, &42));
+                v.insert(i, &42);
             }
             for i in CAP - 1..0 {
-                std::hint::black_box(v.remove(i));
+                v.remove(i);
             }
+            std::hint::black_box(v.capacity())
+        }
+    );
+    compare!(
+        "i ∈ 0..CAP {M.insert(i, 42);} M.clear(); M.len();",
+        ret,
+        total,
+        |v: &mut Vec<_>| {
+            for _ in 0..CAP {
+                v.push(&42);
+            }
+            v.clear();
+            std::hint::black_box(v.len())
+        },
+        |v: &mut Map<_>| {
+            for i in 0..CAP {
+                v.insert(i, &42);
+            }
+            v.clear();
+            std::hint::black_box(v.len())
         }
     );
     compare!(
@@ -97,13 +122,15 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         total,
         |v: &mut Vec<_>| {
             for _ in 0..CAP {
-                std::hint::black_box(v.push(&"Hello, world!"));
+                v.push(&"Hello, world!");
             }
+            std::hint::black_box(v.capacity())
         },
         |v: &mut Map<_>| {
             for i in 0..CAP {
-                std::hint::black_box(v.insert(i, &"Hello, world!"));
+                v.insert(i, &"Hello, world!");
             }
+            std::hint::black_box(v.capacity())
         }
     );
     ret

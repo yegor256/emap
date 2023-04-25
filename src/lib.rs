@@ -54,18 +54,10 @@ mod values;
 use std::alloc::Layout;
 use std::marker::PhantomData;
 
-/// An item in the Map.
-#[derive(Clone, Default, Eq, PartialEq)]
-enum Item<V> {
-    Present(V),
-    #[default]
-    Absent,
-}
-
 /// A map with a fixed capacity and `usize` as keys.
 pub struct Map<V> {
     max: usize,
-    head: *mut Item<V>,
+    head: *mut Option<V>,
     layout: Layout,
 }
 
@@ -73,7 +65,7 @@ pub struct Map<V> {
 pub struct Iter<'a, V> {
     max: usize,
     pos: usize,
-    head: *mut Item<V>,
+    head: *mut Option<V>,
     _marker: PhantomData<&'a V>,
 }
 
@@ -81,14 +73,14 @@ pub struct Iter<'a, V> {
 pub struct IntoIter<V> {
     max: usize,
     pos: usize,
-    head: *mut Item<V>,
+    head: *mut Option<V>,
 }
 
 /// Iterator over the values of a [`Map`].
 pub struct Values<'a, V> {
     max: usize,
     pos: usize,
-    head: *mut Item<V>,
+    head: *mut Option<V>,
     _marker: PhantomData<&'a V>,
 }
 
@@ -96,7 +88,7 @@ pub struct Values<'a, V> {
 pub struct IntoValues<V> {
     max: usize,
     pos: usize,
-    head: *mut Item<V>,
+    head: *mut Option<V>,
 }
 
 #[cfg(test)]

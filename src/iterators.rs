@@ -28,7 +28,7 @@ impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let item = unsafe { &*self.head.add(self.pos) };
-            if let Present(p) = item {
+            if let Some(p) = item {
                 let i = self.pos;
                 self.pos += 1;
                 return Some((i, p));
@@ -47,7 +47,7 @@ impl<V: Copy> Iterator for IntoIter<V> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let item = unsafe { &*self.head.add(self.pos) };
-            if let Present(v) = item {
+            if let Some(v) = item {
                 let i = self.pos;
                 self.pos += 1;
                 return Some((i, *v));
@@ -72,7 +72,6 @@ impl<'a, V: Copy> IntoIterator for &'a Map<V> {
     }
 }
 
-use crate::Item::Present;
 #[cfg(test)]
 use anyhow::Result;
 

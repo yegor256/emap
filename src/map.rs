@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::Item::{Absent, Present};
 use crate::{IntoIter, IntoValues, Iter, Map, Values};
 use std::marker::PhantomData;
 use std::ptr;
@@ -95,14 +94,14 @@ impl<V: Clone> Map<V> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn contains_key(&self, k: usize) -> bool {
-        matches!(unsafe { &*self.head.add(k) }, Present(_))
+        matches!(unsafe { &*self.head.add(k) }, Some(_))
     }
 
     /// Remove by key.
     #[inline]
     pub fn remove(&mut self, k: usize) {
         unsafe {
-            ptr::write(self.head.add(k), Absent);
+            ptr::write(self.head.add(k), None);
         }
     }
 
@@ -118,7 +117,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
         unsafe {
-            ptr::write(self.head.add(k), Present(v));
+            ptr::write(self.head.add(k), Some(v));
         }
         if self.max <= k {
             self.max = k + 1;
@@ -130,20 +129,14 @@ impl<V: Clone> Map<V> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn get(&self, k: usize) -> Option<&V> {
-        match unsafe { &*self.head.add(k) } {
-            Present(p) => Some(p),
-            Absent => None,
-        }
+        unsafe { &*self.head.add(k) }.as_ref()
     }
 
     /// Get a mutable reference to a single value.
     #[inline]
     #[must_use]
     pub fn get_mut(&mut self, k: usize) -> Option<&mut V> {
-        match unsafe { &mut *(self.head.add(k)) } {
-            Present(p) => Some(p),
-            Absent => None,
-        }
+        unsafe { &mut *(self.head.add(k)) }.as_mut()
     }
 
     /// Remove all items from it, but keep the space intact for future use.
@@ -159,7 +152,7 @@ impl<V: Clone> Map<V> {
             if let Some(p) = self.get_mut(i) {
                 if !f(&i, p) {
                     unsafe {
-                        ptr::write(self.head.add(i), Absent);
+                        ptr::write(self.head.add(i), None);
                     }
                 }
             }
