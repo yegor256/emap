@@ -123,17 +123,22 @@ use std::time::Instant;
 
 #[test]
 fn perf() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(256);
+    let cap = 256;
+    let mut m: Map<&str> = Map::with_capacity(cap);
     let start = Instant::now();
-    for _ in 0..10000000 {
-        for _ in 0..m.len() {
+    for _ in 0..100000 {
+        m.clear();
+        for _ in 0..cap {
             m.push("Hello, world!");
         }
-        for i in 0..m.len() {
+        for i in 0..cap {
             m.remove(&i);
         }
         for (k, _) in m.into_iter() {
             m.remove(&k);
+        }
+        for i in 0..cap {
+            assert!(!m.contains_key(&i));
         }
     }
     let d = start.elapsed();
