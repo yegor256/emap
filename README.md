@@ -48,11 +48,11 @@ The struct
 ## Benchmark
 
 There is a summary of a simple benchmark, where we compared `emap::Map` with
-a few other Rust maps, changing the total capacity of the map (horizontal axis).
+`Vec`, changing the total capacity `CAP` of them (horizontal axis).
 We applied the same interactions 
 ([`benchmark.rs`](https://github.com/yegor256/emap/blob/master/tests/benchmark.rs)) 
-to them and measured how fast they performed. In the following table, 
-the numbers over 1.0 indicate performance gain, 
+to them both and measured how fast they performed. In the following table, 
+the numbers over 1.0 indicate performance gain of `Map` against `Vec`, 
 while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
