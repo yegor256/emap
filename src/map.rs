@@ -159,7 +159,7 @@ impl<V: Clone> Map<V> {
             if let Some(p) = self.get_mut(&i) {
                 if !f(&i, p) {
                     unsafe {
-                        *(self.head.add(i)) = Absent;
+                        ptr::write(self.head.add(i), Absent);
                     }
                 }
             }
