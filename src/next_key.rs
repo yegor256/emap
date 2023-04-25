@@ -25,15 +25,13 @@ impl<V: Clone> Map<V> {
     #[inline]
     #[must_use]
     pub fn next_key(&self) -> usize {
-        unsafe {
-            for i in 0..self.max {
-                let item = &*self.head.add(i);
-                if !item.is_some() {
-                    return i;
-                }
+        for i in 0..self.max {
+            let item = self.get(&i);
+            if item.is_none() {
+                return i;
             }
-            self.max
         }
+        self.max
     }
 }
 

@@ -44,7 +44,6 @@ mod clone;
 mod ctors;
 mod debug;
 mod index;
-mod item;
 mod iterators;
 mod map;
 mod next_key;

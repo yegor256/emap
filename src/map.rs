@@ -158,11 +158,11 @@ impl<V: Clone> Map<V> {
     /// Retains only the elements specified by the predicate.
     #[inline]
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
-        unsafe {
-            for i in 0..self.max {
-                let item = &*(self.head.add(i));
-                if let Present(p) = item {
-                    if !f(&i, p) {
+        for i in 0..self.max {
+            let item = self.get_mut(&i);
+            if let Some(p) = item {
+                if !f(&i, p) {
+                    unsafe {
                         *(self.head.add(i)) = Absent;
                     }
                 }
