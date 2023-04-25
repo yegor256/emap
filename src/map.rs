@@ -118,7 +118,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
         unsafe {
-            *self.head.add(k) = Present(v);
+            ptr::write(self.head.add(k), Present(v));
         }
         if self.max <= k {
             self.max = k + 1;
