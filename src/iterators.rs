@@ -26,18 +26,16 @@ impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     #[inline]
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        unsafe {
-            while self.pos < self.max {
-                let item = &*self.head.add(self.pos);
-                if let Present(p) = item {
-                    let i = self.pos;
-                    self.pos += 1;
-                    return Some((i, p));
-                }
+        while self.pos < self.max {
+            let item = unsafe { &*self.head.add(self.pos) };
+            if let Present(p) = item {
+                let i = self.pos;
                 self.pos += 1;
+                return Some((i, p));
             }
-            None
+            self.pos += 1;
         }
+        None
     }
 }
 
@@ -47,18 +45,16 @@ impl<V: Copy> Iterator for IntoIter<V> {
     #[inline]
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        unsafe {
-            while self.pos < self.max {
-                let item = self.head.add(self.pos);
-                if let Present(v) = &*item {
-                    let i = self.pos;
-                    self.pos += 1;
-                    return Some((i, *v));
-                }
+        while self.pos < self.max {
+            let item = unsafe { &*self.head.add(self.pos) };
+            if let Present(v) = item {
+                let i = self.pos;
                 self.pos += 1;
+                return Some((i, *v));
             }
-            None
+            self.pos += 1;
         }
+        None
     }
 }
 
