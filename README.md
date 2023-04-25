@@ -56,14 +56,15 @@ the numbers over 1.0 indicate performance gain of `Map` against `Vec`,
 while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
-| | 4 | 16 |
-| --- | --: | --: |
-| `for _ in 0..CAP { X.push(&"Hello, world!"); }` |11.95 |6.30 |
-| `for _ in 0..CAP { X.push(&42); for s in X.into_values() { s > 0; }; }` |1.16 |1.27 |
+| | 4 | 16 | 256 |
+| --- | --: | --: | --: |
+| `for _ in 0..CAP { M.push(&"Hello, world!"); }` |12.39 |6.47 |5.13 |
+| `for _ in 0..CAP { M.push(&42); for s in M.into_values() { s > 0; }; }` |1.07 |0.86 |0.79 |
+| `for _ in 0..CAP { M.push(&42); } for i in CAP-1..0 { M.remove(&i); }` |12.65 |6.48 |5.10 |
 
 The experiment was performed on 25-04-2023.
  There were 10000 repetition cycles.
- The entire benchmark took 61s.
+ The entire benchmark took 63s.
 
 <!-- benchmark -->
 
