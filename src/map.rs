@@ -156,8 +156,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
         for i in 0..self.max {
-            let item = self.get_mut(&i);
-            if let Some(p) = item {
+            if let Some(p) = self.get_mut(&i) {
                 if !f(&i, p) {
                     unsafe {
                         *(self.head.add(i)) = Absent;
