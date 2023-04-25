@@ -79,7 +79,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &42);} i ∈ CAP-1..0 {M.remove(&i);}",
+        "i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}",
         ret,
         total,
         |v: &mut Vec<_>| {
@@ -100,7 +100,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, 42);} M.clear(); M.len();",
+        "i ∈ 0..CAP {M.insert(i, 42)}; M.clear(); M.len();",
         ret,
         total,
         |v: &mut Vec<_>| {
@@ -119,7 +119,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &\"Hello, world!\");}",
+        "i ∈ 0..CAP {M.insert(i, &\"Hello, world!\")}",
         ret,
         total,
         |v: &mut Vec<_>| {
