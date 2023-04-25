@@ -15,6 +15,18 @@ is a supplementary function `next_key()`, which returns the next available key i
 It is recommended to use it in order to ensure sequential order of the keys, which
 will guarantee _O(1)_ cost of `next()` in iterators.
 
+Also, there is an important restriction: you must not touch the keys that 
+haven't been inserted yet. Thus this code is ILLEGAL:
+
+```rust
+use emap::Map;
+let mut m : Map<&str> = Map::with_capacity(100); // allocation on heap
+m.insert(42, "foo");
+for (k, v) in m {
+  // ... undefined behavior here
+}
+```
+
 If `usize` keys are placed sequentially, the only true competitor of ours is 
 [`std::vec::Vec`](https://doc.rust-lang.org/std/vec/struct.Vec.html).
 We beat it too, see the [benchmarking results](#benchmark) below.

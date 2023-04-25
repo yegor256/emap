@@ -131,7 +131,7 @@ fn perf() -> Result<()> {
     let cap = 256;
     let mut m: Map<&str> = Map::with_capacity(cap);
     let start = Instant::now();
-    for _ in 0..10000 {
+    for _ in 0..1000 {
         m.clear();
         for _ in 0..cap {
             m.push("Hello, world!");

@@ -109,8 +109,9 @@ impl<V: Clone> Map<V> {
     /// Push to the rightmost position and return the key.
     #[inline]
     pub fn push(&mut self, v: V) -> usize {
-        self.insert(self.max, v);
-        self.max
+        let k = self.next_key();
+        self.insert(k, v);
+        k
     }
 
     /// Insert a single pair into the map.
@@ -288,5 +289,13 @@ fn clears_it_up() -> Result<()> {
     m.insert(7, "one");
     m.clear();
     assert_eq!(0, m.len());
+    Ok(())
+}
+
+#[test]
+fn pushes_into() -> Result<()> {
+    let mut m: Map<&str> = Map::with_capacity(16);
+    assert_eq!(0, m.push("one"));
+    assert_eq!(1, m.push("two"));
     Ok(())
 }

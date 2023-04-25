@@ -22,6 +22,10 @@ use crate::Map;
 
 impl<V: Clone> Map<V> {
     /// Get the next key available for insertion.
+    ///
+    /// # Panics
+    ///
+    /// If no more keys left
     #[inline]
     #[must_use]
     pub fn next_key(&self) -> usize {
@@ -31,6 +35,7 @@ impl<V: Clone> Map<V> {
                 return i;
             }
         }
+        assert_ne!(self.max, self.layout.size(), "No more keys available left");
         self.max
     }
 }
@@ -54,4 +59,22 @@ fn get_next_in_the_middle() -> Result<()> {
     m.insert(2, 42);
     assert_eq!(1, m.next_key());
     Ok(())
+}
+
+#[test]
+fn reset_next_key_on_clear() -> Result<()> {
+    let mut m: Map<u32> = Map::with_capacity(16);
+    m.insert(0, 42);
+    assert_eq!(1, m.next_key());
+    m.clear();
+    assert_eq!(0, m.next_key());
+    Ok(())
+}
+
+#[test]
+#[should_panic]
+fn panics_on_end_of_keys() {
+    let mut m: Map<u32> = Map::with_capacity(1);
+    m.insert(0, 42);
+    assert_ne!(1, m.next_key());
 }
