@@ -127,26 +127,22 @@ impl<V: Clone> Map<V> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn get(&self, k: &usize) -> Option<&V> {
-        unsafe {
-            let item = self.head.add(*k);
-            if let Present(p) = &*item {
-                return Some(p);
-            }
-            None
+        let item = unsafe { self.head.add(*k) };
+        if let Present(p) = unsafe { &*item } {
+            return Some(p);
         }
+        None
     }
 
     /// Get a mutable reference to a single value.
     #[inline]
     #[must_use]
     pub fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
-        unsafe {
-            let item = &mut *(self.head.add(*k));
-            if let Present(p) = item {
-                return Some(p);
-            }
-            None
+        let item = unsafe { &mut *(self.head.add(*k)) };
+        if let Present(p) = item {
+            return Some(p);
         }
+        None
     }
 
     /// Remove all items from it, but keep the space intact for future use.
