@@ -22,74 +22,78 @@
 // $ cargo test --test benchmark -- --nocapture
 
 use emap::Map;
-use std::collections::HashMap;
 use std::env;
 use std::time::{Duration, Instant};
 
+const CAP: usize = 10;
+
 macro_rules! measure {
-    ($title:expr, $ret:expr, $total:expr, $e:expr) => {{
+    ($total:expr, $e:expr) => {{
         let start = Instant::now();
-        let mut sum = 0;
         for _ in 0..$total {
-            sum += $e;
+            std::hint::black_box($e);
         }
-        std::hint::black_box(sum);
-        let e = start.elapsed();
-        $ret.insert($title, e);
+        start.elapsed()
     }};
 }
 
-fn benchmark(total: usize) -> HashMap<&'static str, Duration> {
-    let mut ret = HashMap::new();
-    measure!("std::Vec", ret, total, {
-        let mut sum = 0;
-        let mut v = Vec::with_capacity(total);
-        for i in 0..total {
-            v.push(&"hello!");
-            if !std::hint::black_box(v[i]).is_empty() {
-                sum += 1;
+macro_rules! compare {
+    ($title:expr, $ret:expr, $total:expr, $eV:expr, $eM:expr) => {{
+        $ret.push((
+            $title,
+            measure!($total, { $eV(&mut Vec::with_capacity(CAP)) }),
+            measure!($total, { $eM(&mut Map::with_capacity(CAP)) }),
+        ));
+    }};
+}
+
+fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
+    let mut ret = vec![];
+    compare!(
+        "for _ in 0..CAP { X.push(&42); for s in X.into_values() { s > 0; }; }",
+        ret,
+        total,
+        |v: &mut Vec<_>| {
+            for _ in 0..CAP {
+                v.push(&42);
+                for s in v.into_iter() {
+                    std::hint::black_box(*s > &0);
+                }
+            }
+        },
+        |v: &mut Map<_>| {
+            for _ in 0..CAP {
+                v.push(&42);
+                for s in v.into_values() {
+                    std::hint::black_box(*s > 0);
+                }
             }
         }
-        for v in v.into_iter() {
-            if !v.is_empty() {
-                sum += 1;
+    );
+    compare!(
+        "for _ in 0..CAP { X.push(&\"Hello, world!\"); }",
+        ret,
+        total,
+        |v: &mut Vec<_>| {
+            for _ in 0..CAP {
+                std::hint::black_box(v.push(&"Hello, world!"));
+            }
+        },
+        |v: &mut Map<_>| {
+            for _ in 0..CAP {
+                std::hint::black_box(v.push(&"Hello, world!"));
             }
         }
-        std::hint::black_box(sum)
-    });
-    measure!("emap::Map", ret, total, {
-        let mut sum = 0;
-        let mut v = Map::with_capacity(total);
-        for i in 0..total {
-            v.insert(i, &"hello!");
-            if !std::hint::black_box(v[i]).is_empty() {
-                sum += 1;
-            }
-        }
-        for v in v.into_values() {
-            if !v.is_empty() {
-                sum += 1;
-            }
-        }
-        std::hint::black_box(sum)
-    });
+    );
     ret
 }
 
 #[test]
 pub fn benchmark_and_print() {
     let times = benchmark(1000);
-    let ours = times.get("emap::Map").unwrap();
-    for (m, d) in &times {
-        println!(
-            "{m} -> {:?} ({:.2}x)",
-            d,
-            d.as_nanos() as f64 / ours.as_nanos() as f64
-        );
-        if d == ours {
-            continue;
-        }
-        assert!(d.cmp(ours).is_gt());
+    for (m, dv, dm) in times {
+        println!("{m} -> {:.2}x", dv.as_nanos() as f64 / dm.as_nanos() as f64);
+        assert!(dv.cmp(&dm).is_gt());
     }
 }
 
@@ -97,8 +101,8 @@ pub fn main() {
     let args: Vec<String> = env::args().collect();
     let times = benchmark(args.get(1).unwrap().parse::<usize>().unwrap());
     let mut lines = vec![];
-    for (m, d) in &times {
-        lines.push(format!("{m}\t{}", d.as_nanos()));
+    for (m, dv, dm) in times {
+        lines.push(format!("{m}\t{}\t{}", dv.as_nanos(), dm.as_nanos()));
     }
     lines.sort();
     for t in lines {

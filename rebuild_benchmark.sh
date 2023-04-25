@@ -8,59 +8,41 @@ cp tests/benchmark.rs src/bin/benchmark.rs
 
 sed -E -i 's/\[dev-dependencies\]//g' Cargo.toml
 
-emap="emap::Map"
-capacities="1 10 100"
+caps="4 16"
 cycles=10000
+first=$(echo ${caps} | cut -f1 -d' ')
 
 rm -rf target/benchmark
 mkdir -p target/benchmark
 SECONDS=0
-for capacity in ${capacities}; do
-  sed -E -i "s/CAPACITY: usize = [0-9]+/CAPACITY: usize = ${capacity}/g" src/bin/benchmark.rs
+for cap in ${caps}; do
+  sed -E -i "s/CAP: usize = [0-9]+/CAP: usize = ${cap}/g" src/bin/benchmark.rs
   cargo build --release
-  ./target/release/benchmark ${cycles} > target/benchmark/${capacity}.out
+  ./target/release/benchmark ${cycles} > target/benchmark/${cap}.out
 done
 lapsed=$SECONDS
 
 {
   echo -n '| |'
-  for capacity in ${capacities}; do
-    echo -n " ${capacity} |"
+  for cap in ${caps}; do
+    echo -n " ${cap} |"
   done
   echo ''
   echo -n '| --- |'
-  for capacity in ${capacities}; do
+  for cap in ${caps}; do
     echo -n " --: |"
   done
   echo ''
-  maps=$(cut -f 1 target/benchmark/1.out)
-  for map in ${maps}; do
-    echo -n "| \`${map}\`"
-      if [ "${map}" == "${emap}" ]; then
-        echo -n ' 👍'
-      fi
-    echo -n ' |'
-    for capacity in ${capacities}; do
-      our=$(grep "${emap}" "target/benchmark/${capacity}.out" | cut -f 2)
-      if [ "${our}" -eq "0" ]; then
-        our=1
-      fi
-      their=$(grep "${map}" "target/benchmark/${capacity}.out" | cut -f 2)
-      if [ "${their}" -eq "0" ]; then
-        their=1
-      fi
-      echo -n ' '
-      if [ "$(expr $their / $our / 1000 / 1000)" -gt 0 ]; then
-        perl -e "printf(\"%dM\", ${their} / ${our} / 1000 / 1000);"
-      elif [ "$(expr $their / $our / 1000)" -gt 0 ]; then
-        perl -e "printf(\"%dK\", ${their} / ${our} / 1000);"
-      else
-        perl -e "printf(\"%.02f\", ${their} / ${our});"
-      fi
+  while read script; do
+    echo -n "| \`${script}\` |"
+    for cap in ${caps}; do
+      dv=$(grep "${script}" "target/benchmark/${cap}.out" | cut -f 2)
+      dm=$(grep "${script}" "target/benchmark/${cap}.out" | cut -f 3)
+      perl -e "printf(\"%.02f\", ${dv} / ${dm});"
       echo -n ' |'
     done
     echo ''
-  done
+  done < <(cut -f 1 target/benchmark/${first}.out)
   echo ''
   echo "The experiment was performed on $(date +%d-%m-%Y)."
   echo " There were ${cycles} repetition cycles."
@@ -88,3 +70,4 @@ perl -e '
 
 git restore Cargo.toml
 rm -rf src/bin
+cat target/benchmark/table.md

@@ -2,7 +2,10 @@
 name: up
 on:
   push:
+    branches:
+      - master
     tags:
+      - '*'
 jobs:
   up:
     runs-on: ubuntu-20.04
@@ -10,7 +13,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: |-
           git pull --tags && \
-          latest=$(git tag | tail -1) && \
+          latest=$(git tag --sort=creatordate | tail -1) && \
           sed -E -i "s/emap = \"[^\"]+\"/emap = \"${latest}\"/g" README.md
       - uses: peter-evans/create-pull-request@v5
         with:
