@@ -130,11 +130,11 @@ impl<V: Clone> Map<V> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn get(&self, k: &usize) -> Option<&V> {
-        let item = unsafe { self.head.add(*k) };
-        if let Present(p) = unsafe { &*item } {
-            return Some(p);
+        let item = unsafe { &*self.head.add(*k) };
+        match item {
+            Present(p) => Some(p),
+            Absent => None,
         }
-        None
     }
 
     /// Get a mutable reference to a single value.
