@@ -121,12 +121,17 @@ use anyhow::Result;
 #[cfg(test)]
 use std::time::Instant;
 
+/// Run it like this from command line:
+///
+/// ```text
+/// $ cargo test --release -- perf
+/// ```
 #[test]
 fn perf() -> Result<()> {
     let cap = 256;
     let mut m: Map<&str> = Map::with_capacity(cap);
     let start = Instant::now();
-    for _ in 0..100000 {
+    for _ in 0..10000 {
         m.clear();
         for _ in 0..cap {
             m.push("Hello, world!");
