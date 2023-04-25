@@ -66,3 +66,14 @@ fn drops_correctly() -> Result<()> {
     assert_eq!(0, m.len());
     Ok(())
 }
+
+#[test]
+#[ignore]
+fn drops_values() {
+    use std::rc::Rc;
+    let mut m: Map<Rc<()>> = Map::with_capacity(1);
+    let v = Rc::new(());
+    m.insert(0, Rc::clone(&v));
+    drop(m);
+    assert_eq!(Rc::strong_count(&v), 1);
+}
