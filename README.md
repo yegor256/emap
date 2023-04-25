@@ -70,13 +70,14 @@ while the numbers below 1.0 demonstrate performance loss.
 <!-- benchmark -->
 | | 4 | 16 | 256 |
 | --- | --: | --: | --: |
-| `i ∈ 0..CAP {M.insert(i, &"Hello, world!");}` |43.62 |22.79 |714.55 |
-| `i ∈ 0..CAP {M.insert(i, &42);} i ∈ CAP-1..0 {M.remove(&i);}` |42.44 |22.74 |1443.19 |
-| `i ∈ 0..CAP {M.insert(i, 42);} M.clear(); M.len();` |47.93 |47.00 |1317.37 |
+| `i ∈ 0..CAP {M.insert(i, &"Hello, world!");}` |1.17 |1.91 |2.11 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}` |1.18 |0.55 |0.34 |
+| `i ∈ 0..CAP {M.insert(i, &42);} i ∈ CAP-1..0 {M.remove(&i);}` |1.16 |1.92 |2.21 |
+| `i ∈ 0..CAP {M.insert(i, 42);} M.clear(); M.len();` |1.32 |1.86 |6.50 |
 
 The experiment was performed on 25-04-2023.
  There were 10000 repetition cycles.
- The entire benchmark took 91s.
+ The entire benchmark took 73s.
 
 <!-- benchmark -->
 
