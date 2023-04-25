@@ -8,7 +8,7 @@ cp tests/benchmark.rs src/bin/benchmark.rs
 
 sed -E -i 's/\[dev-dependencies\]//g' Cargo.toml
 
-caps="4 16 256"
+caps="4 16 256 1024"
 cycles=10000
 first=$(echo ${caps} | cut -f1 -d' ')
 
