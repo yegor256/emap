@@ -30,8 +30,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn next_key(&self) -> usize {
         for i in 0..self.max {
-            let item = self.get(&i);
-            if item.is_none() {
+            if self.get(&i).is_none() {
                 return i;
             }
         }
