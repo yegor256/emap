@@ -174,9 +174,9 @@ dependencies = [
 
 [[package]]
 name = "micromap"
-version = "0.0.7"
+version = "0.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c720a38144ff8756b15e9e71eb6d31a0b7613f11f44ac10f44ba2f3d21756fd"
+checksum = "5034b3e6e0c6cfb2c5075cccb5dadf09febe573718f67d362df8a953e944c2d2"
 
 [[package]]
 name = "nohash-hasher"
