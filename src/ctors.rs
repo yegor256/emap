@@ -59,3 +59,10 @@ fn makes_new_map() -> Result<()> {
     assert_eq!(0, m.len());
     Ok(())
 }
+
+#[test]
+fn drops_correctly() -> Result<()> {
+    let m: Map<Vec<u8>> = Map::with_capacity(16);
+    assert_eq!(0, m.len());
+    Ok(())
+}
