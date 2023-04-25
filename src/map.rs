@@ -130,8 +130,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn get(&self, k: &usize) -> Option<&V> {
-        let item = unsafe { &*self.head.add(*k) };
-        match item {
+        match unsafe { &*self.head.add(*k) } {
             Present(p) => Some(p),
             Absent => None,
         }
@@ -141,11 +140,10 @@ impl<V: Clone> Map<V> {
     #[inline]
     #[must_use]
     pub fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
-        let item = unsafe { &mut *(self.head.add(*k)) };
-        if let Present(p) = item {
-            return Some(p);
+        match unsafe { &mut *(self.head.add(*k)) } {
+            Present(p) => Some(p),
+            Absent => None,
         }
-        None
     }
 
     /// Remove all items from it, but keep the space intact for future use.
