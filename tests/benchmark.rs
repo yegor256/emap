@@ -76,7 +76,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         total,
         |v: &mut Vec<_>| {
             for _ in 0..CAP {
-                v.push(&42);
+                std::hint::black_box(v.push(&42));
             }
             for i in CAP - 1..0 {
                 std::hint::black_box(v.remove(i));
@@ -84,7 +84,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         },
         |v: &mut Map<_>| {
             for _ in 0..CAP {
-                v.push(&42);
+                std::hint::black_box(v.push(&42));
             }
             for i in CAP - 1..0 {
                 std::hint::black_box(v.remove(&i));
