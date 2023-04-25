@@ -34,7 +34,6 @@ impl<V: Clone> Clone for Map<V> {
 use anyhow::Result;
 
 #[test]
-#[ignore]
 fn map_can_be_cloned() -> Result<()> {
     let mut m: Map<u8> = Map::with_capacity(16);
     m.insert(0, 42);
