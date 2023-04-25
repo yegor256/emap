@@ -27,17 +27,14 @@ impl<'a, V: Clone + 'a> Iterator for Values<'a, V> {
     #[inline]
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        unsafe {
-            while self.pos < self.max {
-                let item = &*self.head.add(self.pos);
-                if let Present(p) = item {
-                    self.pos += 1;
-                    return Some(p);
-                }
+        while self.pos < self.max {
+            if let Present(p) = unsafe { &*self.head.add(self.pos) } {
                 self.pos += 1;
+                return Some(p);
             }
-            None
+            self.pos += 1;
         }
+        None
     }
 }
 
@@ -47,17 +44,14 @@ impl<V: Copy> Iterator for IntoValues<V> {
     #[inline]
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        unsafe {
-            while self.pos < self.max {
-                let item = self.head.add(self.pos);
-                if let Present(v) = &*item {
-                    self.pos += 1;
-                    return Some(*v);
-                }
+        while self.pos < self.max {
+            if let Present(v) = unsafe { &*self.head.add(self.pos) } {
                 self.pos += 1;
+                return Some(*v);
             }
-            None
+            self.pos += 1;
         }
+        None
     }
 }
 
