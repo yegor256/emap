@@ -30,7 +30,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn next_key(&self) -> usize {
         for i in 0..self.max {
-            if self.get(&i).is_none() {
+            if self.get(i).is_none() {
                 return i;
             }
         }
@@ -54,7 +54,7 @@ fn get_next_in_the_middle() -> Result<()> {
     let mut m: Map<u32> = Map::with_capacity(16);
     m.insert(0, 42);
     m.insert(1, 42);
-    m.remove(&1);
+    m.remove(1);
     m.insert(2, 42);
     assert_eq!(1, m.next_key());
     Ok(())

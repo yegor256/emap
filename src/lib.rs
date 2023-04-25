@@ -137,13 +137,13 @@ fn perf() -> Result<()> {
             m.push("Hello, world!");
         }
         for i in 0..cap {
-            m.remove(&i);
+            m.remove(i);
         }
         for (k, _) in m.into_iter() {
-            m.remove(&k);
+            m.remove(k);
         }
         for i in 0..cap {
-            assert!(!m.contains_key(&i));
+            assert!(!m.contains_key(i));
         }
     }
     let d = start.elapsed();

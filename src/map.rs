@@ -83,7 +83,7 @@ impl<V: Clone> Map<V> {
     pub fn len(&self) -> usize {
         let mut busy = 0;
         for i in 0..self.max {
-            if self.get(&i).is_some() {
+            if self.get(i).is_some() {
                 busy += 1;
             }
         }
@@ -94,15 +94,15 @@ impl<V: Clone> Map<V> {
     #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
-    pub fn contains_key(&self, k: &usize) -> bool {
-        matches!(unsafe { &*self.head.add(*k) }, Present(_))
+    pub fn contains_key(&self, k: usize) -> bool {
+        matches!(unsafe { &*self.head.add(k) }, Present(_))
     }
 
     /// Remove by key.
     #[inline]
-    pub fn remove(&mut self, k: &usize) {
+    pub fn remove(&mut self, k: usize) {
         unsafe {
-            ptr::write(self.head.add(*k), Absent);
+            ptr::write(self.head.add(k), Absent);
         }
     }
 
@@ -129,8 +129,8 @@ impl<V: Clone> Map<V> {
     #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
-    pub fn get(&self, k: &usize) -> Option<&V> {
-        match unsafe { &*self.head.add(*k) } {
+    pub fn get(&self, k: usize) -> Option<&V> {
+        match unsafe { &*self.head.add(k) } {
             Present(p) => Some(p),
             Absent => None,
         }
@@ -139,8 +139,8 @@ impl<V: Clone> Map<V> {
     /// Get a mutable reference to a single value.
     #[inline]
     #[must_use]
-    pub fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
-        match unsafe { &mut *(self.head.add(*k)) } {
+    pub fn get_mut(&mut self, k: usize) -> Option<&mut V> {
+        match unsafe { &mut *(self.head.add(k)) } {
             Present(p) => Some(p),
             Absent => None,
         }
@@ -156,7 +156,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
         for i in 0..self.max {
-            if let Some(p) = self.get_mut(&i) {
+            if let Some(p) = self.get_mut(i) {
                 if !f(&i, p) {
                     unsafe {
                         ptr::write(self.head.add(i), Absent);
@@ -203,7 +203,7 @@ fn insert_and_gets() -> Result<()> {
     let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "zero");
     m.insert(1, "one");
-    assert_eq!("one", *m.get(&1).unwrap());
+    assert_eq!("one", *m.get(1).unwrap());
     Ok(())
 }
 
@@ -211,9 +211,9 @@ fn insert_and_gets() -> Result<()> {
 fn insert_and_gets_mut() -> Result<()> {
     let mut m: Map<[i32; 3]> = Map::with_capacity(16);
     m.insert(0, [1, 2, 3]);
-    let a = m.get_mut(&0).unwrap();
+    let a = m.get_mut(0).unwrap();
     a[0] = 500;
-    assert_eq!(500, m.get(&0).unwrap()[0]);
+    assert_eq!(500, m.get(0).unwrap()[0]);
     Ok(())
 }
 
@@ -221,10 +221,10 @@ fn insert_and_gets_mut() -> Result<()> {
 fn checks_key() -> Result<()> {
     let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
-    assert!(m.contains_key(&0));
+    assert!(m.contains_key(0));
     m.insert(8, "");
-    m.remove(&8);
-    assert!(!m.contains_key(&8));
+    m.remove(8);
+    assert!(!m.contains_key(8));
     Ok(())
 }
 
@@ -233,8 +233,8 @@ fn gets_missing_key() -> Result<()> {
     let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.insert(1, "one");
-    m.remove(&1);
-    assert!(m.get(&1).is_none());
+    m.remove(1);
+    assert!(m.get(1).is_none());
     Ok(())
 }
 
@@ -243,8 +243,8 @@ fn mut_gets_missing_key() -> Result<()> {
     let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
     m.insert(1, "one");
-    m.remove(&1);
-    assert!(m.get_mut(&1).is_none());
+    m.remove(1);
+    assert!(m.get_mut(1).is_none());
     Ok(())
 }
 
@@ -252,9 +252,9 @@ fn mut_gets_missing_key() -> Result<()> {
 fn removes_simple_pair() -> Result<()> {
     let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(0, "one");
-    m.remove(&0);
-    m.remove(&1);
-    assert!(m.get(&0).is_none());
+    m.remove(0);
+    m.remove(1);
+    assert!(m.get(0).is_none());
     Ok(())
 }
 

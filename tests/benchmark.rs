@@ -87,7 +87,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
                 std::hint::black_box(v.insert(i, &42));
             }
             for i in CAP - 1..0 {
-                std::hint::black_box(v.remove(&i));
+                std::hint::black_box(v.remove(i));
             }
         }
     );

@@ -26,14 +26,14 @@ impl<V: Clone> Index<usize> for Map<V> {
 
     #[inline]
     fn index(&self, key: usize) -> &V {
-        self.get(&key).expect("No entry found for key")
+        self.get(key).expect("No entry found for key")
     }
 }
 
 impl<V: Clone> IndexMut<usize> for Map<V> {
     #[inline]
     fn index_mut(&mut self, key: usize) -> &mut V {
-        self.get_mut(&key).expect("No entry found for key")
+        self.get_mut(key).expect("No entry found for key")
     }
 }
 
@@ -66,7 +66,7 @@ fn wrong_index() -> () {
     let mut m: Map<&str> = Map::with_capacity(16);
     m.insert(2, "first");
     m.insert(8, "second");
-    m.remove(&8);
+    m.remove(8);
     m[8];
 }
 
