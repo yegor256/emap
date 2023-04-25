@@ -50,7 +50,7 @@ macro_rules! compare {
 fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
     let mut ret = vec![];
     compare!(
-        "for _ in 0..CAP { X.push(&42); for s in X.into_values() { s > 0; }; }",
+        "for _ in 0..CAP { M.push(&42); for s in M.into_values() { s > 0; }; }",
         ret,
         total,
         |v: &mut Vec<_>| {
@@ -71,7 +71,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "for _ in 0..CAP { X.push(&42); } for i in CAP-1..0 { X.remove(&i); }",
+        "for _ in 0..CAP { M.push(&42); } for i in CAP-1..0 { M.remove(&i); }",
         ret,
         total,
         |v: &mut Vec<_>| {
@@ -92,7 +92,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "for _ in 0..CAP { X.push(&\"Hello, world!\"); }",
+        "for _ in 0..CAP { M.push(&\"Hello, world!\"); }",
         ret,
         total,
         |v: &mut Vec<_>| {
