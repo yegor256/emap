@@ -104,6 +104,31 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
+        "i ∈ 0..CAP {M.insert(i, &\"大家好\"); s ∈ M.values() {sum += s.len()}}",
+        ret,
+        total,
+        |v: &mut Vec<_>| {
+            let mut sum = 0;
+            for _ in 0..CAP {
+                v.push(&"大家好");
+                for s in v.iter() {
+                    sum += s.len();
+                }
+            }
+            sum
+        },
+        |v: &mut Map<_>| {
+            let mut sum = 0;
+            for i in 0..CAP {
+                v.insert(i, &"大家好");
+                for s in v.values() {
+                    sum += s.len();
+                }
+            }
+            sum
+        }
+    );
+    compare!(
         "i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}",
         ret,
         total,
@@ -150,7 +175,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, 42)}; M.clear(); M.len();",
+        "i ∈ 0..CAP {M.insert(i, &42)}; M.clear(); M.len();",
         ret,
         total,
         |v: &mut Vec<_>| {
