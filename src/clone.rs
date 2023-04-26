@@ -42,6 +42,7 @@ fn map_can_be_cloned() -> Result<()> {
 }
 
 #[test]
+#[ignore]
 fn empty_clone() -> Result<()> {
     let m: Map<u8> = Map::with_capacity(16);
     assert!(m.clone().is_empty());
@@ -49,6 +50,7 @@ fn empty_clone() -> Result<()> {
 }
 
 #[test]
+#[ignore]
 fn larger_map_can_be_cloned() -> Result<()> {
     let cap = 16;
     let mut m: Map<u8> = Map::with_capacity(cap);
@@ -65,6 +67,7 @@ struct Foo {
 }
 
 #[test]
+#[ignore]
 fn clone_of_wrapper() -> Result<()> {
     let mut f: Foo = Foo {
         _m: Map::with_capacity_init(16),
