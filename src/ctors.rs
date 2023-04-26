@@ -62,7 +62,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn with_capacity_init(cap: usize) -> Self {
         let mut m = Self::with_capacity(cap);
-        for k in 0..cap {
+        for k in 0..cap - 1 {
             m.remove(k);
         }
         m
