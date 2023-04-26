@@ -58,15 +58,15 @@ while the numbers below 1.0 demonstrate performance loss.
 <!-- benchmark -->
 | | 4 | 16 | 256 | 1024 |
 | --- | --: | --: | --: | --: |
-| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |1.29 |5.81 |2.51 |2.48 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}` |0.95 |0.35 |0.34 |0.35 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |1.12 |0.55 |0.48 |0.52 |
-| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |1.20 |1.93 |2.53 |2.48 |
-| `i ∈ 0..CAP {M.insert(i, 42)}; M.clear(); M.len();` |1.12 |1.84 |6.99 |8.81 |
+| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |1.79 |1.92 |2.23 |2.43 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}` |1.10 |0.54 |0.34 |0.35 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |1.11 |0.54 |0.47 |0.52 |
+| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |1.27 |1.93 |2.33 |2.43 |
+| `i ∈ 0..CAP {M.insert(i, 42)}; M.clear(); M.len();` |1.14 |1.86 |6.31 |8.61 |
 
-The experiment was performed on 25-04-2023.
+The experiment was performed on 26-04-2023.
  There were 10000 repetition cycles.
- The entire benchmark took 99s.
+ The entire benchmark took 84s.
 
 <!-- benchmark -->
 
