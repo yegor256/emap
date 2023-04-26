@@ -172,7 +172,6 @@ impl<V: Clone> Map<V> {
     /// undefined behavior.
     #[inline]
     #[must_use]
-    #[allow(clippy::missing_const_for_fn)]
     pub fn get(&self, k: usize) -> Option<&V> {
         #[cfg(debug_assertions)]
         assert!(k < self.capacity(), "Over the boundary");
