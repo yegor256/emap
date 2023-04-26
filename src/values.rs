@@ -28,11 +28,10 @@ impl<'a, V: Clone + 'a> Iterator for Values<'a, V> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let opt = unsafe { &*self.head.add(self.pos) };
+            self.pos += 1;
             if opt.is_some() {
-                self.pos += 1;
                 return opt.as_ref();
             }
-            self.pos += 1;
         }
         None
     }
@@ -46,11 +45,10 @@ impl<V: Copy> Iterator for IntoValues<V> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let opt = unsafe { &*self.head.add(self.pos) };
+            self.pos += 1;
             if opt.is_some() {
-                self.pos += 1;
                 return *opt;
             }
-            self.pos += 1;
         }
         None
     }
@@ -76,5 +74,15 @@ fn insert_and_jump_over_next() -> Result<()> {
     let mut values = m.into_values();
     assert_eq!("foo", values.next().unwrap());
     assert!(values.next().is_none());
+    Ok(())
+}
+
+#[test]
+fn count_them_all() -> Result<()> {
+    let mut m: Map<&str> = Map::with_capacity(16);
+    m.insert(0, "one");
+    m.insert(1, "two");
+    m.insert(2, "three");
+    assert_eq!(3, m.into_values().count());
     Ok(())
 }
