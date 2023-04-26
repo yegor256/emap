@@ -22,7 +22,7 @@ use crate::Map;
 
 impl<V: Clone> Clone for Map<V> {
     fn clone(&self) -> Self {
-        let mut m = Self::with_capacity_init(self.layout.size());
+        let mut m = Self::with_capacity(self.layout.size());
         for (k, v) in self.iter() {
             m.insert(k, v.clone());
         }
