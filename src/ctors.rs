@@ -19,14 +19,14 @@
 // SOFTWARE.
 
 use crate::Map;
-use std::alloc::{alloc, dealloc, Layout};
+use std::alloc::{alloc, Layout};
 use std::mem;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
-        unsafe {
-            dealloc(self.head.cast(), self.layout);
-        }
+        // unsafe {
+        //     dealloc(self.head.cast(), self.layout);
+        // }
     }
 }
 
