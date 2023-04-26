@@ -74,7 +74,7 @@ dependencies = [
 
 [[package]]
 name = "emap"
-version = "0.0.0"
+version = "0.0.7"
 dependencies = [
  "anyhow",
  "bincode",
