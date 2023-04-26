@@ -48,14 +48,14 @@ use crate::Map;
 
 #[test]
 fn empty_keys() -> Result<()> {
-    let m: Map<u32> = Map::with_capacity(16);
+    let m: Map<u32> = Map::with_capacity_init(16);
     assert!(m.keys().next().is_none());
     Ok(())
 }
 
 #[test]
 fn insert_and_jump_over_next_key() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "foo");
     let mut keys = m.keys();
     assert_eq!(0, keys.next().unwrap());

@@ -77,14 +77,14 @@ use anyhow::Result;
 
 #[test]
 fn empty_iterator() -> Result<()> {
-    let m: Map<u32> = Map::with_capacity(16);
+    let m: Map<u32> = Map::with_capacity_init(16);
     assert!(m.into_iter().next().is_none());
     Ok(())
 }
 
 #[test]
 fn insert_and_jump_over_next() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "foo");
     let mut iter = m.into_iter();
     assert_eq!("foo", iter.next().unwrap().1);
@@ -94,7 +94,7 @@ fn insert_and_jump_over_next() -> Result<()> {
 
 #[test]
 fn insert_and_iterate() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "two");
     m.insert(2, "three");
@@ -111,7 +111,7 @@ fn insert_and_iterate() -> Result<()> {
 
 #[test]
 fn insert_and_into_iterate() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "two");
     m.insert(2, "three");

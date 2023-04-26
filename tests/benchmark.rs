@@ -45,7 +45,7 @@ macro_rules! compare {
                 $eV(std::hint::black_box(&mut Vec::with_capacity(CAP)))
             }),
             measure!($total, {
-                $eM(std::hint::black_box(&mut Map::with_capacity(CAP)))
+                $eM(std::hint::black_box(&mut Map::with_capacity_init(CAP)))
             }),
         ));
     }};

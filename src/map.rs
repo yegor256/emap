@@ -24,9 +24,15 @@ use std::ptr;
 
 impl<V: Clone> Map<V> {
     /// Make an iterator over all items.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
     pub const fn iter(&self) -> Iter<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't iter() non-initialized Map");
         Iter {
             max: self.max,
             pos: 0,
@@ -36,9 +42,15 @@ impl<V: Clone> Map<V> {
     }
 
     /// Make an iterator over all items.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
     pub const fn into_iter(&self) -> IntoIter<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't into_iter() non-initialized Map");
         IntoIter {
             max: self.max,
             pos: 0,
@@ -47,9 +59,15 @@ impl<V: Clone> Map<V> {
     }
 
     /// Make an iterator over all values.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
     pub const fn values(&self) -> Values<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't values() non-initialized Map");
         Values {
             max: self.max,
             pos: 0,
@@ -59,9 +77,15 @@ impl<V: Clone> Map<V> {
     }
 
     /// Make an into-iterator over all items.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
     pub const fn into_values(&self) -> IntoValues<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't into_values() non-initialized Map");
         IntoValues {
             max: self.max,
             pos: 0,
@@ -70,9 +94,15 @@ impl<V: Clone> Map<V> {
     }
 
     /// Make an iterator over all keys.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
     pub const fn keys(&self) -> Keys<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't keys() non-initialized Map");
         Keys {
             max: self.max,
             pos: 0,
@@ -88,9 +118,15 @@ impl<V: Clone> Map<V> {
     }
 
     /// Return the total number of items inside.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
     pub fn len(&self) -> usize {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't do len() on non-initialized Map");
         let mut busy = 0;
         for i in 0..self.max {
             if self.get(i).is_some() {
@@ -201,8 +237,14 @@ impl<V: Clone> Map<V> {
     }
 
     /// Retains only the elements specified by the predicate.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't do retain() on non-initialized Map");
         for i in 0..self.max {
             if let Some(p) = self.get_mut(i) {
                 if !f(&i, p) {
@@ -220,7 +262,7 @@ use anyhow::Result;
 
 #[test]
 fn insert_and_check_length() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "zero");
     assert_eq!(1, m.len());
     m.insert(1, "first");
@@ -232,14 +274,14 @@ fn insert_and_check_length() -> Result<()> {
 
 #[test]
 fn empty_length() -> Result<()> {
-    let m: Map<u32> = Map::with_capacity(16);
+    let m: Map<u32> = Map::with_capacity_init(16);
     assert_eq!(0, m.len());
     Ok(())
 }
 
 #[test]
 fn is_empty_check() -> Result<()> {
-    let mut m: Map<u32> = Map::with_capacity(16);
+    let mut m: Map<u32> = Map::with_capacity_init(16);
     assert!(m.is_empty());
     m.insert(0, 42);
     assert!(!m.is_empty());
@@ -248,7 +290,7 @@ fn is_empty_check() -> Result<()> {
 
 #[test]
 fn insert_and_gets() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "zero");
     m.insert(1, "one");
     assert_eq!("one", *m.get(1).unwrap());
@@ -257,7 +299,7 @@ fn insert_and_gets() -> Result<()> {
 
 #[test]
 fn insert_and_gets_mut() -> Result<()> {
-    let mut m: Map<[i32; 3]> = Map::with_capacity(16);
+    let mut m: Map<[i32; 3]> = Map::with_capacity_init(16);
     m.insert(0, [1, 2, 3]);
     let a = m.get_mut(0).unwrap();
     a[0] = 500;
@@ -267,7 +309,7 @@ fn insert_and_gets_mut() -> Result<()> {
 
 #[test]
 fn checks_key() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     assert!(m.contains_key(0));
     m.insert(8, "");
@@ -278,7 +320,7 @@ fn checks_key() -> Result<()> {
 
 #[test]
 fn gets_missing_key() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "one");
     m.remove(1);
@@ -288,7 +330,7 @@ fn gets_missing_key() -> Result<()> {
 
 #[test]
 fn mut_gets_missing_key() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "one");
     m.remove(1);
@@ -298,7 +340,7 @@ fn mut_gets_missing_key() -> Result<()> {
 
 #[test]
 fn removes_simple_pair() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.remove(0);
     m.remove(1);
@@ -314,7 +356,7 @@ struct Foo {
 
 #[test]
 fn insert_struct() -> Result<()> {
-    let mut m: Map<Foo> = Map::with_capacity(16);
+    let mut m: Map<Foo> = Map::with_capacity_init(16);
     let foo = Foo { v: [1, 2, 100] };
     m.insert(0, foo);
     assert_eq!(100, m.into_iter().next().unwrap().1.v[2]);
@@ -323,14 +365,14 @@ fn insert_struct() -> Result<()> {
 
 #[test]
 fn large_map_in_heap() -> Result<()> {
-    let m: Box<Map<[u64; 10]>> = Box::new(Map::with_capacity(16));
+    let m: Box<Map<[u64; 10]>> = Box::new(Map::with_capacity_init(16));
     assert_eq!(0, m.len());
     Ok(())
 }
 
 #[test]
 fn clears_it_up() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(7, "one");
     m.clear();
     assert_eq!(0, m.len());
@@ -339,7 +381,7 @@ fn clears_it_up() -> Result<()> {
 
 #[test]
 fn pushes_into() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     assert_eq!(0, m.push("one"));
     assert_eq!(1, m.push("two"));
     Ok(())

@@ -41,6 +41,11 @@ impl<V: Clone> Map<V> {
     #[inline]
     #[must_use]
     pub fn next_key_gte(&self, k: usize) -> usize {
+        #[cfg(debug_assertions)]
+        assert!(
+            self.initialized,
+            "Can't do next_key_gte() on non-initialized Map"
+        );
         for i in k..self.max {
             if self.get(i).is_none() {
                 return i;
@@ -56,14 +61,14 @@ use anyhow::Result;
 
 #[test]
 fn get_next_key_empty_map() -> Result<()> {
-    let m: Map<&str> = Map::with_capacity(16);
+    let m: Map<&str> = Map::with_capacity_init(16);
     assert_eq!(0, m.next_key());
     Ok(())
 }
 
 #[test]
 fn get_next_in_the_middle() -> Result<()> {
-    let mut m: Map<u32> = Map::with_capacity(16);
+    let mut m: Map<u32> = Map::with_capacity_init(16);
     m.insert(0, 42);
     m.insert(1, 42);
     m.remove(1);
@@ -74,7 +79,7 @@ fn get_next_in_the_middle() -> Result<()> {
 
 #[test]
 fn reset_next_key_on_clear() -> Result<()> {
-    let mut m: Map<u32> = Map::with_capacity(16);
+    let mut m: Map<u32> = Map::with_capacity_init(16);
     m.insert(0, 42);
     assert_eq!(1, m.next_key());
     m.clear();
@@ -85,7 +90,7 @@ fn reset_next_key_on_clear() -> Result<()> {
 #[test]
 #[should_panic]
 fn panics_on_end_of_keys() {
-    let mut m: Map<u32> = Map::with_capacity(1);
+    let mut m: Map<u32> = Map::with_capacity_init(1);
     m.insert(0, 42);
     assert_ne!(1, m.next_key());
 }

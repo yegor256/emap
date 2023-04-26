@@ -30,6 +30,8 @@ impl<V: Clone + Display> Display for Map<V> {
 
 impl<V: Clone + Display> Debug for Map<V> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't debug() non-initialized Map");
         let mut parts = vec![];
         for (k, v) in self.iter() {
             parts.push(format!("{k}: {v}"));
@@ -43,7 +45,7 @@ use anyhow::Result;
 
 #[test]
 fn debugs_map() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "two");
     assert_eq!("{0: one, 1: two}", format!("{:?}", m));
@@ -52,7 +54,7 @@ fn debugs_map() -> Result<()> {
 
 #[test]
 fn displays_map() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "two");
     assert_eq!("{0: one, 1: two}", format!("{}", m));

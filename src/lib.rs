@@ -24,7 +24,7 @@
 //!
 //! ```
 //! use emap::Map;
-//! let mut m : Map<&str> = Map::with_capacity(10);
+//! let mut m : Map<&str> = Map::with_capacity_init(10);
 //! m.insert(0, "Hello, world!");
 //! m.insert(1, "Good bye!");
 //! assert_eq!(2, m.len());
@@ -60,6 +60,8 @@ pub struct Map<V> {
     max: usize,
     head: *mut Option<V>,
     layout: Layout,
+    #[cfg(debug_assertions)]
+    initialized: bool,
 }
 
 /// Iterator over the [`Map`].
@@ -129,7 +131,7 @@ use std::time::Instant;
 #[test]
 fn perf() -> Result<()> {
     let cap = 256;
-    let mut m: Map<&str> = Map::with_capacity(cap);
+    let mut m: Map<&str> = Map::with_capacity_init(cap);
     let start = Instant::now();
     for _ in 0..1000 {
         m.clear();

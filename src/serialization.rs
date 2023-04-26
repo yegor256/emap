@@ -30,6 +30,8 @@ impl<V: Clone + Serialize> Serialize for Map<V> {
     where
         S: Serializer,
     {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't serialize() non-initialized Map");
         let mut map = serializer.serialize_map(Some(self.len()))?;
         for (a, v) in self.iter() {
             map.serialize_entry(&a, &v)?;
@@ -51,7 +53,7 @@ impl<'de, V: Clone + Deserialize<'de>> Visitor<'de> for Vi<V> {
     where
         M: MapAccess<'de>,
     {
-        let mut m: Self::Value = Map::with_capacity(16);
+        let mut m: Self::Value = Map::with_capacity_init(16);
         while let Some((key, value)) = access.next_entry()? {
             m.insert(key, value);
         }
@@ -76,7 +78,7 @@ use bincode::{deserialize, serialize};
 
 #[test]
 fn serialize_and_deserialize() -> Result<()> {
-    let mut before: Map<u8> = Map::with_capacity(16);
+    let mut before: Map<u8> = Map::with_capacity_init(16);
     before.insert(0, 42);
     let bytes: Vec<u8> = serialize(&before)?;
     let after: Map<u8> = deserialize(&bytes)?;

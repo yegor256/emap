@@ -46,6 +46,8 @@ impl<V: Clone> Map<V> {
                 max: 0,
                 layout,
                 head: ptr.cast(),
+                #[cfg(debug_assertions)]
+                initialized: false,
             }
         }
     }
@@ -65,6 +67,10 @@ impl<V: Clone> Map<V> {
         for k in 0..cap {
             m.remove(k);
         }
+        #[cfg(debug_assertions)]
+        {
+            m.initialized = true;
+        }
         m
     }
 
@@ -81,14 +87,14 @@ use anyhow::Result;
 
 #[test]
 fn makes_new_map() -> Result<()> {
-    let m: Map<&str> = Map::with_capacity(16);
+    let m: Map<&str> = Map::with_capacity_init(16);
     assert_eq!(0, m.len());
     Ok(())
 }
 
 #[test]
 fn returns_capacity() -> Result<()> {
-    let m: Map<&str> = Map::with_capacity(16);
+    let m: Map<&str> = Map::with_capacity_init(16);
     assert_eq!(16, m.capacity());
     Ok(())
 }
@@ -102,7 +108,7 @@ fn with_init() -> Result<()> {
 
 #[test]
 fn drops_correctly() -> Result<()> {
-    let m: Map<Vec<u8>> = Map::with_capacity(16);
+    let m: Map<Vec<u8>> = Map::with_capacity_init(16);
     assert_eq!(0, m.len());
     Ok(())
 }

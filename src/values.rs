@@ -62,14 +62,14 @@ use crate::Map;
 
 #[test]
 fn empty_values() -> Result<()> {
-    let m: Map<u32> = Map::with_capacity(16);
+    let m: Map<u32> = Map::with_capacity_init(16);
     assert!(m.values().next().is_none());
     Ok(())
 }
 
 #[test]
 fn insert_and_jump_over_next() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "foo");
     let mut values = m.into_values();
     assert_eq!("foo", values.next().unwrap());
@@ -79,7 +79,7 @@ fn insert_and_jump_over_next() -> Result<()> {
 
 #[test]
 fn count_them_all() -> Result<()> {
-    let mut m: Map<&str> = Map::with_capacity(16);
+    let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "two");
     m.insert(2, "three");

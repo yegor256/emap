@@ -22,6 +22,8 @@ use crate::Map;
 
 impl<V: Clone> Clone for Map<V> {
     fn clone(&self) -> Self {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't clone() non-initialized Map");
         let mut m = Self::with_capacity(self.layout.size());
         for (k, v) in self.iter() {
             m.insert(k, v.clone());
@@ -35,7 +37,7 @@ use anyhow::Result;
 
 #[test]
 fn map_can_be_cloned() -> Result<()> {
-    let mut m: Map<u8> = Map::with_capacity(16);
+    let mut m: Map<u8> = Map::with_capacity_init(16);
     m.insert(0, 42);
     assert_eq!(42, *m.clone().get(0).unwrap());
     Ok(())
@@ -44,7 +46,7 @@ fn map_can_be_cloned() -> Result<()> {
 #[test]
 #[ignore]
 fn empty_clone() -> Result<()> {
-    let m: Map<u8> = Map::with_capacity(16);
+    let m: Map<u8> = Map::with_capacity_init(16);
     assert!(m.clone().is_empty());
     Ok(())
 }
