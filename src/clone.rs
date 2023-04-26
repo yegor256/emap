@@ -24,7 +24,7 @@ impl<V: Clone> Clone for Map<V> {
     fn clone(&self) -> Self {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't clone() non-initialized Map");
-        let mut m = Self::with_capacity(self.layout.size());
+        let mut m = Self::with_capacity_init(self.layout.size());
         for (k, v) in self.iter() {
             m.insert(k, v.clone());
         }
