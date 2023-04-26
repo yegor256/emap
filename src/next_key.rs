@@ -25,11 +25,23 @@ impl<V: Clone> Map<V> {
     ///
     /// # Panics
     ///
-    /// If no more keys left
+    /// If no more keys left.
     #[inline]
     #[must_use]
     pub fn next_key(&self) -> usize {
-        for i in 0..self.max {
+        self.next_key_gte(0)
+    }
+
+    /// Get the next key available for insertion, which is "greater or equal"
+    /// than the number provided.
+    ///
+    /// # Panics
+    ///
+    /// If no more keys left.
+    #[inline]
+    #[must_use]
+    pub fn next_key_gte(&self, k: usize) -> usize {
+        for i in k..self.max {
             if self.get(i).is_none() {
                 return i;
             }
