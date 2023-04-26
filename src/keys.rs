@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 use crate::Keys;
+use std::ptr;
 
 impl<V> Iterator for Keys<V> {
     type Item = usize;
@@ -27,7 +28,7 @@ impl<V> Iterator for Keys<V> {
     #[must_use]
     fn next(&mut self) -> Option<usize> {
         while self.pos < self.max {
-            let opt = unsafe { &*self.head.add(self.pos) };
+            let opt = unsafe { ptr::read(self.head.add(self.pos)) };
             if opt.is_some() {
                 let k = self.pos;
                 self.pos += 1;
