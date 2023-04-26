@@ -19,14 +19,14 @@
 // SOFTWARE.
 
 use crate::Map;
-use std::alloc::{alloc, Layout};
+use std::alloc::{alloc, dealloc, Layout};
 use std::mem;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
-        // unsafe {
-        //     dealloc(self.head.cast(), self.layout);
-        // }
+        unsafe {
+            dealloc(self.head.cast(), self.layout);
+        }
     }
 }
 
@@ -40,7 +40,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn with_capacity(cap: usize) -> Self {
         unsafe {
-            let layout = Layout::array::<V>(cap).unwrap();
+            let layout = Layout::array::<Option<V>>(cap).unwrap();
             let ptr = alloc(layout);
             Self {
                 max: 0,
@@ -78,7 +78,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     #[must_use]
     pub const fn capacity(&self) -> usize {
-        self.layout.size() / mem::size_of::<V>()
+        self.layout.size() / mem::size_of::<Option<V>>()
     }
 }
 
@@ -122,4 +122,17 @@ fn drops_values() {
     m.insert(0, Rc::clone(&v));
     drop(m);
     assert_eq!(Rc::strong_count(&v), 1);
+}
+
+#[cfg(test)]
+#[derive(Clone, PartialEq, Eq)]
+struct Foo {
+    pub t: i32,
+}
+
+#[test]
+fn init_with_structs() -> Result<()> {
+    let m: Map<Foo> = Map::with_capacity_init(16);
+    assert_eq!(16, m.capacity());
+    Ok(())
 }
