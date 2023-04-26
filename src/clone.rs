@@ -55,7 +55,7 @@ fn empty_clone() -> Result<()> {
 #[ignore]
 fn larger_map_can_be_cloned() -> Result<()> {
     let cap = 16;
-    let mut m: Map<u8> = Map::with_capacity(cap);
+    let mut m: Map<u8> = Map::with_capacity_init(cap);
     m.insert(1, 42);
     m.insert(2, 42);
     assert_eq!(2, m.clone().len());
