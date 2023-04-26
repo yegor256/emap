@@ -38,6 +38,8 @@ impl<V: Clone> Map<V> {
     /// # Panics
     ///
     /// If no more keys left.
+    ///
+    /// It may also panic in "debug" mode if the Map is not initialized.
     #[inline]
     #[must_use]
     pub fn next_key_gte(&self, k: usize) -> usize {
