@@ -45,6 +45,7 @@ mod ctors;
 mod debug;
 mod index;
 mod iterators;
+mod keys;
 mod map;
 mod next_key;
 #[cfg(feature = "serde")]
@@ -86,6 +87,13 @@ pub struct Values<'a, V> {
 
 /// Into-iterator over the values of a [`Map`].
 pub struct IntoValues<V> {
+    max: usize,
+    pos: usize,
+    head: *mut Option<V>,
+}
+
+/// Iterator over the keys of a [`Map`].
+pub struct Keys<V> {
     max: usize,
     pos: usize,
     head: *mut Option<V>,

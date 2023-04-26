@@ -50,6 +50,24 @@ impl<V: Clone> Map<V> {
         }
     }
 
+    /// Make it and prepare all keys.
+    ///
+    /// This is a more expensive operation that `with_capacity`, because it has
+    /// to go through all keys and fill them up with `None`.
+    ///
+    /// # Panics
+    ///
+    /// May panic if out of memory.
+    #[inline]
+    #[must_use]
+    pub fn with_capacity_init(cap: usize) -> Self {
+        let mut m = Self::with_capacity(cap);
+        for k in 0..cap {
+            m.remove(k);
+        }
+        m
+    }
+
     /// Return capacity.
     #[inline]
     #[must_use]
@@ -72,6 +90,13 @@ fn makes_new_map() -> Result<()> {
 fn returns_capacity() -> Result<()> {
     let m: Map<&str> = Map::with_capacity(16);
     assert_eq!(16, m.capacity());
+    Ok(())
+}
+
+#[test]
+fn with_init() -> Result<()> {
+    let m: Map<&str> = Map::with_capacity_init(16);
+    assert!(!m.contains_key(8));
     Ok(())
 }
 

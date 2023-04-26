@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::{IntoIter, IntoValues, Iter, Map, Values};
+use crate::{IntoIter, IntoValues, Iter, Keys, Map, Values};
 use std::marker::PhantomData;
 use std::ptr;
 
@@ -58,11 +58,22 @@ impl<V: Clone> Map<V> {
         }
     }
 
-    /// Make an iterator over all items.
+    /// Make an into-iterator over all items.
     #[inline]
     #[must_use]
     pub const fn into_values(&self) -> IntoValues<V> {
         IntoValues {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+        }
+    }
+
+    /// Make an iterator over all keys.
+    #[inline]
+    #[must_use]
+    pub const fn keys(&self) -> Keys<V> {
+        Keys {
             max: self.max,
             pos: 0,
             head: self.head,
