@@ -113,7 +113,7 @@ impl<V: Clone> Map<V> {
     #[allow(clippy::missing_const_for_fn)]
     pub fn contains_key(&self, k: usize) -> bool {
         #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "It's impossible to do contains_key({k}) since there are only {} keys available in the map", self.capacity());
+        assert!(k < self.capacity(), "Over the boundary");
         matches!(unsafe { &*self.head.add(k) }, Some(_))
     }
 
@@ -128,11 +128,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn remove(&mut self, k: usize) {
         #[cfg(debug_assertions)]
-        assert!(
-            k < self.capacity(),
-            "It's impossible to remove({k}) since there are only {} keys available in the map",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "Over the boundary");
         unsafe {
             ptr::write(self.head.add(k), None);
         }
@@ -157,11 +153,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
         #[cfg(debug_assertions)]
-        assert!(
-            k < self.capacity(),
-            "It's impossible to insert({k}) since there are only {} keys available in the map",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "Over the boundary");
         unsafe {
             ptr::write(self.head.add(k), Some(v));
         }
@@ -183,11 +175,7 @@ impl<V: Clone> Map<V> {
     #[allow(clippy::missing_const_for_fn)]
     pub fn get(&self, k: usize) -> Option<&V> {
         #[cfg(debug_assertions)]
-        assert!(
-            k < self.capacity(),
-            "It's impossible to get({k}) since there are only {} keys available in the map",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "Over the boundary");
         unsafe { &*self.head.add(k) }.as_ref()
     }
 
@@ -203,11 +191,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn get_mut(&mut self, k: usize) -> Option<&mut V> {
         #[cfg(debug_assertions)]
-        assert!(
-            k < self.capacity(),
-            "It's impossible to get_mut({k}) since there are only {} keys available in the map",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "Over the boundary");
         unsafe { &mut *(self.head.add(k)) }.as_mut()
     }
 
