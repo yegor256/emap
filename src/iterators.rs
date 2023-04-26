@@ -72,28 +72,23 @@ impl<'a, V: Copy> IntoIterator for &'a Map<V> {
     }
 }
 
-#[cfg(test)]
-use anyhow::Result;
-
 #[test]
-fn empty_iterator() -> Result<()> {
+fn empty_iterator() {
     let m: Map<u32> = Map::with_capacity_init(16);
     assert!(m.into_iter().next().is_none());
-    Ok(())
 }
 
 #[test]
-fn insert_and_jump_over_next() -> Result<()> {
+fn insert_and_jump_over_next() {
     let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "foo");
     let mut iter = m.into_iter();
     assert_eq!("foo", iter.next().unwrap().1);
     assert!(iter.next().is_none());
-    Ok(())
 }
 
 #[test]
-fn insert_and_iterate() -> Result<()> {
+fn insert_and_iterate() {
     let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "two");
@@ -106,11 +101,10 @@ fn insert_and_iterate() -> Result<()> {
     }
     assert_eq!(3, count);
     assert_eq!(3, sum);
-    Ok(())
 }
 
 #[test]
-fn insert_and_into_iterate() -> Result<()> {
+fn insert_and_into_iterate() {
     let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "one");
     m.insert(1, "two");
@@ -123,5 +117,4 @@ fn insert_and_into_iterate() -> Result<()> {
     }
     assert_eq!(3, count);
     assert_eq!(3, sum);
-    Ok(())
 }

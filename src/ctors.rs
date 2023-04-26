@@ -82,35 +82,28 @@ impl<V: Clone> Map<V> {
     }
 }
 
-#[cfg(test)]
-use anyhow::Result;
-
 #[test]
-fn makes_new_map() -> Result<()> {
+fn makes_new_map() {
     let m: Map<&str> = Map::with_capacity_init(16);
     assert_eq!(0, m.len());
-    Ok(())
 }
 
 #[test]
-fn returns_capacity() -> Result<()> {
+fn returns_capacity() {
     let m: Map<&str> = Map::with_capacity_init(16);
     assert_eq!(16, m.capacity());
-    Ok(())
 }
 
 #[test]
-fn with_init() -> Result<()> {
+fn with_init() {
     let m: Map<&str> = Map::with_capacity_init(16);
     assert!(!m.contains_key(8));
-    Ok(())
 }
 
 #[test]
-fn drops_correctly() -> Result<()> {
+fn drops_correctly() {
     let m: Map<Vec<u8>> = Map::with_capacity_init(16);
     assert_eq!(0, m.len());
-    Ok(())
 }
 
 #[test]
@@ -131,8 +124,7 @@ struct Foo {
 }
 
 #[test]
-fn init_with_structs() -> Result<()> {
+fn init_with_structs() {
     let m: Map<Foo> = Map::with_capacity_init(16);
     assert_eq!(16, m.capacity());
-    Ok(())
 }

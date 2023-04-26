@@ -38,26 +38,21 @@ impl<V: Clone> IndexMut<usize> for Map<V> {
 }
 
 #[cfg(test)]
-use anyhow::Result;
-
-#[cfg(test)]
 use std::borrow::Borrow;
 
 #[test]
-fn index() -> Result<()> {
+fn index() {
     let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(1, "first");
     assert_eq!("first", m[1]);
-    Ok(())
 }
 
 #[test]
-fn index_mut() -> Result<()> {
+fn index_mut() {
     let mut m: Map<i32> = Map::with_capacity_init(16);
     m.insert(1, 10);
     m[1] += 55;
     assert_eq!(65, m[1]);
-    Ok(())
 }
 
 #[test]
@@ -84,9 +79,8 @@ impl Borrow<i32> for Container {
 }
 
 #[test]
-fn index_by_borrow() -> Result<()> {
+fn index_by_borrow() {
     let mut m: Map<Container> = Map::with_capacity_init(16);
     m.insert(2, Container { t: 10 });
     assert_eq!(10, m[2].t);
-    Ok(())
 }

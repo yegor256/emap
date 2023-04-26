@@ -32,35 +32,29 @@ impl<V: Clone> Clone for Map<V> {
     }
 }
 
-#[cfg(test)]
-use anyhow::Result;
-
 #[test]
-fn map_can_be_cloned() -> Result<()> {
+fn map_can_be_cloned() {
     let mut m: Map<u8> = Map::with_capacity_init(16);
     m.insert(0, 42);
     assert_eq!(42, *m.clone().get(0).unwrap());
-    Ok(())
 }
 
 #[test]
 #[ignore]
-fn empty_clone() -> Result<()> {
+fn empty_clone() {
     let m: Map<u8> = Map::with_capacity_init(16);
     assert!(m.clone().is_empty());
-    Ok(())
 }
 
 #[test]
 #[ignore]
-fn larger_map_can_be_cloned() -> Result<()> {
+fn larger_map_can_be_cloned() {
     let cap = 16;
     let mut m: Map<u8> = Map::with_capacity_init(cap);
     m.insert(1, 42);
     m.insert(2, 42);
     assert_eq!(2, m.clone().len());
     assert_eq!(cap, m.clone().capacity());
-    Ok(())
 }
 
 #[derive(Clone)]
@@ -70,11 +64,10 @@ struct Foo {
 
 #[test]
 #[ignore]
-fn clone_of_wrapper() -> Result<()> {
+fn clone_of_wrapper() {
     let mut f: Foo = Foo {
         _m: Map::with_capacity_init(16),
     };
     f._m.insert(7, 42);
     assert_eq!(1, f.clone()._m.len());
-    Ok(())
 }

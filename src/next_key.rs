@@ -58,35 +58,29 @@ impl<V: Clone> Map<V> {
     }
 }
 
-#[cfg(test)]
-use anyhow::Result;
-
 #[test]
-fn get_next_key_empty_map() -> Result<()> {
+fn get_next_key_empty_map() {
     let m: Map<&str> = Map::with_capacity_init(16);
     assert_eq!(0, m.next_key());
-    Ok(())
 }
 
 #[test]
-fn get_next_in_the_middle() -> Result<()> {
+fn get_next_in_the_middle() {
     let mut m: Map<u32> = Map::with_capacity_init(16);
     m.insert(0, 42);
     m.insert(1, 42);
     m.remove(1);
     m.insert(2, 42);
     assert_eq!(1, m.next_key());
-    Ok(())
 }
 
 #[test]
-fn reset_next_key_on_clear() -> Result<()> {
+fn reset_next_key_on_clear() {
     let mut m: Map<u32> = Map::with_capacity_init(16);
     m.insert(0, 42);
     assert_eq!(1, m.next_key());
     m.clear();
     assert_eq!(0, m.next_key());
-    Ok(())
 }
 
 #[test]

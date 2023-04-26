@@ -41,24 +41,19 @@ impl<V> Iterator for Keys<V> {
 }
 
 #[cfg(test)]
-use anyhow::Result;
-
-#[cfg(test)]
 use crate::Map;
 
 #[test]
-fn empty_keys() -> Result<()> {
+fn empty_keys() {
     let m: Map<u32> = Map::with_capacity_init(16);
     assert!(m.keys().next().is_none());
-    Ok(())
 }
 
 #[test]
-fn insert_and_jump_over_next_key() -> Result<()> {
+fn insert_and_jump_over_next_key() {
     let mut m: Map<&str> = Map::with_capacity_init(16);
     m.insert(0, "foo");
     let mut keys = m.keys();
     assert_eq!(0, keys.next().unwrap());
     assert!(keys.next().is_none());
-    Ok(())
 }

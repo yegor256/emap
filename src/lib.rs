@@ -102,25 +102,6 @@ pub struct Keys<V> {
 }
 
 #[cfg(test)]
-use simple_logger::SimpleLogger;
-
-#[cfg(test)]
-use log::LevelFilter;
-
-#[cfg(test)]
-#[ctor::ctor]
-fn init() {
-    SimpleLogger::new()
-        .without_timestamps()
-        .with_level(LevelFilter::Trace)
-        .init()
-        .unwrap();
-}
-
-#[cfg(test)]
-use anyhow::Result;
-
-#[cfg(test)]
 use std::time::Instant;
 
 /// Run it like this from command line:
@@ -129,7 +110,7 @@ use std::time::Instant;
 /// $ cargo test --release -- perf --nocapture
 /// ```
 #[test]
-fn perf() -> Result<()> {
+fn perf() {
     let cap = 256;
     let mut m: Map<&str> = Map::with_capacity_init(cap);
     let start = Instant::now();
@@ -150,5 +131,4 @@ fn perf() -> Result<()> {
     }
     let d = start.elapsed();
     println!("Total time: {}", d.as_millis());
-    Ok(())
 }
