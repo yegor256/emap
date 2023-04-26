@@ -101,16 +101,38 @@ impl<V: Clone> Map<V> {
     }
 
     /// Does the map contain this key?
+    ///
+    /// # Panics
+    ///
+    /// It may panic if you attempt to refer to they key that is outside
+    /// of the boundary of this map. It will not return `None`, it will panic.
+    /// However, in "release" mode it will not panic, but will lead to
+    /// undefined behavior.
     #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn contains_key(&self, k: usize) -> bool {
+        #[cfg(debug_assertions)]
+        assert!(k < self.capacity(), "It's impossible to do contains_key({k}) since there are only {} keys available in the map", self.capacity());
         matches!(unsafe { &*self.head.add(k) }, Some(_))
     }
 
     /// Remove by key.
+    ///
+    /// # Panics
+    ///
+    /// It may panic if you attempt to refer to they key that is outside
+    /// of the boundary of this map. It will not return `None`, it will panic.
+    /// However, in "release" mode it will not panic, but will lead to
+    /// undefined behavior.
     #[inline]
     pub fn remove(&mut self, k: usize) {
+        #[cfg(debug_assertions)]
+        assert!(
+            k < self.capacity(),
+            "It's impossible to remove({k}) since there are only {} keys available in the map",
+            self.capacity()
+        );
         unsafe {
             ptr::write(self.head.add(k), None);
         }
@@ -125,8 +147,21 @@ impl<V: Clone> Map<V> {
     }
 
     /// Insert a single pair into the map.
+    ///
+    /// # Panics
+    ///
+    /// It may panic if you attempt to refer to they key that is outside
+    /// of the boundary of this map. It will not return `None`, it will panic.
+    /// However, in "release" mode it will not panic, but will lead to
+    /// undefined behavior.
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
+        #[cfg(debug_assertions)]
+        assert!(
+            k < self.capacity(),
+            "It's impossible to insert({k}) since there are only {} keys available in the map",
+            self.capacity()
+        );
         unsafe {
             ptr::write(self.head.add(k), Some(v));
         }
@@ -136,17 +171,43 @@ impl<V: Clone> Map<V> {
     }
 
     /// Get a reference to a single value.
+    ///
+    /// # Panics
+    ///
+    /// It may panic if you attempt to refer to they key that is outside
+    /// of the boundary of this map. It will not return `None`, it will panic.
+    /// However, in "release" mode it will not panic, but will lead to
+    /// undefined behavior.
     #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn get(&self, k: usize) -> Option<&V> {
+        #[cfg(debug_assertions)]
+        assert!(
+            k < self.capacity(),
+            "It's impossible to get({k}) since there are only {} keys available in the map",
+            self.capacity()
+        );
         unsafe { &*self.head.add(k) }.as_ref()
     }
 
     /// Get a mutable reference to a single value.
+    ///
+    /// # Panics
+    ///
+    /// It may panic if you attempt to refer to they key that is outside
+    /// of the boundary of this map. It will not return `None`, it will panic.
+    /// However, in "release" mode it will not panic, but will lead to
+    /// undefined behavior.
     #[inline]
     #[must_use]
     pub fn get_mut(&mut self, k: usize) -> Option<&mut V> {
+        #[cfg(debug_assertions)]
+        assert!(
+            k < self.capacity(),
+            "It's impossible to get_mut({k}) since there are only {} keys available in the map",
+            self.capacity()
+        );
         unsafe { &mut *(self.head.add(k)) }.as_mut()
     }
 
@@ -299,4 +360,28 @@ fn pushes_into() -> Result<()> {
     assert_eq!(0, m.push("one"));
     assert_eq!(1, m.push("two"));
     Ok(())
+}
+
+#[test]
+#[should_panic]
+#[cfg(debug_assertions)]
+fn insert_out_of_boundary() {
+    let mut m: Map<&str> = Map::with_capacity(1);
+    m.insert(5, "one");
+}
+
+#[test]
+#[should_panic]
+#[cfg(debug_assertions)]
+fn get_out_of_boundary() {
+    let m: Map<&str> = Map::with_capacity(1);
+    m.get(5).unwrap();
+}
+
+#[test]
+#[should_panic]
+#[cfg(debug_assertions)]
+fn remove_out_of_boundary() {
+    let mut m: Map<&str> = Map::with_capacity(1);
+    m.remove(5);
 }

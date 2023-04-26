@@ -124,7 +124,7 @@ use std::time::Instant;
 /// Run it like this from command line:
 ///
 /// ```text
-/// $ cargo test --release -- perf
+/// $ cargo test --release -- perf --nocapture
 /// ```
 #[test]
 fn perf() -> Result<()> {

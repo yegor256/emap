@@ -22,7 +22,7 @@ use crate::Map;
 
 impl<V: Clone> Clone for Map<V> {
     fn clone(&self) -> Self {
-        let mut m = Self::with_capacity(self.layout.size());
+        let mut m = Self::with_capacity_init(self.layout.size());
         for (k, v) in self.iter() {
             m.insert(k, v.clone());
         }
@@ -38,5 +38,38 @@ fn map_can_be_cloned() -> Result<()> {
     let mut m: Map<u8> = Map::with_capacity(16);
     m.insert(0, 42);
     assert_eq!(42, *m.clone().get(0).unwrap());
+    Ok(())
+}
+
+#[test]
+fn empty_clone() -> Result<()> {
+    let m: Map<u8> = Map::with_capacity(16);
+    assert!(m.clone().is_empty());
+    Ok(())
+}
+
+#[test]
+fn larger_map_can_be_cloned() -> Result<()> {
+    let cap = 16;
+    let mut m: Map<u8> = Map::with_capacity(cap);
+    m.insert(1, 42);
+    m.insert(2, 42);
+    assert_eq!(2, m.clone().len());
+    assert_eq!(cap, m.clone().capacity());
+    Ok(())
+}
+
+#[derive(Clone)]
+struct Foo {
+    _m: Map<u64>,
+}
+
+#[test]
+fn clone_of_wrapper() -> Result<()> {
+    let mut f: Foo = Foo {
+        _m: Map::with_capacity_init(16),
+    };
+    f._m.insert(7, 42);
+    assert_eq!(1, f.clone()._m.len());
     Ok(())
 }
