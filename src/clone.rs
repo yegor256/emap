@@ -28,7 +28,6 @@ impl<V: Clone> Clone for Map<V> {
         for (k, v) in self.iter() {
             m.insert(k, v.clone());
         }
-        println!("clone!");
         m
     }
 }
