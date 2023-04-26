@@ -56,17 +56,18 @@ the numbers over 1.0 indicate performance gain of `Map` against `Vec`,
 while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
-| | 4 | 16 | 256 | 1024 |
+| | 4 | 16 | 256 | 4096 |
 | --- | --: | --: | --: | --: |
-| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |1.29 |5.81 |2.51 |2.48 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}` |0.95 |0.35 |0.34 |0.35 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |1.12 |0.55 |0.48 |0.52 |
-| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |1.20 |1.93 |2.53 |2.48 |
-| `i ∈ 0..CAP {M.insert(i, 42)}; M.clear(); M.len();` |1.12 |1.84 |6.99 |8.81 |
+| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |1.29 |2.01 |2.58 |2.49 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}` |1.22 |0.76 |0.58 |0.66 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}` |1.07 |0.59 |0.49 |0.53 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |1.11 |0.72 |0.64 |0.68 |
+| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |1.20 |1.96 |2.72 |2.74 |
+| `i ∈ 0..CAP {M.insert(i, 42)}; M.clear(); M.len();` |1.17 |1.89 |8.19 |9.33 |
 
-The experiment was performed on 25-04-2023.
+The experiment was performed on 26-04-2023.
  There were 10000 repetition cycles.
- The entire benchmark took 99s.
+ The entire benchmark took 357s.
 
 <!-- benchmark -->
 
