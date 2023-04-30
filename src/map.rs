@@ -148,8 +148,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn contains_key(&self, k: usize) -> bool {
-        #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "Over the boundary");
+        self.assert_boundaries(k);
         matches!(unsafe { &*self.head.add(k) }, Some(_))
     }
 
@@ -163,8 +162,7 @@ impl<V: Clone> Map<V> {
     /// undefined behavior.
     #[inline]
     pub fn remove(&mut self, k: usize) {
-        #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "Over the boundary");
+        self.assert_boundaries(k);
         unsafe {
             ptr::write(self.head.add(k), None);
         }
@@ -188,8 +186,7 @@ impl<V: Clone> Map<V> {
     /// undefined behavior.
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
-        #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "Over the boundary");
+        self.assert_boundaries(k);
         unsafe {
             ptr::write(self.head.add(k), Some(v));
         }
@@ -209,8 +206,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     #[must_use]
     pub fn get(&self, k: usize) -> Option<&V> {
-        #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "Over the boundary");
+        self.assert_boundaries(k);
         unsafe { &*self.head.add(k) }.as_ref()
     }
 
@@ -225,8 +221,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     #[must_use]
     pub fn get_mut(&mut self, k: usize) -> Option<&mut V> {
-        #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "Over the boundary");
+        self.assert_boundaries(k);
         unsafe { &mut *(self.head.add(k)) }.as_mut()
     }
 
@@ -254,6 +249,18 @@ impl<V: Clone> Map<V> {
                 }
             }
         }
+    }
+
+    /// Check the boundary condition.
+    #[inline]
+    #[allow(unused_variables)]
+    fn assert_boundaries(&self, k: usize) {
+        #[cfg(debug_assertions)]
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 }
 
