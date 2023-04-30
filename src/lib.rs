@@ -72,6 +72,14 @@ pub struct Iter<'a, V> {
     _marker: PhantomData<&'a V>,
 }
 
+/// Mutable iterator over the [`Map`].
+pub struct IterMut<'a, V> {
+    max: usize,
+    pos: usize,
+    head: *mut Option<V>,
+    _marker: PhantomData<&'a V>,
+}
+
 /// Into-iterator over the [`Map`].
 pub struct IntoIter<V> {
     max: usize,

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::{IntoIter, Iter, Map};
+use crate::{IntoIter, Iter, IterMut, Map};
 use std::marker::PhantomData;
 
 impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
@@ -29,6 +29,25 @@ impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let item = unsafe { &*self.head.add(self.pos) };
+            if let Some(p) = item {
+                let i = self.pos;
+                self.pos += 1;
+                return Some((i, p));
+            }
+            self.pos += 1;
+        }
+        None
+    }
+}
+
+impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
+    type Item = (usize, &'a mut V);
+
+    #[inline]
+    #[must_use]
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.pos < self.max {
+            let item = unsafe { &mut *self.head.add(self.pos) };
             if let Some(p) = item {
                 let i = self.pos;
                 self.pos += 1;
@@ -85,6 +104,24 @@ impl<V: Clone> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
         Iter {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Make an iterator over all items.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
+    #[inline]
+    #[must_use]
+    pub const fn iter_mut(&self) -> IterMut<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't iter_mut() non-initialized Map");
+        IterMut {
             max: self.max,
             pos: 0,
             head: self.head,
@@ -166,4 +203,20 @@ fn iterate_without_function() {
         count += 1;
     }
     assert_eq!(1, count);
+}
+
+#[test]
+fn iterate_and_mutate() {
+    let mut m: Map<u64> = Map::with_capacity_none(16);
+    m.insert(0, 16);
+    m.insert(1, 32);
+    m.insert(2, 64);
+    for (_, v) in m.iter_mut() {
+        *v += 1;
+    }
+    let mut sum = 0;
+    for v in m.values() {
+        sum += v;
+    }
+    assert_eq!(115, sum);
 }
