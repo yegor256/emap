@@ -22,3 +22,4 @@ jobs:
           title: 'New version in README'
           assignees: yegor256
           base: master
+          branch: up
