@@ -125,6 +125,8 @@ impl<V: Clone> Map<V> {
     /// }
     /// ```
     ///
+    /// The keys are not mutable, only the values, for obvious reasons.
+    ///
     /// # Panics
     ///
     /// It may panic in debug mode, if the [`Map`] is not initialized.
