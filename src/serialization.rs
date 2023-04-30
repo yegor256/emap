@@ -22,6 +22,7 @@ use crate::Map;
 use serde::de::{MapAccess, Visitor};
 use serde::ser::SerializeMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::collections::HashMap;
 use std::fmt::Formatter;
 use std::marker::PhantomData;
 
@@ -53,9 +54,13 @@ impl<'de, V: Clone + Deserialize<'de>> Visitor<'de> for Vi<V> {
     where
         M: MapAccess<'de>,
     {
-        let mut m: Self::Value = Map::with_capacity_none(16);
+        let mut map: HashMap<usize, V> = HashMap::new();
         while let Some((key, value)) = access.next_entry()? {
-            m.insert(key, value);
+            map.insert(key, value);
+        }
+        let mut m: Self::Value = Map::with_capacity_none(map.len());
+        for (k, v) in map.iter() {
+            m.insert(*k, v.clone());
         }
         Ok(m)
     }
@@ -81,4 +86,15 @@ fn serialize_and_deserialize() {
     let bytes: Vec<u8> = serialize(&before).unwrap();
     let after: Map<u8> = deserialize(&bytes).unwrap();
     assert_eq!(42, after.into_iter().next().unwrap().1);
+}
+
+#[test]
+fn serde_big_map() {
+    let cap = 256;
+    let mut before: Map<u8> = Map::with_capacity_none(cap);
+    before.insert(0, 42);
+    before.insert(1, 42);
+    let bytes: Vec<u8> = serialize(&before).unwrap();
+    let after: Map<u8> = deserialize(&bytes).unwrap();
+    assert_eq!(2, after.capacity());
 }
