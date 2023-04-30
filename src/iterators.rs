@@ -111,7 +111,19 @@ impl<V: Clone> Map<V> {
         }
     }
 
-    /// Make an iterator over all items.
+    /// Make a mutable iterator over all items.
+    ///
+    /// For example:
+    ///
+    /// ```
+    /// use emap::Map;
+    /// let mut m: Map<String> = Map::with_capacity_none(16);
+    /// m.insert(0, "Jeff".to_string());
+    /// m.insert(1, "Lebowski".to_string());
+    /// for (_, v) in m.iter_mut() {
+    ///   *v = v.to_lowercase();
+    /// }
+    /// ```
     ///
     /// # Panics
     ///
