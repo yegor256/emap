@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 use crate::{IntoIter, Iter, Map};
+use std::marker::PhantomData;
 
 impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     type Item = (usize, &'a V);
@@ -64,6 +65,43 @@ impl<'a, V: Copy> IntoIterator for &'a Map<V> {
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
+        IntoIter {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+        }
+    }
+}
+
+impl<V: Clone> Map<V> {
+    /// Make an iterator over all items.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
+    #[inline]
+    #[must_use]
+    pub const fn iter(&self) -> Iter<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't iter() non-initialized Map");
+        Iter {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Make an iterator over all items.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
+    #[inline]
+    #[must_use]
+    pub const fn into_iter(&self) -> IntoIter<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't into_iter() non-initialized Map");
         IntoIter {
             max: self.max,
             pos: 0,

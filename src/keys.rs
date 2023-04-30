@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 use crate::Keys;
+use crate::Map;
 use std::ptr;
 
 impl<V> Iterator for Keys<V> {
@@ -40,8 +41,24 @@ impl<V> Iterator for Keys<V> {
     }
 }
 
-#[cfg(test)]
-use crate::Map;
+impl<V: Clone> Map<V> {
+    /// Make an iterator over all keys.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
+    #[inline]
+    #[must_use]
+    pub const fn keys(&self) -> Keys<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't keys() non-initialized Map");
+        Keys {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+        }
+    }
+}
 
 #[test]
 fn empty_keys() {

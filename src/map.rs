@@ -18,98 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::{IntoIter, IntoValues, Iter, Keys, Map, Values};
-use std::marker::PhantomData;
+use crate::Map;
 use std::ptr;
 
 impl<V: Clone> Map<V> {
-    /// Make an iterator over all items.
-    ///
-    /// # Panics
-    ///
-    /// It may panic in debug mode, if the [`Map`] is not initialized.
-    #[inline]
-    #[must_use]
-    pub const fn iter(&self) -> Iter<V> {
-        #[cfg(debug_assertions)]
-        assert!(self.initialized, "Can't iter() non-initialized Map");
-        Iter {
-            max: self.max,
-            pos: 0,
-            head: self.head,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Make an iterator over all items.
-    ///
-    /// # Panics
-    ///
-    /// It may panic in debug mode, if the [`Map`] is not initialized.
-    #[inline]
-    #[must_use]
-    pub const fn into_iter(&self) -> IntoIter<V> {
-        #[cfg(debug_assertions)]
-        assert!(self.initialized, "Can't into_iter() non-initialized Map");
-        IntoIter {
-            max: self.max,
-            pos: 0,
-            head: self.head,
-        }
-    }
-
-    /// Make an iterator over all values.
-    ///
-    /// # Panics
-    ///
-    /// It may panic in debug mode, if the [`Map`] is not initialized.
-    #[inline]
-    #[must_use]
-    pub const fn values(&self) -> Values<V> {
-        #[cfg(debug_assertions)]
-        assert!(self.initialized, "Can't values() non-initialized Map");
-        Values {
-            max: self.max,
-            pos: 0,
-            head: self.head,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Make an into-iterator over all items.
-    ///
-    /// # Panics
-    ///
-    /// It may panic in debug mode, if the [`Map`] is not initialized.
-    #[inline]
-    #[must_use]
-    pub const fn into_values(&self) -> IntoValues<V> {
-        #[cfg(debug_assertions)]
-        assert!(self.initialized, "Can't into_values() non-initialized Map");
-        IntoValues {
-            max: self.max,
-            pos: 0,
-            head: self.head,
-        }
-    }
-
-    /// Make an iterator over all keys.
-    ///
-    /// # Panics
-    ///
-    /// It may panic in debug mode, if the [`Map`] is not initialized.
-    #[inline]
-    #[must_use]
-    pub const fn keys(&self) -> Keys<V> {
-        #[cfg(debug_assertions)]
-        assert!(self.initialized, "Can't keys() non-initialized Map");
-        Keys {
-            max: self.max,
-            pos: 0,
-            head: self.head,
-        }
-    }
-
     /// Is it empty?
     #[inline]
     #[must_use]

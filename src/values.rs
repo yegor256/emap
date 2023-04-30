@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use crate::Map;
 use crate::{IntoValues, Values};
+use std::marker::PhantomData;
 
 impl<'a, V: Clone + 'a> Iterator for Values<'a, V> {
     type Item = &'a V;
@@ -54,8 +56,42 @@ impl<V: Copy> Iterator for IntoValues<V> {
     }
 }
 
-#[cfg(test)]
-use crate::Map;
+impl<V: Clone> Map<V> {
+    /// Make an iterator over all values.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
+    #[inline]
+    #[must_use]
+    pub const fn values(&self) -> Values<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't values() non-initialized Map");
+        Values {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Make an into-iterator over all items.
+    ///
+    /// # Panics
+    ///
+    /// It may panic in debug mode, if the [`Map`] is not initialized.
+    #[inline]
+    #[must_use]
+    pub const fn into_values(&self) -> IntoValues<V> {
+        #[cfg(debug_assertions)]
+        assert!(self.initialized, "Can't into_values() non-initialized Map");
+        IntoValues {
+            max: self.max,
+            pos: 0,
+            head: self.head,
+        }
+    }
+}
 
 #[test]
 fn empty_values() {
