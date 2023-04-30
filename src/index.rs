@@ -42,14 +42,14 @@ use std::borrow::Borrow;
 
 #[test]
 fn index() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(1, "first");
     assert_eq!("first", m[1]);
 }
 
 #[test]
 fn index_mut() {
-    let mut m: Map<i32> = Map::with_capacity_init(16);
+    let mut m: Map<i32> = Map::with_capacity_none(16);
     m.insert(1, 10);
     m[1] += 55;
     assert_eq!(65, m[1]);
@@ -58,7 +58,7 @@ fn index_mut() {
 #[test]
 #[should_panic]
 fn wrong_index() -> () {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(2, "first");
     m.insert(8, "second");
     m.remove(8);
@@ -80,7 +80,7 @@ impl Borrow<i32> for Container {
 
 #[test]
 fn index_by_borrow() {
-    let mut m: Map<Container> = Map::with_capacity_init(16);
+    let mut m: Map<Container> = Map::with_capacity_none(16);
     m.insert(2, Container { t: 10 });
     assert_eq!(10, m[2].t);
 }

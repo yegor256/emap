@@ -26,7 +26,7 @@ use test::Bencher;
 
 #[bench]
 fn insert_same(b: &mut Bencher) {
-    let mut m: Map<&str> = Map::with_capacity_init(10);
+    let mut m: Map<&str> = Map::with_capacity_none(10);
     b.iter(|| {
         for i in 0..1000 {
             m.insert(i, &"Hello, world!");

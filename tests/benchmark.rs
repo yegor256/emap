@@ -47,7 +47,7 @@ macro_rules! compare {
             measure!($total, {
                 $eM(std::hint::black_box(
                     #[cfg(debug_assertions)]
-                    &mut Map::with_capacity_init(CAP),
+                    &mut Map::with_capacity_none(CAP),
                     #[cfg(not(debug_assertions))]
                     &mut Map::with_capacity(CAP),
                 ))

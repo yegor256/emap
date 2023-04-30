@@ -62,7 +62,7 @@ impl<V: Clone> Map<V> {
     /// May panic if out of memory.
     #[inline]
     #[must_use]
-    pub fn with_capacity_init(cap: usize) -> Self {
+    pub fn with_capacity_none(cap: usize) -> Self {
         let mut m = Self::with_capacity(cap);
         for k in 0..cap {
             m.remove(k);
@@ -84,25 +84,25 @@ impl<V: Clone> Map<V> {
 
 #[test]
 fn makes_new_map() {
-    let m: Map<&str> = Map::with_capacity_init(16);
+    let m: Map<&str> = Map::with_capacity_none(16);
     assert_eq!(0, m.len());
 }
 
 #[test]
 fn returns_capacity() {
-    let m: Map<&str> = Map::with_capacity_init(16);
+    let m: Map<&str> = Map::with_capacity_none(16);
     assert_eq!(16, m.capacity());
 }
 
 #[test]
 fn with_init() {
-    let m: Map<&str> = Map::with_capacity_init(16);
+    let m: Map<&str> = Map::with_capacity_none(16);
     assert!(!m.contains_key(8));
 }
 
 #[test]
 fn drops_correctly() {
-    let m: Map<Vec<u8>> = Map::with_capacity_init(16);
+    let m: Map<Vec<u8>> = Map::with_capacity_none(16);
     assert_eq!(0, m.len());
 }
 
@@ -125,6 +125,6 @@ struct Foo {
 
 #[test]
 fn init_with_structs() {
-    let m: Map<Foo> = Map::with_capacity_init(16);
+    let m: Map<Foo> = Map::with_capacity_none(16);
     assert_eq!(16, m.capacity());
 }

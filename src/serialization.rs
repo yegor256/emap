@@ -53,7 +53,7 @@ impl<'de, V: Clone + Deserialize<'de>> Visitor<'de> for Vi<V> {
     where
         M: MapAccess<'de>,
     {
-        let mut m: Self::Value = Map::with_capacity_init(16);
+        let mut m: Self::Value = Map::with_capacity_none(16);
         while let Some((key, value)) = access.next_entry()? {
             m.insert(key, value);
         }
@@ -75,7 +75,7 @@ use bincode::{deserialize, serialize};
 
 #[test]
 fn serialize_and_deserialize() {
-    let mut before: Map<u8> = Map::with_capacity_init(16);
+    let mut before: Map<u8> = Map::with_capacity_none(16);
     before.insert(0, 42);
     let bytes: Vec<u8> = serialize(&before).unwrap();
     let after: Map<u8> = deserialize(&bytes).unwrap();

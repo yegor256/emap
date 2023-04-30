@@ -24,7 +24,7 @@
 //!
 //! ```
 //! use emap::Map;
-//! let mut m : Map<&str> = Map::with_capacity_init(10);
+//! let mut m : Map<&str> = Map::with_capacity_none(10);
 //! m.insert(0, "Hello, world!");
 //! m.insert(1, "Good bye!");
 //! assert_eq!(2, m.len());
@@ -112,7 +112,7 @@ use std::time::Instant;
 #[test]
 fn perf() {
     let cap = 256;
-    let mut m: Map<&str> = Map::with_capacity_init(cap);
+    let mut m: Map<&str> = Map::with_capacity_none(cap);
     let start = Instant::now();
     for _ in 0..1000 {
         m.clear();

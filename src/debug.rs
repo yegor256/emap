@@ -42,7 +42,7 @@ impl<V: Clone + Display> Debug for Map<V> {
 
 #[test]
 fn debugs_map() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "one");
     m.insert(1, "two");
     assert_eq!("{0: one, 1: two}", format!("{:?}", m));
@@ -50,7 +50,7 @@ fn debugs_map() {
 
 #[test]
 fn displays_map() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "one");
     m.insert(1, "two");
     assert_eq!("{0: one, 1: two}", format!("{}", m));

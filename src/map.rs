@@ -259,7 +259,7 @@ impl<V: Clone> Map<V> {
 
 #[test]
 fn insert_and_check_length() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "zero");
     assert_eq!(1, m.len());
     m.insert(1, "first");
@@ -270,13 +270,13 @@ fn insert_and_check_length() {
 
 #[test]
 fn empty_length() {
-    let m: Map<u32> = Map::with_capacity_init(16);
+    let m: Map<u32> = Map::with_capacity_none(16);
     assert_eq!(0, m.len());
 }
 
 #[test]
 fn is_empty_check() {
-    let mut m: Map<u32> = Map::with_capacity_init(16);
+    let mut m: Map<u32> = Map::with_capacity_none(16);
     assert!(m.is_empty());
     m.insert(0, 42);
     assert!(!m.is_empty());
@@ -284,7 +284,7 @@ fn is_empty_check() {
 
 #[test]
 fn insert_and_gets() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "zero");
     m.insert(1, "one");
     assert_eq!("one", *m.get(1).unwrap());
@@ -292,7 +292,7 @@ fn insert_and_gets() {
 
 #[test]
 fn insert_and_gets_mut() {
-    let mut m: Map<[i32; 3]> = Map::with_capacity_init(16);
+    let mut m: Map<[i32; 3]> = Map::with_capacity_none(16);
     m.insert(0, [1, 2, 3]);
     let a = m.get_mut(0).unwrap();
     a[0] = 500;
@@ -301,7 +301,7 @@ fn insert_and_gets_mut() {
 
 #[test]
 fn checks_key() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "one");
     assert!(m.contains_key(0));
     m.insert(8, "");
@@ -311,7 +311,7 @@ fn checks_key() {
 
 #[test]
 fn gets_missing_key() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "one");
     m.insert(1, "one");
     m.remove(1);
@@ -320,7 +320,7 @@ fn gets_missing_key() {
 
 #[test]
 fn mut_gets_missing_key() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "one");
     m.insert(1, "one");
     m.remove(1);
@@ -329,7 +329,7 @@ fn mut_gets_missing_key() {
 
 #[test]
 fn removes_simple_pair() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "one");
     m.remove(0);
     m.remove(1);
@@ -344,7 +344,7 @@ struct Foo {
 
 #[test]
 fn insert_struct() {
-    let mut m: Map<Foo> = Map::with_capacity_init(16);
+    let mut m: Map<Foo> = Map::with_capacity_none(16);
     let foo = Foo { v: [1, 2, 100] };
     m.insert(0, foo);
     assert_eq!(100, m.into_iter().next().unwrap().1.v[2]);
@@ -352,13 +352,13 @@ fn insert_struct() {
 
 #[test]
 fn large_map_in_heap() {
-    let m: Box<Map<[u64; 10]>> = Box::new(Map::with_capacity_init(16));
+    let m: Box<Map<[u64; 10]>> = Box::new(Map::with_capacity_none(16));
     assert_eq!(0, m.len());
 }
 
 #[test]
 fn clears_it_up() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(7, "one");
     m.clear();
     assert_eq!(0, m.len());
@@ -366,7 +366,7 @@ fn clears_it_up() {
 
 #[test]
 fn pushes_into() {
-    let mut m: Map<&str> = Map::with_capacity_init(16);
+    let mut m: Map<&str> = Map::with_capacity_none(16);
     assert_eq!(0, m.push("one"));
     assert_eq!(1, m.push("two"));
 }
