@@ -74,6 +74,28 @@ impl<V: Clone> Map<V> {
         m
     }
 
+    /// Make it and prepare all keys with some value set.
+    ///
+    /// This is a more expensive operation that `with_capacity`, because it has
+    /// to go through all keys and fill them up with `Some`.
+    ///
+    /// # Panics
+    ///
+    /// May panic if out of memory.
+    #[inline]
+    #[must_use]
+    pub fn with_capacity_some(cap: usize, v: V) -> Self {
+        let mut m = Self::with_capacity(cap);
+        for k in 0..cap {
+            m.insert(k, v.clone());
+        }
+        #[cfg(debug_assertions)]
+        {
+            m.initialized = true;
+        }
+        m
+    }
+
     /// Return capacity.
     #[inline]
     #[must_use]
@@ -126,5 +148,11 @@ struct Foo {
 #[test]
 fn init_with_structs() {
     let m: Map<Foo> = Map::with_capacity_none(16);
+    assert_eq!(16, m.capacity());
+}
+
+#[test]
+fn init_with_some() {
+    let m: Map<Foo> = Map::with_capacity_some(16, Foo { t: 42 });
     assert_eq!(16, m.capacity());
 }
