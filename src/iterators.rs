@@ -118,3 +118,14 @@ fn insert_and_into_iterate() {
     assert_eq!(3, count);
     assert_eq!(3, sum);
 }
+
+#[test]
+fn iterate_without_function() {
+    let mut m: Map<&str> = Map::with_capacity_init(16);
+    m.insert(0, "test");
+    let mut count = 0;
+    for (_, _) in &m {
+        count += 1;
+    }
+    assert_eq!(1, count);
+}
