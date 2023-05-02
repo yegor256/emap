@@ -76,7 +76,7 @@ impl<V: Clone> Map<V> {
     pub fn remove(&mut self, k: usize) {
         self.assert_boundaries(k);
         unsafe {
-            ptr::write(self.head.add(k), None);
+            *self.head.add(k) = None;
         }
     }
 
