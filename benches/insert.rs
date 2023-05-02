@@ -24,12 +24,13 @@ extern crate test;
 use emap::Map;
 use test::Bencher;
 
+const CAPACITY: usize = 1024;
+
 #[bench]
 fn insert_same(b: &mut Bencher) {
-    let cap = 1024;
-    let mut m: Map<&str> = Map::with_capacity(cap);
+    let mut m: Map<&str> = Map::with_capacity(CAPACITY);
     b.iter(|| {
-        for i in 0..cap {
+        for i in 0..CAPACITY {
             m.insert(i, &"Hello, world!");
         }
     });
