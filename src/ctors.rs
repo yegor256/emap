@@ -105,6 +105,14 @@ impl<V: Clone> Map<V> {
 }
 
 #[test]
+fn calculates_size_of_memory() {
+    let m1: Map<u8> = Map::with_capacity_none(8);
+    assert_eq!(16, m1.layout.size());
+    let m2: Map<bool> = Map::with_capacity_none(8);
+    assert_eq!(8, m2.layout.size());
+}
+
+#[test]
 fn makes_new_map() {
     let m: Map<&str> = Map::with_capacity_none(16);
     assert_eq!(0, m.len());
