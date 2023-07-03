@@ -58,17 +58,17 @@ while the numbers below 1.0 demonstrate performance loss.
 <!-- benchmark -->
 | | 4 | 16 | 256 | 4096 |
 | --- | --: | --: | --: | --: |
-| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |1.25 |1.90 |2.10 |2.21 |
-| `i ∈ 0..CAP {M.insert(i, &"大家好"); s ∈ M.values() {sum += s.len()}}` |1.53 |0.98 |0.48 |0.34 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}` |1.18 |1.29 |0.53 |0.34 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}` |1.09 |0.56 |0.35 |0.52 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |1.05 |0.52 |0.34 |0.36 |
-| `i ∈ 0..CAP {M.insert(i, &42)}; M.clear(); M.len();` |1.23 |2.59 |5.47 |7.31 |
-| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |1.56 |1.92 |2.59 |2.18 |
+| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |1.14 |1.99 |2.22 |2.21 |
+| `i ∈ 0..CAP {M.insert(i, &"大家好"); s ∈ M.values() {sum += s.len()}}` |1.21 |0.91 |0.51 |0.35 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}` |1.30 |0.88 |0.51 |0.35 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}` |1.08 |0.53 |0.47 |0.34 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |1.37 |0.58 |0.34 |0.34 |
+| `i ∈ 0..CAP {M.insert(i, &42)}; M.clear(); M.len();` |1.14 |1.89 |6.32 |7.10 |
+| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |1.19 |2.05 |2.36 |2.16 |
 
 The experiment was performed on 03-07-2023.
  There were 10000 repetition cycles.
- The entire benchmark took 475s.
+ The entire benchmark took 465s.
 
 <!-- benchmark -->
 
