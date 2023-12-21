@@ -24,6 +24,14 @@ use std::marker::PhantomData;
 impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     type Item = (usize, &'a V);
 
+    /// This is an implementation of the `next` function that returns the next item in an iterator if it
+    /// exists, or `None` if the end of the iterator has been reached.
+    /// 
+    /// Returns:
+    /// 
+    /// The `next` function returns an `Option` that contains a tuple of `(i, p)` where `i` is the index of
+    /// the item and `p` is a reference to the item. If there are no more items to iterate over, it returns
+    /// `None`.
     #[inline]
     #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
