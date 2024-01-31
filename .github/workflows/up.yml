@@ -15,7 +15,7 @@ jobs:
           git fetch --tags --force && \
           latest=$(git tag --sort=creatordate | tail -1) && \
           sed -E -i "s/emap = \"[^\"]+\"/emap = \"${latest}\"/g" README.md
-      - uses: peter-evans/create-pull-request@v5
+      - uses: peter-evans/create-pull-request@v6
         with:
           commit-message: 'new version in README'
           delete-branch: true
