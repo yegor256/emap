@@ -56,7 +56,7 @@ impl<V: Copy> Iterator for IntoValues<V> {
     }
 }
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Make an iterator over all values.
     ///
     /// # Panics

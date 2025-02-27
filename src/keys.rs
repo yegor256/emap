@@ -41,7 +41,7 @@ impl<V> Iterator for Keys<V> {
     }
 }
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Make an iterator over all keys.
     ///
     /// # Panics
