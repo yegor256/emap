@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+# SPDX-License-Identifier: MIT
+
 set -x
 set -e
 
