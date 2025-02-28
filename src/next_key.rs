@@ -3,7 +3,7 @@
 
 use crate::Map;
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Get the next key available for insertion.
     ///
     /// # Panics

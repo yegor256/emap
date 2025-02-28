@@ -4,7 +4,7 @@
 use crate::Map;
 use std::ops::{Index, IndexMut};
 
-impl<V: Clone> Index<usize> for Map<V> {
+impl<V> Index<usize> for Map<V> {
     type Output = V;
 
     #[inline]
@@ -13,7 +13,7 @@ impl<V: Clone> Index<usize> for Map<V> {
     }
 }
 
-impl<V: Clone> IndexMut<usize> for Map<V> {
+impl<V> IndexMut<usize> for Map<V> {
     #[inline]
     fn index_mut(&mut self, key: usize) -> &mut V {
         self.get_mut(key).expect("No entry found for key")
