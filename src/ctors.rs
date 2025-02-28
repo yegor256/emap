@@ -82,7 +82,7 @@ impl<V> Map<V> {
     }
 }
 
-impl <V: Clone> Map<V> {
+impl<V: Clone> Map<V> {
     /// Make it and prepare all keys with some value set.
     ///
     /// This is a more expensive operation that `with_capacity`, because it has
@@ -103,7 +103,7 @@ impl <V: Clone> Map<V> {
             m.initialized = true;
         }
         m
-    }    
+    }
 }
 
 #[test]
