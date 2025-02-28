@@ -7,15 +7,15 @@
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
 It is an alternative on-heap implementation of a map with keys of type `usize`
-and a fixed capacity. It works much faster than a standard `HashMap` 
+and a fixed capacity. It works much faster than a standard `HashMap`
 because it allocates memory for all keys at once and then the cost
 of `get()` is _O(1)_. Obviously, with this design, the cost of `iter()` increases because the iterator
 has to jump through empty keys. However, there
-is a supplementary function `next_key()`, which returns the next available key in the map. 
+is a supplementary function `next_key()`, which returns the next available key in the map.
 It is recommended to use it in order to ensure sequential order of the keys, which
 will guarantee _O(1)_ cost of `next()` in iterators.
 
-If `usize` keys are placed sequentially, the only true competitor of ours is 
+If `usize` keys are placed sequentially, the only true competitor of ours is
 [`std::vec::Vec`](https://doc.rust-lang.org/std/vec/struct.Vec.html).
 We beat it too, see the [benchmarking results](#benchmark) below.
 
@@ -36,23 +36,23 @@ m.insert(m.next_key(), "bar");
 assert_eq!(2, m.len());
 ```
 
-If more than 100 keys will be added to the map, it will panic. 
-The map doesn't increase its size automatically, like `Vec` does 
+If more than 100 keys will be added to the map, it will panic.
+The map doesn't increase its size automatically, like `Vec` does
 (this is one of the reasons why we are faster).
 
-Read [the API documentation](https://docs.rs/emap/latest/emap/). 
+Read [the API documentation](https://docs.rs/emap/latest/emap/).
 The struct
-[`emap::Map`](https://docs.rs/emap/latest/emap/struct.Map.html) is designed as closely similar to 
+[`emap::Map`](https://docs.rs/emap/latest/emap/struct.Map.html) is designed as closely similar to
 [`std::collections::HashMap`](https://doc.rust-lang.org/std/collections/struct.HashMap.html) as possible.
 
 ## Benchmark
 
 There is a summary of a simple benchmark, where we compared `emap::Map` with
 `Vec`, changing the total capacity `CAP` of them (horizontal axis).
-We applied the same interactions 
-([`benchmark.rs`](https://github.com/yegor256/emap/blob/master/tests/benchmark.rs)) 
-to them both and measured how fast they performed. In the following table, 
-the numbers over 1.0 indicate performance gain of `Map` against `Vec`, 
+We applied the same interactions
+([`benchmark.rs`](https://github.com/yegor256/emap/blob/master/tests/benchmark.rs))
+to them both and measured how fast they performed. In the following table,
+the numbers over 1.0 indicate performance gain of `Map` against `Vec`,
 while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
@@ -80,11 +80,11 @@ First, install [Rust](https://www.rust-lang.org/tools/install) and then:
 $ cargo test -vv
 ```
 
-If everything goes well, fork repository, make changes, 
+If everything goes well, fork repository, make changes,
 send us a [pull request](https://www.yegor256.com/2014/04/15/github-guidelines.html).
 We will review your changes and apply them to the `master` branch shortly,
 provided they don't violate our quality standards. To avoid frustration,
-before sending us your pull request please run `cargo test` again. Also, 
+before sending us your pull request please run `cargo test` again. Also,
 run `cargo fmt` and `cargo clippy`.
 
 Also, before you start making changes, run benchmarks:
