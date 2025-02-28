@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+# SPDX-License-Identifier: MIT
+
 [package]
 name = "emap"
 version = "0.0.0"
