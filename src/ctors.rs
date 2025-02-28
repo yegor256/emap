@@ -13,7 +13,7 @@ impl<V> Drop for Map<V> {
     }
 }
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Make it.
     ///
     /// # Panics
@@ -57,6 +57,15 @@ impl<V: Clone> Map<V> {
         m
     }
 
+    /// Return capacity.
+    #[inline]
+    #[must_use]
+    pub const fn capacity(&self) -> usize {
+        self.layout.size() / mem::size_of::<Option<V>>()
+    }
+}
+
+impl<V: Clone> Map<V> {
     /// Make it and prepare all keys with some value set.
     ///
     /// This is a more expensive operation that `with_capacity`, because it has
@@ -77,13 +86,6 @@ impl<V: Clone> Map<V> {
             m.initialized = true;
         }
         m
-    }
-
-    /// Return capacity.
-    #[inline]
-    #[must_use]
-    pub const fn capacity(&self) -> usize {
-        self.layout.size() / mem::size_of::<Option<V>>()
     }
 }
 

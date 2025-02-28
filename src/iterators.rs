@@ -83,7 +83,7 @@ impl<'a, V: Copy> IntoIterator for &'a Map<V> {
     }
 }
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Make an iterator over all items.
     ///
     /// # Panics

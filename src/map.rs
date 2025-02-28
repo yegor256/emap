@@ -4,7 +4,7 @@
 use crate::Map;
 use std::ptr;
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Is it empty?
     #[inline]
     #[must_use]

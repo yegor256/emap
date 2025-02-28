@@ -41,6 +41,7 @@ fn larger_map_can_be_cloned() {
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct Foo {
     _m: Map<u64>,
 }
