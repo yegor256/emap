@@ -1,7 +1,9 @@
-.idea/
-target/
+*.bak
 *.relf
 *.svg
+.DS_Store
+.idea/
 bin/
-*.bak
+node_modules/
+target/
 tmp/
