@@ -17,4 +17,4 @@ categories = ["data-structures", "memory-management"]
 serde = { version = "1.0.185", optional = true, default-features = false }
 
 [dev-dependencies]
-bincode = "1.3.3"
+bincode = "2.0.0"
