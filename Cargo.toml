@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
-# SPDX-License-Identifier: MIT
-
 [package]
 name = "emap"
 version = "0.0.0"
@@ -14,7 +11,7 @@ keywords = ["memory", "map"]
 categories = ["data-structures", "memory-management"]
 
 [dependencies]
-serde = { version = "1.0.185", optional = true, default-features = false }
+serde = { version = "1.0.200", optional = true, default-features = false }
 
 [dev-dependencies]
 bincode = "1.3.3"
