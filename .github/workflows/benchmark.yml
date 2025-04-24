@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - master
-    paths-ignore: [ 'README.md', '.github' ]
+    paths-ignore: ['README.md', '.github']
 jobs:
   benchmark:
     timeout-minutes: 15
