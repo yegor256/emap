@@ -56,7 +56,7 @@ impl<V> Map<V> {
         }
         m
     }
-
+    Добавить тесты на длину в map.rs!
     /// Return capacity.
     #[inline]
     #[must_use]
@@ -88,6 +88,29 @@ impl<V: Clone> Map<V> {
         m
     }
 }
+
+macro_rules! impl_with_capacity_some_sse {
+    ($type:ty) => {
+        impl Map<$type> {
+            pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
+                let mut m = Self::with_capacity(cap);
+                m.init_sse(value);
+                #[cfg(debug_assertions)]
+                {
+                    m.initialized = true;
+                }
+                m
+            }
+        }
+    };
+}
+
+impl_with_capacity_some_sse!(i8);
+impl_with_capacity_some_sse!(i16);
+impl_with_capacity_some_sse!(i32);
+impl_with_capacity_some_sse!(u8);
+impl_with_capacity_some_sse!(u16);
+impl_with_capacity_some_sse!(u32);
 
 #[test]
 fn calculates_size_of_memory() {
@@ -148,4 +171,60 @@ fn init_with_structs() {
 fn init_with_some() {
     let m: Map<Foo> = Map::with_capacity_some(16, Foo { t: 42 });
     assert_eq!(16, m.capacity());
+}
+
+#[test]
+fn init_with_some_sse() {
+    let m: Map<i32> = Map::<i32>::with_capacity_some_sse(16, 42_i32);
+    assert_eq!(*m.get(0).unwrap(), 42_i32);
+    assert_eq!(*m.get(3).unwrap(), 42_i32);
+    assert_eq!(16, m.capacity());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! test_sse_impl {
+        ($type:ty, $value:expr) => {
+            paste::item! {
+                #[test]
+                fn [<test_sse_aligned $type>]() {
+                    const SIZE: usize = 128;
+                    let m: Map<$type> = Map::<$type>::with_capacity_some_sse(SIZE, $value);
+
+                    for i in 0..SIZE {
+                        assert_eq!(*m.get(i).unwrap(), $value);
+                    }
+                }
+
+                #[test]
+                fn [<test_sse_not_aligned $type>]() {
+                    const SIZE: usize = 129;
+                    let m: Map<$type> = Map::<$type>::with_capacity_some_sse(SIZE, $value);
+
+                    for i in 0..SIZE {
+                        assert_eq!(*m.get(i).unwrap(), $value);
+                    }
+                }
+
+                #[test]
+                fn [<test_sse_single_value $type>]() {
+                    const SIZE: usize = 1;
+                    let m: Map<$type> = Map::<$type>::with_capacity_some_sse(SIZE, $value);
+
+                    for i in 0..SIZE {
+                        assert_eq!(*m.get(i).unwrap(), $value);
+                    }
+                }
+            }
+        };
+    }
+
+    test_sse_impl!(i8, 42_i8);
+    test_sse_impl!(i16, 1234_i16);
+    test_sse_impl!(i32, 0x11223344_i32);
+    test_sse_impl!(u8, 0xFF_u8);
+    test_sse_impl!(u16, 0xABCD_u16);
+    test_sse_impl!(u32, 0xDEADBEEF_u32);
 }
