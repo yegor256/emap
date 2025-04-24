@@ -50,7 +50,7 @@ impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
     }
 }
 
-impl<V: Copy> Iterator for IntoIter<V> {
+impl<V: Clone> Iterator for IntoIter<V> {
     type Item = (usize, V);
 
     #[inline]
@@ -61,7 +61,7 @@ impl<V: Copy> Iterator for IntoIter<V> {
             if let Some(v) = item {
                 let i = self.pos;
                 self.pos += 1;
-                return Some((i, *v));
+                return Some((i, v.clone()));
             }
             self.pos += 1;
         }
@@ -69,7 +69,7 @@ impl<V: Copy> Iterator for IntoIter<V> {
     }
 }
 
-impl<V: Copy> IntoIterator for &Map<V> {
+impl<V: Clone> IntoIterator for &Map<V> {
     type Item = (usize, V);
     type IntoIter = IntoIter<V>;
 
@@ -83,7 +83,7 @@ impl<V: Copy> IntoIterator for &Map<V> {
     }
 }
 
-impl<V> Map<V> {
+impl<V: Clone> Map<V> {
     /// Make an iterator over all items.
     ///
     /// # Panics
