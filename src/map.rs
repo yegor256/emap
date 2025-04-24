@@ -44,7 +44,7 @@ impl<V> Map<V> {
     #[allow(clippy::missing_const_for_fn)]
     pub fn contains_key(&self, k: usize) -> bool {
         self.assert_boundaries(k);
-        matches!(unsafe { &*self.head.add(k) }, Some(_))
+        unsafe { &*self.head.add(k) }.is_some()
     }
 
     /// Remove by key.
@@ -122,7 +122,7 @@ impl<V> Map<V> {
 
     /// Remove all items from it, but keep the space intact for future use.
     #[inline]
-    pub fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.max = 0;
     }
 

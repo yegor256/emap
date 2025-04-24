@@ -69,7 +69,7 @@ impl<V: Copy> Iterator for IntoIter<V> {
     }
 }
 
-impl<'a, V: Copy> IntoIterator for &'a Map<V> {
+impl<V: Copy> IntoIterator for &Map<V> {
     type Item = (usize, V);
     type IntoIter = IntoIter<V>;
 
