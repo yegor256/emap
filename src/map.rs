@@ -122,7 +122,7 @@ impl<V> Map<V> {
 
     /// Remove all items from it, but keep the space intact for future use.
     #[inline]
-    pub const fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.max = 0;
     }
 
