@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-License-Identifier: MIT
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use emap::Map;
 
