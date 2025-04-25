@@ -97,7 +97,7 @@ macro_rules! impl_with_capacity_some_sse {
             ///
             /// This method is implemented for primitive types and allows you to
             /// use sse2 vector registers for filling. It works faster than
-            /// `with_capacity_some'.
+            /// `with_capacity_some`.
             ///
             /// # Panics
             ///
@@ -211,7 +211,7 @@ macro_rules! test_sse_impl {
         paste::item! {
             #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
             #[test]
-            fn [<test_sse_aligned $type>]() {
+            fn [<test_sse_ $type>]() {
                 let sizes: [usize; 8] = [1, 2, 3, 4, 5, 13, 16, 25];
                 for size in sizes {
                     let m: Map<$type> = Map::<$type>::with_capacity_some_sse(size, $value);

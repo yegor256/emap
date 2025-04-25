@@ -4,7 +4,7 @@ use emap::Map;
 macro_rules! bench_capacity_some {
     ($c:expr, $type:ty, $default_value:expr, $name:expr) => {
         let mut group = $c.benchmark_group(format!("Map_{}", $name));
-        
+
         for el in [10, 100, 1000, 10_000, 25_000, 50_000, 75_000, 100_000].iter() {
             group.bench_with_input(BenchmarkId::new("std", el), el, |b, el| {
                 b.iter(|| {
@@ -14,7 +14,7 @@ macro_rules! bench_capacity_some {
                     ));
                 })
             });
-            
+
             #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
             group.bench_with_input(BenchmarkId::new("sse", el), el, |b, el| {
                 b.iter(|| {
@@ -25,7 +25,7 @@ macro_rules! bench_capacity_some {
                 })
             });
         }
-        
+
         group.finish();
     };
 }
