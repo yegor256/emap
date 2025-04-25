@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::Map;
-use std::arch::x86_64::*;
+use std::arch::x86_64::{__m128i, _mm_storeu_si128};
 use std::ptr;
 
 impl<V> Map<V> {
@@ -160,55 +160,54 @@ impl<V> Map<V> {
     }
 }
 
-
+#[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 macro_rules! impl_sse_for_int {
-    ($type:ty, $set1:ident, $lanes:expr) => {
+    ($type:ty, $lanes:expr) => {
         impl Map<$type> {
             pub fn init_sse(&mut self, value: $type) {
-                #[repr(C)]
+                #[repr(C, align(16))]
                 union OptionPair {
                     opts: [Option<$type>; $lanes],
-                    bytes: [u8; 16],
+                    simd: __m128i,
                 }
 
-                // Создаем массив Option для заполнения 16-байтного регистра
                 let option_pair = OptionPair {
                     opts: [Some(value); $lanes],
                 };
 
-                // Безопасно загружаем в SSE-регистр
-                let sse_value = unsafe {
-                    _mm_loadu_si128(option_pair.bytes.as_ptr() as *const __m128i)
-                };
+                let sse_value = unsafe { option_pair.simd };
 
                 let sse_chunks = self.capacity() / $lanes;
                 let remainder_start = sse_chunks * $lanes;
 
-                unsafe {
-                    // Обрабатываем основную часть массива с SSE
-                    for i in 0..sse_chunks {
-                        let offset = i * $lanes;
-                        let ptr = self.head.add(offset) as *mut __m128i;
+                for i in 0..sse_chunks {
+                    let offset = i * $lanes;
+                    unsafe {
+                        let raw_ptr = self.head.add(offset);
+                        #[allow(clippy::cast_ptr_alignment)]
+                        // because _mm_storeu_si128 uses unaligned memory
+                        let ptr = raw_ptr.cast::<__m128i>();
                         _mm_storeu_si128(ptr, sse_value);
                     }
+                }
 
-                    // Обрабатываем остаток обычным способом
-                    for i in remainder_start..self.capacity() {
+                for i in remainder_start..self.capacity() {
+                    unsafe {
                         ptr::write(self.head.add(i), Some(value));
                     }
                 }
+                self.max = self.capacity();
             }
         }
     };
 }
 
-// Реализации для всех целочисленных типов
-impl_sse_for_int!(i8, _mm_set1_epi8, 8);   // 8 элементов i8
-impl_sse_for_int!(i16, _mm_set1_epi16, 4);  // 4 элементов i16
-impl_sse_for_int!(i32, _mm_set1_epi32, 2);  // 2 элемента i32
-impl_sse_for_int!(u8, _mm_set1_epi8, 8);   // 8 элементов u8
-impl_sse_for_int!(u16, _mm_set1_epi16, 4);  // 4 элементов u16
-impl_sse_for_int!(u32, _mm_set1_epi32, 2);  // 2 элемента u32
+impl_sse_for_int!(i8, 8);
+impl_sse_for_int!(i16, 4);
+impl_sse_for_int!(i32, 2);
+impl_sse_for_int!(u8, 8);
+impl_sse_for_int!(u16, 4);
+impl_sse_for_int!(u32, 2);
 
 #[test]
 fn insert_and_check_length() {
