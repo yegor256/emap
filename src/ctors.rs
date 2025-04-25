@@ -93,6 +93,15 @@ macro_rules! impl_with_capacity_some_sse {
     ($type:ty) => {
         #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
         impl Map<$type> {
+            /// Make it and prepare all keys with some value set using sse.
+            ///
+            /// This method is implemented for primitive types and allows you to
+            /// use sse2 vector registers for filling. It works faster than
+            /// `with_capacity_some'.
+            ///
+            /// # Panics
+            ///
+            /// May panic if out of memory.
             #[inline]
             #[must_use]
             pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
@@ -182,6 +191,18 @@ fn init_with_structs() {
 fn init_with_some() {
     let m: Map<Foo> = Map::with_capacity_some(16, Foo { t: 42 });
     assert_eq!(16, m.capacity());
+}
+
+#[test]
+fn init_with_some_sse_neg() {
+    let value = -13131_i32;
+    let size = 127;
+    let m: Map<i32> = Map::<i32>::with_capacity_some_sse(size, value);
+
+    for i in 0..size {
+        assert_eq!(*m.get(i).unwrap(), value);
+    }
+    assert_eq!(m.len(), size);
 }
 
 #[cfg(test)]
