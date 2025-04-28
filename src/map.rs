@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::Map;
+use std::arch::x86_64::{__m128i, _mm_storeu_si128};
 use std::ptr;
 
 impl<V> Map<V> {
@@ -158,6 +159,55 @@ impl<V> Map<V> {
         );
     }
 }
+
+#[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
+macro_rules! impl_sse_for_int {
+    ($type:ty, $lanes:expr) => {
+        impl Map<$type> {
+            pub fn init_sse(&mut self, value: $type) {
+                #[repr(C, align(16))]
+                union OptionPair {
+                    opts: [Option<$type>; $lanes],
+                    simd: __m128i,
+                }
+
+                let option_pair = OptionPair {
+                    opts: [Some(value); $lanes],
+                };
+
+                let sse_value = unsafe { option_pair.simd };
+
+                let sse_chunks = self.capacity() / $lanes;
+                let remainder_start = sse_chunks * $lanes;
+
+                for i in 0..sse_chunks {
+                    let offset = i * $lanes;
+                    unsafe {
+                        let raw_ptr = self.head.add(offset);
+                        #[allow(clippy::cast_ptr_alignment)]
+                        // because _mm_storeu_si128 uses unaligned memory
+                        let ptr = raw_ptr.cast::<__m128i>();
+                        _mm_storeu_si128(ptr, sse_value);
+                    }
+                }
+
+                for i in remainder_start..self.capacity() {
+                    unsafe {
+                        ptr::write(self.head.add(i), Some(value));
+                    }
+                }
+                self.max = self.capacity();
+            }
+        }
+    };
+}
+
+impl_sse_for_int!(i8, 8);
+impl_sse_for_int!(i16, 4);
+impl_sse_for_int!(i32, 2);
+impl_sse_for_int!(u8, 8);
+impl_sse_for_int!(u16, 4);
+impl_sse_for_int!(u32, 2);
 
 #[test]
 fn insert_and_check_length() {
