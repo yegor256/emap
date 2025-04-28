@@ -24,3 +24,13 @@ criterion = { version = "0.5", features = ["html_reports"] }
 [[bench]]
 name = "with_capacity"
 harness = false
+
+[[bench]]
+name = "insert_bench"
+harness = false
+path = "benches/insert.rs"
+
+[[bench]]
+name = "remove_bench"
+harness = false
+path = "benches/remove.rs"
