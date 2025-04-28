@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
+use crate::func::calc_capacity_ub;
 use crate::Map;
 use std::alloc::{alloc, dealloc, Layout};
-use std::mem;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
@@ -22,11 +22,44 @@ impl<V> Map<V> {
     #[inline]
     #[must_use]
     pub fn with_capacity(cap: usize) -> Self {
+        let size = cap;
+
         unsafe {
             let layout = Layout::array::<Option<V>>(cap).unwrap();
             let ptr = alloc(layout);
+
             Self {
                 max: 0,
+                size,
+                layout,
+                head: ptr.cast(),
+                #[cfg(debug_assertions)]
+                initialized: false,
+            }
+        }
+    }
+
+    /// Make it, while allocating memory with alignment alignment
+    /// and a size not less than necessary, but at the same time
+    /// a multiple of `reg_size`
+    ///
+    /// # Panics
+    ///
+    /// May panic if out of memory.
+    fn with_capacity_align(size: usize, align: usize, reg_size: usize) -> Self {
+        // align must be power of two
+        assert!(align != 0 && align.is_power_of_two());
+
+        let align = align.max(std::mem::align_of::<Option<V>>());
+        let cap = calc_capacity_ub(std::mem::size_of::<Option<V>>() * size, reg_size);
+
+        unsafe {
+            let layout = Layout::from_size_align(cap, align).unwrap();
+            let ptr = alloc(layout);
+            assert!(ptr as usize % align == 0);
+            Self {
+                max: 0,
+                size,
                 layout,
                 head: ptr.cast(),
                 #[cfg(debug_assertions)]
@@ -61,7 +94,7 @@ impl<V> Map<V> {
     #[inline]
     #[must_use]
     pub const fn capacity(&self) -> usize {
-        self.layout.size() / mem::size_of::<Option<V>>()
+        self.size
     }
 }
 
@@ -105,7 +138,7 @@ macro_rules! impl_with_capacity_some_sse {
             #[inline]
             #[must_use]
             pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
-                let mut m = Self::with_capacity(cap);
+                let mut m = Self::with_capacity_align(cap, 16, 16);
                 m.init_sse(value);
                 #[cfg(debug_assertions)]
                 {
@@ -203,6 +236,7 @@ fn init_with_some_sse_neg() {
         assert_eq!(*m.get(i).unwrap(), value);
     }
     assert_eq!(m.len(), size);
+    assert_eq!(m.capacity(), size);
 }
 
 #[cfg(test)]
@@ -220,6 +254,7 @@ macro_rules! test_sse_impl {
                         assert_eq!(*m.get(i).unwrap(), $value);
                     }
                     assert_eq!(m.len(), size);
+                    assert_eq!(m.capacity(), size);
                 }
             }
         }

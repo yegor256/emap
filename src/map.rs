@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::Map;
-use std::arch::x86_64::{__m128i, _mm_storeu_si128};
+use std::arch::x86_64::{__m128i, _mm_store_si128};
 use std::ptr;
 
 impl<V> Map<V> {
@@ -187,7 +187,7 @@ macro_rules! impl_sse_for_int {
                         #[allow(clippy::cast_ptr_alignment)]
                         // because _mm_storeu_si128 uses unaligned memory
                         let ptr = raw_ptr.cast::<__m128i>();
-                        _mm_storeu_si128(ptr, sse_value);
+                        _mm_store_si128(ptr, sse_value);
                     }
                 }
 

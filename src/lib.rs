@@ -26,6 +26,7 @@
 mod clone;
 mod ctors;
 mod debug;
+mod func;
 mod index;
 mod iterators;
 mod keys;
@@ -41,6 +42,7 @@ use std::marker::PhantomData;
 /// A map with a fixed capacity and `usize` as keys.
 pub struct Map<V> {
     max: usize,
+    size: usize,
     head: *mut Option<V>,
     layout: Layout,
     #[cfg(debug_assertions)]
