@@ -49,10 +49,8 @@ impl<V> Map<V> {
     fn with_capacity_align(size: usize, align: usize, reg_size: usize) -> Self {
         // align must be power of two
         assert!(align != 0 && align.is_power_of_two());
-
         let align = align.max(std::mem::align_of::<Option<V>>());
         let cap = calc_capacity_ub(std::mem::size_of::<Option<V>>() * size, reg_size);
-
         unsafe {
             let layout = Layout::from_size_align(cap, align).unwrap();
             let ptr = alloc(layout);
