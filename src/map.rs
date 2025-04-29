@@ -186,7 +186,6 @@ macro_rules! impl_sse_for_int {
                     unsafe {
                         let raw_ptr = self.head.add(offset);
                         #[allow(clippy::cast_ptr_alignment)]
-                        // because _mm_storeu_si128 uses unaligned memory
                         let ptr = raw_ptr.cast::<__m128i>();
                         _mm_store_si128(ptr, sse_value);
                     }
