@@ -3,6 +3,7 @@
 
 use crate::Map;
 use std::arch::x86_64::{__m128i, _mm_store_si128};
+use std::mem;
 use std::ptr;
 
 impl<V> Map<V> {
@@ -177,9 +178,9 @@ macro_rules! impl_sse_for_int {
 
                 let sse_value = unsafe { option_pair.simd };
 
-                let sse_chunks = self.capacity() / $lanes;
-                let remainder_start = sse_chunks * $lanes;
-
+                let layout_capacity = self.layout.size() / mem::size_of::<Option<$type>>();
+                let sse_chunks = layout_capacity / $lanes;
+                assert_eq!(layout_capacity % $lanes, 0);
                 for i in 0..sse_chunks {
                     let offset = i * $lanes;
                     unsafe {
@@ -188,12 +189,6 @@ macro_rules! impl_sse_for_int {
                         // because _mm_storeu_si128 uses unaligned memory
                         let ptr = raw_ptr.cast::<__m128i>();
                         _mm_store_si128(ptr, sse_value);
-                    }
-                }
-
-                for i in remainder_start..self.capacity() {
-                    unsafe {
-                        ptr::write(self.head.add(i), Some(value));
                     }
                 }
                 self.max = self.capacity();
