@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::Map;
-use std::arch::x86_64::{__m128i, _mm_storeu_si128};
+use std::arch::x86_64::{__m128i, __m256i, _mm256_storeu_si256, _mm_storeu_si128};
 use std::ptr;
 
 impl<V> Map<V> {
@@ -160,34 +160,33 @@ impl<V> Map<V> {
     }
 }
 
-#[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 macro_rules! impl_sse_for_int {
-    ($type:ty, $lanes:expr) => {
+    ($type:ty, $lanes:expr, $reg_type: ty, $store_inst:expr) => {
         impl Map<$type> {
             pub fn init_sse(&mut self, value: $type) {
                 #[repr(C, align(16))]
                 union OptionPair {
                     opts: [Option<$type>; $lanes],
-                    simd: __m128i,
+                    simd: $reg_type,
                 }
 
                 let option_pair = OptionPair {
                     opts: [Some(value); $lanes],
                 };
 
-                let sse_value = unsafe { option_pair.simd };
+                let vec_value = unsafe { option_pair.simd };
 
-                let sse_chunks = self.capacity() / $lanes;
-                let remainder_start = sse_chunks * $lanes;
+                let chunks = self.capacity() / $lanes;
+                let remainder_start = chunks * $lanes;
 
-                for i in 0..sse_chunks {
+                for i in 0..chunks {
                     let offset = i * $lanes;
                     unsafe {
                         let raw_ptr = self.head.add(offset);
                         #[allow(clippy::cast_ptr_alignment)]
-                        // because _mm_storeu_si128 uses unaligned memory
-                        let ptr = raw_ptr.cast::<__m128i>();
-                        _mm_storeu_si128(ptr, sse_value);
+                        // because reg uses unaligned memory
+                        let ptr = raw_ptr.cast::<$reg_type>();
+                        $store_inst(ptr, vec_value);
                     }
                 }
 
@@ -202,12 +201,64 @@ macro_rules! impl_sse_for_int {
     };
 }
 
-impl_sse_for_int!(i8, 8);
-impl_sse_for_int!(i16, 4);
-impl_sse_for_int!(i32, 2);
-impl_sse_for_int!(u8, 8);
-impl_sse_for_int!(u16, 4);
-impl_sse_for_int!(u32, 2);
+impl_sse_for_int!(i8, 8, __m128i, _mm_storeu_si128);
+impl_sse_for_int!(i16, 4, __m128i, _mm_storeu_si128);
+impl_sse_for_int!(i32, 2, __m128i, _mm_storeu_si128);
+impl_sse_for_int!(i64, 1, __m128i, _mm_storeu_si128);
+impl_sse_for_int!(u8, 8, __m128i, _mm_storeu_si128);
+impl_sse_for_int!(u16, 4, __m128i, _mm_storeu_si128);
+impl_sse_for_int!(u32, 2, __m128i, _mm_storeu_si128);
+impl_sse_for_int!(u64, 1, __m128i, _mm_storeu_si128);
+
+macro_rules! impl_avx_for_int {
+    ($type:ty, $lanes:expr, $reg_type: ty, $store_inst:expr) => {
+        impl Map<$type> {
+            pub fn init_avx(&mut self, value: $type) {
+                #[repr(C, align(32))]
+                union OptionPair {
+                    opts: [Option<$type>; $lanes],
+                    simd: $reg_type,
+                }
+
+                let option_pair = OptionPair {
+                    opts: [Some(value); $lanes],
+                };
+
+                let vec_value = unsafe { option_pair.simd };
+
+                let chunks = self.capacity() / $lanes;
+                let remainder_start = chunks * $lanes;
+
+                for i in 0..chunks {
+                    let offset = i * $lanes;
+                    unsafe {
+                        let raw_ptr = self.head.add(offset);
+                        #[allow(clippy::cast_ptr_alignment)]
+                        // because reg uses unaligned memory
+                        let ptr = raw_ptr.cast::<$reg_type>();
+                        $store_inst(ptr, vec_value);
+                    }
+                }
+
+                for i in remainder_start..self.capacity() {
+                    unsafe {
+                        ptr::write(self.head.add(i), Some(value));
+                    }
+                }
+                self.max = self.capacity();
+            }
+        }
+    };
+}
+
+impl_avx_for_int!(i8, 16, __m256i, _mm256_storeu_si256);
+impl_avx_for_int!(i16, 8, __m256i, _mm256_storeu_si256);
+impl_avx_for_int!(i32, 4, __m256i, _mm256_storeu_si256);
+impl_avx_for_int!(i64, 2, __m256i, _mm256_storeu_si256);
+impl_avx_for_int!(u8, 16, __m256i, _mm256_storeu_si256);
+impl_avx_for_int!(u16, 8, __m256i, _mm256_storeu_si256);
+impl_avx_for_int!(u32, 4, __m256i, _mm256_storeu_si256);
+impl_avx_for_int!(u64, 2, __m256i, _mm256_storeu_si256);
 
 #[test]
 fn insert_and_check_length() {
@@ -346,3 +397,128 @@ fn remove_out_of_boundary() {
     let mut m: Map<&str> = Map::with_capacity(1);
     m.remove(5);
 }
+
+#[cfg(test)]
+#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+macro_rules! test_sse_impl {
+    ($type:ty, $value:expr) => {
+        paste::item! {
+            #[test]
+            fn [<test_sse_ $type>]() {
+                let sizes: [usize; 10] = [1, 2, 3, 4, 5, 13, 16, 25, 64, 67];
+                for size in sizes {
+                    let mut m: Map<$type> = Map::<$type>::with_capacity(size);
+                    m.init_sse($value);
+                    #[cfg(debug_assertions)]
+                    {
+                        m.initialized = true;
+                    }
+
+                    for i in 0..size {
+                        assert_eq!(*m.get(i).unwrap(), $value);
+                    }
+                    assert_eq!(m.len(), size);
+                    assert_eq!(m.capacity(), size);
+                }
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+test_sse_impl!(i8, 42_i8);
+#[cfg(test)]
+#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+test_sse_impl!(i16, 1234_i16);
+#[cfg(test)]
+#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+test_sse_impl!(i32, 0x11223344_i32);
+#[cfg(test)]
+#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+test_sse_impl!(u8, 0xFF_u8);
+#[cfg(test)]
+#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+test_sse_impl!(u16, 0xABCD_u16);
+#[cfg(test)]
+#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+test_sse_impl!(u32, 0xDEADBEEF_u32);
+
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+macro_rules! test_avx_impl {
+    ($type:ty, $value:expr) => {
+        paste::item! {
+            #[test]
+            fn [<test_avx_ $type>]() {
+                let sizes: [usize; 10] = [1, 2, 3, 4, 5, 13, 16, 25, 64, 67];
+                for size in sizes {
+                    let mut m: Map<$type> = Map::<$type>::with_capacity(size);
+                    m.init_avx($value);
+                    #[cfg(debug_assertions)]
+                    {
+                        m.initialized = true;
+                    }
+
+                    for i in 0..size {
+                        assert_eq!(*m.get(i).unwrap(), $value);
+                    }
+                    assert_eq!(m.len(), size);
+                    assert_eq!(m.capacity(), size);
+                }
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+test_avx_impl!(i8, 42_i8);
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+test_avx_impl!(i16, 1234_i16);
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+test_avx_impl!(i32, 0x11223344_i32);
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+test_avx_impl!(i64, 0x1122334455667788_i64);
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+test_avx_impl!(u8, 0xFF_u8);
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+test_avx_impl!(u16, 0xABCD_u16);
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+test_avx_impl!(u32, 0xDEADBEEF_u32);
+#[cfg(test)]
+#[cfg(all(
+    target_arch = "x86_64",
+    any(target_feature = "avx", target_feature = "avx2")
+))]
+test_avx_impl!(u64, 0xDEADBEEFCAFEBABE_u64);

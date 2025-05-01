@@ -18,10 +18,18 @@ macro_rules! bench_capacity_some {
                 })
             });
 
-            #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
             group.bench_with_input(BenchmarkId::new("sse", el), el, |b, el| {
                 b.iter(|| {
                     black_box(Map::<$type>::with_capacity_some_sse(
+                        black_box(*el),
+                        black_box($default_value),
+                    ));
+                })
+            });
+
+            group.bench_with_input(BenchmarkId::new("avx", el), el, |b, el| {
+                b.iter(|| {
+                    black_box(Map::<$type>::with_capacity_some_avx(
                         black_box(*el),
                         black_box($default_value),
                     ));
@@ -57,12 +65,20 @@ fn bench_u32(c: &mut Criterion) {
     bench_capacity_some!(c, u32, 0xDEADBEEF_u32, "u32");
 }
 
+fn bench_i64(c: &mut Criterion) {
+    bench_capacity_some!(c, i64, 0xDEADBEEF_i64, "i64");
+}
+
+fn bench_u64(c: &mut Criterion) {
+    bench_capacity_some!(c, u64, 0xDEADBEEF_u64, "u64");
+}
+
 criterion_group! {
     name = benches;
     config = Criterion::default()
         .warm_up_time(std::time::Duration::from_millis(500))
         .measurement_time(std::time::Duration::from_secs(2))
         .sample_size(20);
-    targets = bench_i8, bench_i16, bench_i32, bench_u8, bench_u16, bench_u32
+    targets = bench_i8, bench_i16, bench_i32, bench_i64, bench_u8, bench_u16, bench_u32, bench_u64
 }
 criterion_main!(benches);

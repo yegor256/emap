@@ -92,6 +92,17 @@ fn insert_and_jump_over_next() {
 }
 
 #[test]
+fn insert_and_not_seq() {
+    let mut m: Map<&str> = Map::with_capacity_none(16);
+    m.insert(0, "foo");
+    m.insert(12, "bar");
+    let mut values = m.into_values();
+    assert_eq!("foo", values.next().unwrap());
+    assert_eq!("bar", values.next().unwrap());
+    assert!(values.next().is_none());
+}
+
+#[test]
 fn count_them_all() {
     let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "one");

@@ -99,6 +99,8 @@ macro_rules! impl_with_capacity_some_sse {
             /// use sse2 vector registers for filling. It works faster than
             /// `with_capacity_some`.
             ///
+            /// Supported types: `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`.
+            ///
             /// # Panics
             ///
             /// May panic if out of memory.
@@ -106,20 +108,18 @@ macro_rules! impl_with_capacity_some_sse {
             #[must_use]
             pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
                 let mut m = Self::with_capacity(cap);
-                m.init_sse(value);
+                if is_x86_feature_detected!("sse2") {
+                    m.init_sse(value);
+                } else {
+                    for k in 0..cap {
+                        m.insert(k, value.clone());
+                    }
+                }
                 #[cfg(debug_assertions)]
                 {
                     m.initialized = true;
                 }
                 m
-            }
-        }
-
-        #[cfg(not(all(target_arch = "x86_64", target_feature = "sse2")))]
-        impl Map<$type> {
-            pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
-                log::warn!("SSE2 not available, using fallback");
-                Self::with_capacity_some(cap, value)
             }
         }
     };
@@ -128,9 +128,56 @@ macro_rules! impl_with_capacity_some_sse {
 impl_with_capacity_some_sse!(i8);
 impl_with_capacity_some_sse!(i16);
 impl_with_capacity_some_sse!(i32);
+impl_with_capacity_some_sse!(i64);
 impl_with_capacity_some_sse!(u8);
 impl_with_capacity_some_sse!(u16);
 impl_with_capacity_some_sse!(u32);
+impl_with_capacity_some_sse!(u64);
+
+macro_rules! impl_with_capacity_some_avx {
+    ($type:ty) => {
+        impl Map<$type> {
+            /// Make it and prepare all keys with some value set using avx/avx2 registers.
+            ///
+            /// This method is implemented for primitive types and allows you to
+            /// use avx/avx2 vector registers for filling. It works faster than
+            /// `with_capacity_some`. Please note that performance may vary on
+            /// different systems.
+            ///
+            /// Supported types: `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`.
+            ///
+            /// # Panics
+            ///
+            /// May panic if out of memory.
+            #[inline]
+            #[must_use]
+            pub fn with_capacity_some_avx(cap: usize, value: $type) -> Self {
+                let mut m = Self::with_capacity(cap);
+                if is_x86_feature_detected!("avx2") || is_x86_feature_detected!("avx") {
+                    m.init_avx(value);
+                } else {
+                    for k in 0..cap {
+                        m.insert(k, value.clone());
+                    }
+                }
+                #[cfg(debug_assertions)]
+                {
+                    m.initialized = true;
+                }
+                m
+            }
+        }
+    };
+}
+
+impl_with_capacity_some_avx!(i8);
+impl_with_capacity_some_avx!(i16);
+impl_with_capacity_some_avx!(i32);
+impl_with_capacity_some_avx!(i64);
+impl_with_capacity_some_avx!(u8);
+impl_with_capacity_some_avx!(u16);
+impl_with_capacity_some_avx!(u32);
+impl_with_capacity_some_avx!(u64);
 
 #[test]
 fn calculates_size_of_memory() {
@@ -194,6 +241,19 @@ fn init_with_some() {
 }
 
 #[test]
+fn init_with_some_sse() {
+    let value = 13131_i32;
+    let size = 127;
+    let m: Map<i32> = Map::<i32>::with_capacity_some_sse(size, value);
+
+    for i in 0..size {
+        assert_eq!(*m.get(i).unwrap(), value);
+    }
+    assert_eq!(m.len(), size);
+    assert_eq!(m.capacity(), size);
+}
+
+#[test]
 fn init_with_some_sse_neg() {
     let value = -13131_i32;
     let size = 127;
@@ -203,38 +263,31 @@ fn init_with_some_sse_neg() {
         assert_eq!(*m.get(i).unwrap(), value);
     }
     assert_eq!(m.len(), size);
+    assert_eq!(m.capacity(), size);
 }
 
-#[cfg(test)]
-macro_rules! test_sse_impl {
-    ($type:ty, $value:expr) => {
-        paste::item! {
-            #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
-            #[test]
-            fn [<test_sse_ $type>]() {
-                let sizes: [usize; 8] = [1, 2, 3, 4, 5, 13, 16, 25];
-                for size in sizes {
-                    let m: Map<$type> = Map::<$type>::with_capacity_some_sse(size, $value);
+#[test]
+fn init_with_some_avx() {
+    let value = 13131_i32;
+    let size = 127;
+    let m: Map<i32> = Map::<i32>::with_capacity_some_avx(size, value);
 
-                    for i in 0..size {
-                        assert_eq!(*m.get(i).unwrap(), $value);
-                    }
-                    assert_eq!(m.len(), size);
-                }
-            }
-        }
-    };
+    for i in 0..size {
+        assert_eq!(*m.get(i).unwrap(), value);
+    }
+    assert_eq!(m.len(), size);
+    assert_eq!(m.capacity(), size);
 }
 
-#[cfg(test)]
-test_sse_impl!(i8, 42_i8);
-#[cfg(test)]
-test_sse_impl!(i16, 1234_i16);
-#[cfg(test)]
-test_sse_impl!(i32, 0x11223344_i32);
-#[cfg(test)]
-test_sse_impl!(u8, 0xFF_u8);
-#[cfg(test)]
-test_sse_impl!(u16, 0xABCD_u16);
-#[cfg(test)]
-test_sse_impl!(u32, 0xDEADBEEF_u32);
+#[test]
+fn init_with_some_avx_neg() {
+    let value = -13131_i32;
+    let size = 127;
+    let m: Map<i32> = Map::<i32>::with_capacity_some_avx(size, value);
+
+    for i in 0..size {
+        assert_eq!(*m.get(i).unwrap(), value);
+    }
+    assert_eq!(m.len(), size);
+    assert_eq!(m.capacity(), size);
+}
