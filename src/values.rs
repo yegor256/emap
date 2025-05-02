@@ -5,20 +5,21 @@ use crate::Map;
 use crate::{IntoValues, Values};
 use std::marker::PhantomData;
 
-impl<'a, V: Clone + 'a> Iterator for Values<'a, V> {
+impl<'a, V: 'a> Iterator for Values<'a, V> {
     type Item = &'a V;
 
     #[inline]
-    #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.max {
-            let opt = unsafe { &*self.head.add(self.pos) };
-            self.pos += 1;
-            if opt.is_some() {
-                return opt.as_ref();
+        unsafe {
+            while self.current < self.end {
+                let opt = &*self.current;
+                self.current = self.current.add(1);
+                if let Some(value) = opt {
+                    return Some(value);
+                }
             }
+            None
         }
-        None
     }
 }
 
@@ -26,7 +27,6 @@ impl<V: Copy> Iterator for IntoValues<V> {
     type Item = V;
 
     #[inline]
-    #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let opt = unsafe { &*self.head.add(self.pos) };
@@ -51,9 +51,8 @@ impl<V> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't values() non-initialized Map");
         Values {
-            max: self.max,
-            pos: 0,
-            head: self.head,
+            current: self.head,
+            end: unsafe { self.head.add(self.max) },
             _marker: PhantomData,
         }
     }

@@ -70,11 +70,9 @@ pub struct IntoIter<V> {
     head: *mut Option<V>,
 }
 
-/// Iterator over the values of a [`Map`].
 pub struct Values<'a, V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: *const Option<V>,
+    end: *const Option<V>,
     _marker: PhantomData<&'a V>,
 }
 
@@ -87,9 +85,9 @@ pub struct IntoValues<V> {
 
 /// Iterator over the keys of a [`Map`].
 pub struct Keys<V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    start: *mut Option<V>,
+    current: *mut Option<V>,
+    end: *mut Option<V>,
 }
 
 #[cfg(test)]

@@ -16,7 +16,6 @@ impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     /// the item and `p` is a reference to the item. If there are no more items to iterate over, it returns
     /// `None`.
     #[inline]
-    #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let item = unsafe { &*self.head.add(self.pos) };
@@ -35,7 +34,6 @@ impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
     type Item = (usize, &'a mut V);
 
     #[inline]
-    #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let item = unsafe { &mut *self.head.add(self.pos) };
@@ -54,7 +52,6 @@ impl<V: Clone> Iterator for IntoIter<V> {
     type Item = (usize, V);
 
     #[inline]
-    #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
         while self.pos < self.max {
             let item = unsafe { &*self.head.add(self.pos) };

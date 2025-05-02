@@ -3,24 +3,24 @@
 
 use crate::Keys;
 use crate::Map;
-use std::ptr;
+use std::mem;
 
 impl<V> Iterator for Keys<V> {
     type Item = usize;
 
-    #[inline]
-    #[must_use]
-    fn next(&mut self) -> Option<usize> {
-        while self.pos < self.max {
-            let opt = unsafe { ptr::read(self.head.add(self.pos)) };
-            if opt.is_some() {
-                let k = self.pos;
-                self.pos += 1;
-                return Some(k);
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe {
+            while self.current < self.end {
+                let opt = &*self.current;
+                if opt.is_some() {
+                    let pos = (self.current as usize - self.start as usize) / mem::size_of::<V>();
+                    self.current = self.current.add(1);
+                    return Some(pos);
+                }
+                self.current = self.current.add(1);
             }
-            self.pos += 1;
+            None
         }
-        None
     }
 }
 
@@ -36,9 +36,9 @@ impl<V> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't keys() non-initialized Map");
         Keys {
-            max: self.max,
-            pos: 0,
-            head: self.head,
+            start: self.head,
+            current: self.head,
+            end: unsafe { self.head.add(self.max) },
         }
     }
 }

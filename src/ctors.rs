@@ -78,14 +78,31 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn with_capacity_some(cap: usize, v: V) -> Self {
         let mut m = Self::with_capacity(cap);
-        for k in 0..cap {
-            m.insert(k, v.clone());
-        }
+        m.init_with_some(cap, v);
         #[cfg(debug_assertions)]
         {
             m.initialized = true;
         }
         m
+    }
+
+    #[inline]
+    pub fn init_with_some(&mut self, cap: usize, v: V) {
+        let mut ptr = self.head;
+        // Write all elements except the last one
+        for _ in 1..cap {
+            unsafe {
+                std::ptr::write(ptr, Some(v.clone()));
+                ptr = ptr.add(1);
+            }
+        }
+        if cap > 0 {
+            unsafe {
+                // We can write the last element directly without cloning needlessly
+                std::ptr::write(ptr, Some(v));
+            }
+        }
+        self.max = cap;
     }
 }
 
@@ -191,6 +208,14 @@ fn init_with_structs() {
 fn init_with_some() {
     let m: Map<Foo> = Map::with_capacity_some(16, Foo { t: 42 });
     assert_eq!(16, m.capacity());
+    assert_eq!(16, m.len());
+}
+
+#[test]
+fn init_with_empty() {
+    let m: Map<Foo> = Map::with_capacity_some(0, Foo { t: 42 });
+    assert_eq!(0, m.capacity());
+    assert_eq!(0, m.len());
 }
 
 #[test]
