@@ -106,49 +106,6 @@ impl<V: Clone> Map<V> {
     }
 }
 
-macro_rules! impl_with_capacity_some_sse {
-    ($type:ty) => {
-        #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
-        impl Map<$type> {
-            /// Make it and prepare all keys with some value set using sse.
-            ///
-            /// This method is implemented for primitive types and allows you to
-            /// use sse2 vector registers for filling. It works faster than
-            /// `with_capacity_some`.
-            ///
-            /// # Panics
-            ///
-            /// May panic if out of memory.
-            #[inline]
-            #[must_use]
-            pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
-                let mut m = Self::with_capacity(cap);
-                m.init_sse(value);
-                #[cfg(debug_assertions)]
-                {
-                    m.initialized = true;
-                }
-                m
-            }
-        }
-
-        #[cfg(not(all(target_arch = "x86_64", target_feature = "sse2")))]
-        impl Map<$type> {
-            pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
-                log::warn!("SSE2 not available, using fallback");
-                Self::with_capacity_some(cap, value)
-            }
-        }
-    };
-}
-
-impl_with_capacity_some_sse!(i8);
-impl_with_capacity_some_sse!(i16);
-impl_with_capacity_some_sse!(i32);
-impl_with_capacity_some_sse!(u8);
-impl_with_capacity_some_sse!(u16);
-impl_with_capacity_some_sse!(u32);
-
 #[test]
 fn calculates_size_of_memory() {
     let m1: Map<u8> = Map::with_capacity_none(8);
@@ -217,49 +174,3 @@ fn init_with_empty() {
     assert_eq!(0, m.capacity());
     assert_eq!(0, m.len());
 }
-
-#[test]
-fn init_with_some_sse_neg() {
-    let value = -13131_i32;
-    let size = 127;
-    let m: Map<i32> = Map::<i32>::with_capacity_some_sse(size, value);
-
-    for i in 0..size {
-        assert_eq!(*m.get(i).unwrap(), value);
-    }
-    assert_eq!(m.len(), size);
-}
-
-#[cfg(test)]
-macro_rules! test_sse_impl {
-    ($type:ty, $value:expr) => {
-        paste::item! {
-            #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
-            #[test]
-            fn [<test_sse_ $type>]() {
-                let sizes: [usize; 8] = [1, 2, 3, 4, 5, 13, 16, 25];
-                for size in sizes {
-                    let m: Map<$type> = Map::<$type>::with_capacity_some_sse(size, $value);
-
-                    for i in 0..size {
-                        assert_eq!(*m.get(i).unwrap(), $value);
-                    }
-                    assert_eq!(m.len(), size);
-                }
-            }
-        }
-    };
-}
-
-#[cfg(test)]
-test_sse_impl!(i8, 42_i8);
-#[cfg(test)]
-test_sse_impl!(i16, 1234_i16);
-#[cfg(test)]
-test_sse_impl!(i32, 0x11223344_i32);
-#[cfg(test)]
-test_sse_impl!(u8, 0xFF_u8);
-#[cfg(test)]
-test_sse_impl!(u16, 0xABCD_u16);
-#[cfg(test)]
-test_sse_impl!(u32, 0xDEADBEEF_u32);

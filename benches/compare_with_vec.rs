@@ -25,15 +25,6 @@ fn compare_ctors(c: &mut Criterion) {
                 ));
             })
         });
-
-        group.bench_with_input(BenchmarkId::new("map_sse", size), size, |b, size| {
-            b.iter(|| {
-                black_box(Map::<i32>::with_capacity_some_sse(
-                    black_box(*size),
-                    black_box(42_i32),
-                ));
-            })
-        });
     }
 
     group.finish();
