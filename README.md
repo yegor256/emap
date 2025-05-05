@@ -81,11 +81,9 @@ Optimized for scenarios where:
 | Feature               | Benefit                                                                                            |
 | --------------------- | -------------------------------------------------------------------------------------------------- |
 | Fixed memory          | Single allocated block, zero reallocations                                                         |
-|                       |
 | Direct addressing     | Key is used as an index — no hashing or collisions                                                 |
 | Fragmentation control | Data is stored densely, no overhead for collision resolution                                       |
 | Faster iteration      | If keys are densely packed, iterators work faster by scanning keys from 0 to the maximum key value |
-|                       |
 
 
 ## Performance (Big-O)
