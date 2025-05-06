@@ -23,7 +23,6 @@ impl<V> Map<V> {
         assert!(self.initialized, "Can't do len() on non-initialized Map");
         let mut busy = 0;
         for i in 0..self.capacity() {
-            //  TODO: make it faster!
             if self.get(i).is_some() {
                 busy += 1;
             }
@@ -192,8 +191,7 @@ impl<V> Map<V> {
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
-        for i in 0..self.capacity() {
-            // TODO: make it faster
+        for i in self.keys() {
             if let Some(p) = self.get_mut(i) {
                 if !f(&i, p) {
                     self.remove(i);
