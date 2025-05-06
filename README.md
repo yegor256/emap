@@ -31,7 +31,7 @@ Optimized for scenarios where:
 
 | Feature               | Benefit                                                                                            |
 | --------------------- | -------------------------------------------------------------------------------------------------- |
-| Fixed memory          | Single allocated block, zero reallocations                                                         |
+| Fixed memory          | Zero reallocations                                                                                 |
 | Direct addressing     | Key is used as an index — no hashing or collisions                                                 |
 | Fragmentation control | Data is stored densely, no overhead for collision resolution                                       |
 | Faster iteration      | If keys are densely packed, iterators work faster by scanning keys from 0 to the maximum key value |
@@ -51,15 +51,12 @@ Optimized for scenarios where:
 ## When to Choose Emap?
 - Keys are `usize` and maximum performance is needed
 
-- `next_key()` is required for object pool management
-
-- Memory predictability is important (no-realloc)
-
-- Faster iterator performance is desired
 - Provides a `next_key` function to find the first available key for denser element placement
 
 - Faster iteration for densely packed elements (best case **O(M)**)
 
+- Predictable memory behavior is needed
+  
 ## Usage
 
 First, add this to `Cargo.toml`:
