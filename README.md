@@ -10,12 +10,15 @@
 
 The **emap** is the fastest possible associative array in Rust, with `usize` keys. 
 It's by the order of magnitude faster than the standard HashMap. 
+It's also faster than vec. 
+We also provide:
+- the `next_key()` method for **O(1)** retrieval of any available free key
+- iterators operate in **O(M)** time complexity, where *M* = number of elements in map
+
 However, the following restrictions apply:
 
 - you must know the total capacity upfront
-- you must pack objects densely for fast iterations
-
-for dense element packing, we recommend using the `next_key()` method to find the first available key.
+- you must account for a memory overhead of `2 * usize` per element
 
 ## Usage
 
