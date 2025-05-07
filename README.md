@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/emap/blob/master/LICENSE.txt)
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
-The [`emap::Map`][Map] is the fastest possible associative array in Rust,
+The [`emap::Map`][Map] is the fastest possible [associative array] in Rust,
   with `usize` keys.
 It's by the order of magnitude faster than the standard
   [`std::collections::HashMap`][HashMap].
@@ -102,3 +102,4 @@ a pull request.
 [HashMap]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
 [Vec]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 [benchmark]: https://github.com/yegor256/emap/blob/master/tests/benchmark.rs
+[associative array]: https://en.wikipedia.org/wiki/Associative_array
