@@ -8,16 +8,16 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/emap/blob/master/LICENSE.txt)
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
-[`emap::Map`][Map] is the fastest possible associative array in Rust,
+The [`emap::Map`][Map] is the fastest possible associative array in Rust,
   with `usize` keys.
 It's by the order of magnitude faster than the standard
   [`std::collections::HashMap`][HashMap].
 It's also faster than [`std::vec::Vec`][Vec].
 However, the following restrictions apply:
 
-- you must know the total capacity upfront
-- you must account for a memory overhead of `2 * usize` per element
-- you must use `next_key()` method, of _O(1)_, to find the next available key
+* you must know the total capacity upfront
+* you must account for a memory overhead of `2 * usize` per element
+* you must use `next_key()` method, of _O(1)_, to find the next available key
 
 ## Usage
 
