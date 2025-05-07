@@ -4,7 +4,6 @@
 [![crates.io](https://img.shields.io/crates/v/emap.svg)](https://crates.io/crates/emap)
 [![codecov](https://codecov.io/gh/yegor256/emap/branch/master/graph/badge.svg)](https://codecov.io/gh/yegor256/emap)
 [![Hits-of-Code](https://hitsofcode.com/github/yegor256/emap)](https://hitsofcode.com/view/github/yegor256/emap)
-![Lines of code](https://img.shields.io/tokei/lines/github/yegor256/emap)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/emap/blob/master/LICENSE.txt)
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
