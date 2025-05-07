@@ -8,7 +8,7 @@ const CAPACITY: usize = 65536;
 
 fn remove_benchmarks(c: &mut Criterion) {
     c.bench_function("remove_big_array", |b| {
-        let mut m: Map<[u8; 1024]> = Map::with_capacity(CAPACITY);
+        let mut m: Map<[u8; 1024]> = Map::with_capacity_none(CAPACITY);
         for i in 0..CAPACITY {
             m.insert(i, [0; 1024]);
         }
@@ -20,7 +20,7 @@ fn remove_benchmarks(c: &mut Criterion) {
     });
 
     c.bench_function("remove_bool", |b| {
-        let mut m: Map<bool> = Map::with_capacity(CAPACITY);
+        let mut m: Map<bool> = Map::with_capacity_none(CAPACITY);
         for i in 0..CAPACITY {
             m.insert(i, true);
         }
@@ -32,7 +32,7 @@ fn remove_benchmarks(c: &mut Criterion) {
     });
 
     c.bench_function("remove_eight_bytes", |b| {
-        let mut m: Map<u64> = Map::with_capacity(CAPACITY);
+        let mut m: Map<u64> = Map::with_capacity_none(CAPACITY);
         for i in 0..CAPACITY {
             m.insert(i, 42);
         }
@@ -44,7 +44,7 @@ fn remove_benchmarks(c: &mut Criterion) {
     });
 
     c.bench_function("remove_four_bytes", |b| {
-        let mut m: Map<u32> = Map::with_capacity(CAPACITY);
+        let mut m: Map<u32> = Map::with_capacity_none(CAPACITY);
         for i in 0..CAPACITY {
             m.insert(i, 42);
         }

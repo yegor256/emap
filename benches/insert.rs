@@ -8,7 +8,7 @@ const CAPACITY: usize = 65536;
 
 fn insert_long_str(c: &mut Criterion) {
     c.bench_function("insert_long_str", |b| {
-        let mut m: Map<&str> = Map::with_capacity(CAPACITY);
+        let mut m: Map<&str> = Map::with_capacity_none(CAPACITY);
         b.iter(|| {
             for i in 0..CAPACITY {
                 black_box(m.insert(i, black_box("Hello, world! How are you doing today?")));
@@ -19,7 +19,7 @@ fn insert_long_str(c: &mut Criterion) {
 
 fn insert_eight_bytes(c: &mut Criterion) {
     c.bench_function("insert_eight_bytes", |b| {
-        let mut m: Map<u64> = Map::with_capacity(CAPACITY);
+        let mut m: Map<u64> = Map::with_capacity_none(CAPACITY);
         b.iter(|| {
             for i in 0..CAPACITY {
                 black_box(m.insert(i, black_box(42)));

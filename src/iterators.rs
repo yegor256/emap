@@ -17,16 +17,14 @@ impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     /// `None`.
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.max {
-            let item = unsafe { &*self.head.add(self.pos) };
-            if let Some(p) = item {
-                let i = self.pos;
-                self.pos += 1;
-                return Some((i, p));
-            }
-            self.pos += 1;
+        if self.current.is_def() {
+            let node = unsafe { &*self.head.add(self.current.get()) };
+            let mut next = node.get_next();
+            std::mem::swap(&mut self.current, &mut next);
+            Some((next.get(), node.get().unwrap()))
+        } else {
+            None
         }
-        None
     }
 }
 
@@ -35,16 +33,14 @@ impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.max {
-            let item = unsafe { &mut *self.head.add(self.pos) };
-            if let Some(p) = item {
-                let i = self.pos;
-                self.pos += 1;
-                return Some((i, p));
-            }
-            self.pos += 1;
+        if self.current.is_def() {
+            let node = unsafe { &mut *self.head.add(self.current.get()) };
+            let mut next = node.get_next();
+            std::mem::swap(&mut self.current, &mut next);
+            Some((next.get(), node.get_mut().unwrap()))
+        } else {
+            None
         }
-        None
     }
 }
 
@@ -53,16 +49,14 @@ impl<V: Clone> Iterator for IntoIter<V> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.max {
-            let item = unsafe { &*self.head.add(self.pos) };
-            if let Some(v) = item {
-                let i = self.pos;
-                self.pos += 1;
-                return Some((i, v.clone()));
-            }
-            self.pos += 1;
+        if self.current.is_def() {
+            let node = unsafe { &mut *self.head.add(self.current.get()) };
+            let mut next = node.get_next();
+            std::mem::swap(&mut self.current, &mut next);
+            Some((next.get(), node.get().unwrap().clone()))
+        } else {
+            None
         }
-        None
     }
 }
 
@@ -73,8 +67,7 @@ impl<V: Clone> IntoIterator for &Map<V> {
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
-            max: self.max,
-            pos: 0,
+            current: self.first_used,
             head: self.head,
         }
     }
@@ -92,13 +85,11 @@ impl<V: Clone> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
         Iter {
-            max: self.max,
-            pos: 0,
+            current: self.first_used,
             head: self.head,
             _marker: PhantomData,
         }
     }
-
     /// Make a mutable iterator over all items.
     ///
     /// For example:
@@ -124,8 +115,7 @@ impl<V: Clone> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
         IterMut {
-            max: self.max,
-            pos: 0,
+            current: self.first_used,
             head: self.head,
             _marker: PhantomData,
         }
@@ -142,8 +132,7 @@ impl<V: Clone> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't into_iter() non-initialized Map");
         IntoIter {
-            max: self.max,
-            pos: 0,
+            current: self.first_used,
             head: self.head,
         }
     }

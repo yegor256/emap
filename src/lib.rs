@@ -31,17 +31,20 @@ mod iterators;
 mod keys;
 mod map;
 mod next_key;
+pub mod node;
 #[cfg(feature = "serde")]
 mod serialization;
 mod values;
 
+use crate::node::{Node, NodeId};
+
 use std::alloc::Layout;
 use std::marker::PhantomData;
-
 /// A map with a fixed capacity and `usize` as keys.
 pub struct Map<V> {
-    max: usize,
-    head: *mut Option<V>,
+    first_free: NodeId, // head of free list
+    first_used: NodeId, // head of elements list
+    head: *mut Node<V>,
     layout: Layout,
     #[cfg(debug_assertions)]
     initialized: bool,
@@ -49,45 +52,40 @@ pub struct Map<V> {
 
 /// Iterator over the [`Map`].
 pub struct Iter<'a, V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
     _marker: PhantomData<&'a V>,
 }
 
 /// Mutable iterator over the [`Map`].
 pub struct IterMut<'a, V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
     _marker: PhantomData<&'a V>,
 }
 
 /// Into-iterator over the [`Map`].
 pub struct IntoIter<V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
 }
 
 pub struct Values<'a, V> {
-    current: *const Option<V>,
-    end: *const Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
     _marker: PhantomData<&'a V>,
 }
 
 /// Into-iterator over the values of a [`Map`].
 pub struct IntoValues<V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
 }
 
 /// Iterator over the keys of a [`Map`].
 pub struct Keys<V> {
-    start: *mut Option<V>,
-    current: *mut Option<V>,
-    end: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
 }
 
 #[cfg(test)]

@@ -19,6 +19,7 @@ impl<V: Clone + Display> Debug for Map<V> {
         for (k, v) in self.iter() {
             parts.push(format!("{k}: {v}"));
         }
+        parts.sort_unstable();
         f.write_str(format!("{{{}}}", parts.join(", ").as_str()).as_str())
     }
 }
