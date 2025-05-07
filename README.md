@@ -14,9 +14,9 @@ It's by the order of magnitude faster than the standard
 It's also faster than [`std::vec::Vec`][Vec].
 However, the following restrictions apply:
 
-* you must know the total capacity upfront
-* you must account for a memory overhead of `2 * usize` per element
-* you must use `next_key()` method, of _O(1)_, to find the next available key
+1. you must know the total capacity upfront
+1. you must account for a memory overhead of `2 * usize` per element
+1. you must use `next_key()` method, of _O(1)_, to find the next available key
 
 First, add this to `Cargo.toml`:
 
