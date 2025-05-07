@@ -1,3 +1,5 @@
+# High-Performance Map Implementation for `usize` Keys with Fixed Capacity
+
 [![cargo](https://github.com/yegor256/emap/actions/workflows/cargo.yml/badge.svg)](https://github.com/yegor256/emap/actions/workflows/cargo.yml)
 [![crates.io](https://img.shields.io/crates/v/emap.svg)](https://crates.io/crates/emap)
 [![codecov](https://codecov.io/gh/yegor256/emap/branch/master/graph/badge.svg)](https://codecov.io/gh/yegor256/emap)
@@ -6,19 +8,16 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/emap/blob/master/LICENSE.txt)
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
-# Emap: High-Performance Map Implementation for `usize` Keys with Fixed Capacity
-
-The **emap** is the fastest possible associative array in Rust, with `usize` keys. 
-It's by the order of magnitude faster than the standard HashMap. 
-It's also faster than vec. 
-We also provide:
-- the `next_key()` method for **O(1)** retrieval of any available free key
-- iterators operate in **O(M)** time complexity, where *M* = number of elements in map
-
+[`emap::Map`][Map] is the fastest possible associative array in Rust,
+  with `usize` keys.
+It's by the order of magnitude faster than the standard
+  [`std::collections::HashMap`][HashMap].
+It's also faster than [`std::vec::Vec`][Vec].
 However, the following restrictions apply:
 
 - you must know the total capacity upfront
 - you must account for a memory overhead of `2 * usize` per element
+- you must use `next_key()` method, of _O(1)_, to find the next available key
 
 ## Usage
 
@@ -98,3 +97,7 @@ $ cargo bench
 
 Then, after the changes you make, run it again. Compare the results. If your changes
 degrade performance, think twice before submitting a pull request.
+
+[Map]: https://docs.rs/emap/0.0.13/emap/struct.Map.html
+[HashMap]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
+[Vec]: https://doc.rust-lang.org/std/vec/struct.Vec.html
