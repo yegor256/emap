@@ -6,18 +6,21 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yegor256/emap/blob/master/LICENSE.txt)
 [![docs.rs](https://img.shields.io/docsrs/emap)](https://docs.rs/emap/latest/emap/)
 
-It is an alternative on-heap implementation of a map with keys of type `usize`
-and a fixed capacity. It works much faster than a standard `HashMap`
-because it allocates memory for all keys at once and then the cost
-of `get()` is _O(1)_. Obviously, with this design, the cost of `iter()` increases because the iterator
-has to jump through empty keys. However, there
-is a supplementary function `next_key()`, which returns the next available key in the map.
-It is recommended to use it in order to ensure sequential order of the keys, which
-will guarantee _O(1)_ cost of `next()` in iterators.
+# Emap: High-Performance Map Implementation for `usize` Keys with Fixed Capacity
 
-If `usize` keys are placed sequentially, the only true competitor of ours is
-[`std::vec::Vec`](https://doc.rust-lang.org/std/vec/struct.Vec.html).
-We beat it too, see the [benchmarking results](#benchmark) below.
+The **emap** is the fastest possible associative array in Rust, with `usize` keys. 
+It's by the order of magnitude faster than the standard HashMap. 
+It's also faster than vec. 
+We also provide:
+- the `next_key()` method for **O(1)** retrieval of any available free key
+- iterators operate in **O(M)** time complexity, where *M* = number of elements in map
+
+However, the following restrictions apply:
+
+- you must know the total capacity upfront
+- you must account for a memory overhead of `2 * usize` per element
+
+## Usage
 
 First, add this to `Cargo.toml`:
 
