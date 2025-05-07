@@ -1,4 +1,4 @@
-# High-Performance Map Implementation for `usize` Keys with Fixed Capacity
+# The Fastest Map with `usize` Keys and Fixed Capacity
 
 [![cargo](https://github.com/yegor256/emap/actions/workflows/cargo.yml/badge.svg)](https://github.com/yegor256/emap/actions/workflows/cargo.yml)
 [![crates.io](https://img.shields.io/crates/v/emap.svg)](https://crates.io/crates/emap)
