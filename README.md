@@ -8,55 +8,15 @@
 
 # Emap: High-Performance Map Implementation for `usize` Keys with Fixed Capacity
 
-**Emap** — is a specialized associative array implementation where:
+The **emap** is the fastest possible associative array in Rust, with `usize` keys. 
+It's by the order of magnitude faster than the standard HashMap. 
+However, the following restrictions apply:
 
-- Keys are of type `usize`
+- you must know the total capacity upfront
+- you must pack objects densely for fast iterations
 
-- Capacity is fixed at creation time
+for dense element packing, we recommend using the `next_key()` method to find the first available key.
 
-- Provides a `next_key` function to find the first available key for denser element placement
-
-- Faster iteration for densely packed elements (best case **O(M)**)
-
-## Motivation
-Optimized for scenarios where:
-
-- Maximum performance is required
-
-- Predictable memory behavior is needed (no reallocations)
-
-- Free key lookup via `next_key()` is required
-
-## Key Advantages
-
-| Feature               | Benefit                                                                                            |
-| --------------------- | -------------------------------------------------------------------------------------------------- |
-| Fixed memory          | Zero reallocations                                                                                 |
-| Direct addressing     | Key is used as an index — no hashing or collisions                                                 |
-| Fragmentation control | Data is stored densely, no overhead for collision resolution                                       |
-| Faster iteration      | If keys are densely packed, iterators work faster by scanning keys from 0 to the maximum key value |
-
-
-## Performance (Big-O)
-
-| Method     | Complexity |
-| ---------- | ---------- |
-| `insert`   | **O(1)**   |
-| `get`      | **O(1)**   |
-| `remove`   | **O(1)**   |
-| `next_key` | **O(N)**   |
-| `iter`     | **O(N)**   |
-
-
-## When to Choose Emap?
-- Keys are `usize` and maximum performance is needed
-
-- Provides a `next_key` function to find the first available key for denser element placement
-
-- Faster iteration for densely packed elements (best case **O(M)**)
-
-- Predictable memory behavior is needed
-  
 ## Usage
 
 First, add this to `Cargo.toml`:
