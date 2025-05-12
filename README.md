@@ -10,12 +10,16 @@
 The [`emap::Map`][Map] is the fastest possible [associative array] in Rust,
   with `usize` keys.
 It's by the order of magnitude faster than the standard
-  [`std::collections::HashMap`][HashMap].
-It's also faster than [`std::vec::Vec`][Vec], provided:
+  [`std::collections::HashMap`][HashMap<usize, V>].
+It's also faster than [`IntMap`][IntMap] (_we are working on this_).
 
-1. you know the total capacity upfront
-1. you account for a memory overhead of `2 * usize` per element
-1. you use `next_key()` method, of _O(1)_, to find the next available key
+It's essentially [`std::vec::Vec`][Vec<Option<V>>] with
+  `next_key()` (_O(1)_ complexity) and iterators
+  (_O(M)_ where _M_ is the number of elements in the array).
+
+You must know the total capacity upfront.
+
+You must account for a memory overhead of `2 * usize` per element.
 
 First, add this to `Cargo.toml`:
 
@@ -100,3 +104,4 @@ a pull request.
 [Vec]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 [benchmark]: https://github.com/yegor256/emap/blob/master/tests/benchmark.rs
 [associative array]: https://en.wikipedia.org/wiki/Associative_array
+[IntMap]: https://docs.rs/intmap/latest/intmap/
