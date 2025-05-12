@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-use crate::Map;
+use crate::{Map, Node, NodeId};
 use std::alloc::{alloc, dealloc, Layout};
 use std::mem;
 
@@ -21,12 +21,13 @@ impl<V> Map<V> {
     /// May panic if out of memory.
     #[inline]
     #[must_use]
-    pub fn with_capacity(cap: usize) -> Self {
+    fn with_capacity(cap: usize) -> Self {
         unsafe {
-            let layout = Layout::array::<Option<V>>(cap).unwrap();
+            let layout = Layout::array::<Node<V>>(cap).unwrap();
             let ptr = alloc(layout);
             Self {
-                max: 0,
+                first_free: NodeId::new(NodeId::UNDEF),
+                first_used: NodeId::new(NodeId::UNDEF),
                 layout,
                 head: ptr.cast(),
                 #[cfg(debug_assertions)]
@@ -47,9 +48,7 @@ impl<V> Map<V> {
     #[must_use]
     pub fn with_capacity_none(cap: usize) -> Self {
         let mut m = Self::with_capacity(cap);
-        for k in 0..cap {
-            m.remove(k);
-        }
+        m.init_with_none();
         #[cfg(debug_assertions)]
         {
             m.initialized = true;
@@ -57,11 +56,26 @@ impl<V> Map<V> {
         m
     }
 
+    fn init_with_none(&mut self) {
+        let mut ptr = self.head;
+        let cap = self.capacity();
+        self.first_free = NodeId::new(0);
+        for i in 0..cap {
+            let free_next = if i + 1 == cap { NodeId::UNDEF } else { i + 1 };
+            let free_prev = if i == 0 { NodeId::UNDEF } else { i - 1 };
+            let node = Node::new(free_next, free_prev, None);
+            unsafe {
+                std::ptr::write(ptr, node);
+                ptr = ptr.add(1);
+            }
+        }
+    }
+
     /// Return capacity.
     #[inline]
     #[must_use]
     pub const fn capacity(&self) -> usize {
-        self.layout.size() / mem::size_of::<Option<V>>()
+        self.layout.size() / mem::size_of::<Node<V>>()
     }
 }
 
@@ -89,177 +103,113 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
         let mut ptr = self.head;
-        // Write all elements except the last one
-        for _ in 1..cap {
+        self.first_used = NodeId::new(0);
+        for i in 0..cap {
+            let free_next = if i + 1 == cap { NodeId::UNDEF } else { i + 1 };
+            let free_prev = if i == 0 { NodeId::UNDEF } else { i - 1 };
+            let node = Node::new(free_next, free_prev, Some(v.clone()));
             unsafe {
-                std::ptr::write(ptr, Some(v.clone()));
+                std::ptr::write(ptr, node);
                 ptr = ptr.add(1);
             }
         }
-        if cap > 0 {
-            unsafe {
-                // We can write the last element directly without cloning needlessly
-                std::ptr::write(ptr, Some(v));
-            }
-        }
-        self.max = cap;
     }
 }
 
-macro_rules! impl_with_capacity_some_sse {
-    ($type:ty) => {
-        #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
-        impl Map<$type> {
-            /// Make it and prepare all keys with some value set using sse.
-            ///
-            /// This method is implemented for primitive types and allows you to
-            /// use sse2 vector registers for filling. It works faster than
-            /// `with_capacity_some`.
-            ///
-            /// # Panics
-            ///
-            /// May panic if out of memory.
-            #[inline]
-            #[must_use]
-            pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
-                let mut m = Self::with_capacity(cap);
-                m.init_sse(value);
-                #[cfg(debug_assertions)]
-                {
-                    m.initialized = true;
-                }
-                m
-            }
-        }
-
-        #[cfg(not(all(target_arch = "x86_64", target_feature = "sse2")))]
-        impl Map<$type> {
-            pub fn with_capacity_some_sse(cap: usize, value: $type) -> Self {
-                log::warn!("SSE2 not available, using fallback");
-                Self::with_capacity_some(cap, value)
-            }
-        }
-    };
-}
-
-impl_with_capacity_some_sse!(i8);
-impl_with_capacity_some_sse!(i16);
-impl_with_capacity_some_sse!(i32);
-impl_with_capacity_some_sse!(u8);
-impl_with_capacity_some_sse!(u16);
-impl_with_capacity_some_sse!(u32);
-
-#[test]
-fn calculates_size_of_memory() {
-    let m1: Map<u8> = Map::with_capacity_none(8);
-    assert_eq!(16, m1.layout.size());
-    let m2: Map<bool> = Map::with_capacity_none(8);
-    assert_eq!(8, m2.layout.size());
-}
-
-#[test]
-fn makes_new_map() {
-    let m: Map<&str> = Map::with_capacity_none(16);
-    assert_eq!(0, m.len());
-}
-
-#[test]
-fn returns_capacity() {
-    let m: Map<&str> = Map::with_capacity_none(16);
-    assert_eq!(16, m.capacity());
-}
-
-#[test]
-fn with_init() {
-    let m: Map<&str> = Map::with_capacity_none(16);
-    assert!(!m.contains_key(8));
-}
-
-#[test]
-fn drops_correctly() {
-    let m: Map<Vec<u8>> = Map::with_capacity_none(16);
-    assert_eq!(0, m.len());
-}
-
-#[test]
-#[ignore]
-fn drops_values() {
-    use std::rc::Rc;
-    let mut m: Map<Rc<()>> = Map::with_capacity(1);
-    let v = Rc::new(());
-    m.insert(0, Rc::clone(&v));
-    drop(m);
-    assert_eq!(Rc::strong_count(&v), 1);
-}
-
 #[cfg(test)]
-#[derive(Clone, PartialEq, Eq)]
-struct Foo {
-    pub t: i32,
-}
+mod tests {
+    use super::*;
 
-#[test]
-fn init_with_structs() {
-    let m: Map<Foo> = Map::with_capacity_none(16);
-    assert_eq!(16, m.capacity());
-}
-
-#[test]
-fn init_with_some() {
-    let m: Map<Foo> = Map::with_capacity_some(16, Foo { t: 42 });
-    assert_eq!(16, m.capacity());
-    assert_eq!(16, m.len());
-}
-
-#[test]
-fn init_with_empty() {
-    let m: Map<Foo> = Map::with_capacity_some(0, Foo { t: 42 });
-    assert_eq!(0, m.capacity());
-    assert_eq!(0, m.len());
-}
-
-#[test]
-fn init_with_some_sse_neg() {
-    let value = -13131_i32;
-    let size = 127;
-    let m: Map<i32> = Map::<i32>::with_capacity_some_sse(size, value);
-
-    for i in 0..size {
-        assert_eq!(*m.get(i).unwrap(), value);
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn insert_out_of_boundary() {
+        let mut m: Map<&str> = Map::with_capacity(1);
+        m.insert(5, "one");
     }
-    assert_eq!(m.len(), size);
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn get_out_of_boundary() {
+        let m: Map<&str> = Map::with_capacity(1);
+        m.get(5).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn remove_out_of_boundary() {
+        let mut m: Map<&str> = Map::with_capacity(1);
+        m.remove(5);
+    }
+
+    #[test]
+    fn calculates_size_of_memory() {
+        let m1: Map<u8> = Map::with_capacity_none(8);
+        assert_eq!(24 * 8, m1.layout.size());
+        let m2: Map<bool> = Map::with_capacity_none(8);
+        assert_eq!(24 * 8, m2.layout.size());
+    }
+
+    #[test]
+    fn makes_new_map() {
+        let m: Map<&str> = Map::with_capacity_none(16);
+        assert_eq!(0, m.len());
+    }
+
+    #[test]
+    fn returns_capacity() {
+        let m: Map<&str> = Map::with_capacity_none(16);
+        assert_eq!(16, m.capacity());
+    }
+
+    #[test]
+    fn with_init() {
+        let m: Map<&str> = Map::with_capacity_none(16);
+        assert!(!m.contains_key(8));
+    }
+
+    #[test]
+    fn drops_correctly() {
+        let m: Map<Vec<u8>> = Map::with_capacity_none(16);
+        assert_eq!(0, m.len());
+    }
+
+    #[test]
+    #[ignore]
+    fn drops_values() {
+        use std::rc::Rc;
+        let mut m: Map<Rc<()>> = Map::with_capacity(1);
+        let v = Rc::new(());
+        m.insert(0, Rc::clone(&v));
+        drop(m);
+        assert_eq!(Rc::strong_count(&v), 1);
+    }
+
+    #[cfg(test)]
+    #[derive(Clone, PartialEq, Eq)]
+    struct Foo {
+        pub t: i32,
+    }
+
+    #[test]
+    fn init_with_structs() {
+        let m: Map<Foo> = Map::with_capacity_none(16);
+        assert_eq!(16, m.capacity());
+    }
+
+    #[test]
+    fn init_with_some() {
+        let m: Map<Foo> = Map::with_capacity_some(16, Foo { t: 42 });
+        assert_eq!(16, m.capacity());
+        assert_eq!(16, m.len());
+    }
+
+    #[test]
+    fn init_with_empty() {
+        let m: Map<Foo> = Map::with_capacity_some(0, Foo { t: 42 });
+        assert_eq!(0, m.capacity());
+        assert_eq!(0, m.len());
+    }
 }
-
-#[cfg(test)]
-macro_rules! test_sse_impl {
-    ($type:ty, $value:expr) => {
-        paste::item! {
-            #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
-            #[test]
-            fn [<test_sse_ $type>]() {
-                let sizes: [usize; 8] = [1, 2, 3, 4, 5, 13, 16, 25];
-                for size in sizes {
-                    let m: Map<$type> = Map::<$type>::with_capacity_some_sse(size, $value);
-
-                    for i in 0..size {
-                        assert_eq!(*m.get(i).unwrap(), $value);
-                    }
-                    assert_eq!(m.len(), size);
-                }
-            }
-        }
-    };
-}
-
-#[cfg(test)]
-test_sse_impl!(i8, 42_i8);
-#[cfg(test)]
-test_sse_impl!(i16, 1234_i16);
-#[cfg(test)]
-test_sse_impl!(i32, 0x11223344_i32);
-#[cfg(test)]
-test_sse_impl!(u8, 0xFF_u8);
-#[cfg(test)]
-test_sse_impl!(u16, 0xABCD_u16);
-#[cfg(test)]
-test_sse_impl!(u32, 0xDEADBEEF_u32);

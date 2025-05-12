@@ -12,40 +12,11 @@ impl<V> Map<V> {
     #[inline]
     #[must_use]
     pub fn next_key(&self) -> usize {
-        self.next_key_gte(0)
-    }
-
-    /// Get the next key available for insertion, which is "greater or equal"
-    /// than the number provided.
-    ///
-    /// # Panics
-    ///
-    /// If no more keys left.
-    ///
-    /// It may also panic in "debug" mode if the Map is not initialized.
-    #[inline]
-    #[must_use]
-    pub fn next_key_gte(&self, k: usize) -> usize {
-        #[cfg(debug_assertions)]
-        assert!(
-            self.initialized,
-            "Can't do next_key_gte() on non-initialized Map"
-        );
-        let mut i = k;
-        loop {
-            if i == self.max {
-                break;
-            }
-            if i > self.max {
-                return i;
-            }
-            if self.get(i).is_none() {
-                return i;
-            }
-            i += 1;
+        if self.first_free.is_def() {
+            self.first_free.get()
+        } else {
+            panic!("No more keys available left");
         }
-        assert_ne!(self.max, self.layout.size(), "No more keys available left");
-        self.max
     }
 }
 
@@ -66,10 +37,14 @@ fn get_next_in_the_middle() {
 }
 
 #[test]
-fn get_next_over() {
-    let mut m: Map<u32> = Map::with_capacity_none(16);
+fn restore_next_key() {
+    let mut m: Map<u32> = Map::with_capacity_none(4);
+    m.insert(0, 42);
+    m.insert(1, 42);
     m.insert(2, 42);
-    assert_eq!(5, m.next_key_gte(5));
+    m.insert(3, 42);
+    m.remove(2);
+    assert_eq!(2, m.next_key());
 }
 
 #[test]
