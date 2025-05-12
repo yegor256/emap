@@ -10,10 +10,10 @@
 The [`emap::Map`][Map] is the fastest possible [associative array] in Rust,
   with `usize` keys.
 It's by the order of magnitude faster than the standard
-  [`std::collections::HashMap`][HashMap<usize, V>].
+  [`HashMap<usize, V>`][HashMap].
 It's also faster than [`IntMap`][IntMap] (_we are working on this_).
 
-It's essentially [`std::vec::Vec`][Vec<Option<V>>] with
+It's essentially [`Vec<Option<V>>`][Vec] with
   `next_key()` (_O(1)_ complexity) and iterators
   (_O(M)_ where _M_ is the number of elements in the array).
 
