@@ -14,9 +14,10 @@ It's by the order of magnitude faster than the standard
 It's also faster than [`IntMap`][IntMap] (_we are working on this_).
 
 It's essentially [`Vec<Option<V>>`][Vec] with two extra features:
-  1) `next_key()` with _O(1)_ complexity)
+  1) `next_key()` with _O(1)_ complexity
   and
-  2) iterators with _O(M)_ complexity, where _M_ is the number of elements in the array.
+  2) iterators with _O(M)_ complexity, where _M_ is the number of elements in \
+the array.
 
 You must know the total capacity upfront.
 
