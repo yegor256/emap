@@ -50,27 +50,26 @@ The struct [`emap::Map`][Map] is designed as closely similar to
 ## Benchmark
 
 There is a summary of a simple benchmark, where we compared `emap::Map` with
-`Vec`, changing the total capacity `CAP` of them (horizontal axis).
+`Intmap`, changing the total capacity `CAP` of them (horizontal axis).
 We applied the same interactions
 ([`benchmark.rs`][benchmark])
 to them both and measured how fast they performed. In the following table,
-the numbers over 1.0 indicate performance gain of `Map` against `Vec`,
+the numbers over 1.0 indicate performance gain of `Map` against `IntMap`,
 while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
 | | 4 | 16 | 256 | 4096 |
 | --- | --: | --: | --: | --: |
-| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |1.08 |1.89 |2.35 |2.14 |
-| `i ∈ 0..CAP {M.insert(i, &"大家好"); s ∈ M.values() {sum += s.len()}}` |1.20 |0.88 |0.34 |0.51 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}` |1.45 |0.93 |0.51 |0.52 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}` |1.09 |0.58 |0.34 |0.51 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |1.03 |0.57 |0.51 |0.51 |
-| `i ∈ 0..CAP {M.insert(i, &42)}; M.clear(); M.len();` |1.27 |1.84 |6.71 |7.61 |
-| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |1.13 |2.13 |2.01 |2.15 |
+| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |6.33 |16.46 |23.98 |24.08 |
+| `i ∈ 0..CAP {M.insert(i, &"大家好"); s ∈ M.values() {sum += s.len()}}` |4.59 |5.80 |1.02 |0.91 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}` |7.51 |7.03 |1.15 |0.90 |
+| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |6.31 |6.13 |0.94 |0.76 |
+| `i ∈ 0..CAP {M.insert(i, &42)}; M.clear(); M.len();` |4.52 |8.74 |9.45 |10.67 |
+| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |5.32 |12.26 |15.57 |14.62 |
 
-The experiment was performed on 21-08-2023.
+The experiment was performed on 13-05-2025.
  There were 10000 repetition cycles.
- The entire benchmark took 423s.
+ The entire benchmark took 1201s.
 
 <!-- benchmark -->
 
