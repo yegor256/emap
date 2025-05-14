@@ -14,6 +14,7 @@ keywords = ["memory", "map"]
 categories = ["data-structures", "memory-management"]
 
 [dependencies]
+intmap = "3.1.0"
 serde = { version = "1.0.185", optional = true, default-features = false }
 
 [dev-dependencies]

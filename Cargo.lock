@@ -198,6 +198,7 @@ version = "0.0.0"
 dependencies = [
  "bincode",
  "criterion",
+ "intmap",
  "paste",
  "serde",
 ]
@@ -217,6 +218,12 @@ name = "hermit-abi"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbd780fe5cc30f81464441920d82ac8740e2e46b29a6fad543ddd075229ce37e"
+
+[[package]]
+name = "intmap"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "210870d5399600055a955c020cc97e462203c234dc2b103b5da5d80fdbd5eed5"
 
 [[package]]
 name = "is-terminal"
