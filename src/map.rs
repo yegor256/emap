@@ -1,27 +1,9 @@
-// Copyright (c) 2023 Yegor Bugayenko
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-License-Identifier: MIT
 
-use crate::Map;
-use std::ptr;
+use crate::{Map, NodeId};
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Is it empty?
     #[inline]
     #[must_use]
@@ -40,7 +22,7 @@ impl<V: Clone> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do len() on non-initialized Map");
         let mut busy = 0;
-        for i in 0..self.max {
+        for i in 0..self.capacity() {
             if self.get(i).is_some() {
                 busy += 1;
             }
@@ -61,7 +43,7 @@ impl<V: Clone> Map<V> {
     #[allow(clippy::missing_const_for_fn)]
     pub fn contains_key(&self, k: usize) -> bool {
         self.assert_boundaries(k);
-        matches!(unsafe { &*self.head.add(k) }, Some(_))
+        unsafe { &*self.head.add(k) }.is_some()
     }
 
     /// Remove by key.
@@ -75,9 +57,39 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn remove(&mut self, k: usize) {
         self.assert_boundaries(k);
-        unsafe {
-            ptr::write(self.head.add(k), None);
+        let node = unsafe { &mut *self.head.add(k) };
+
+        if node.is_none() {
+            return;
         }
+
+        let prev_used = node.get_prev();
+        let next_used = node.get_next();
+
+        // 1. remove node from element list
+        if prev_used.is_undef() {
+            self.first_used = next_used;
+        } else {
+            let prev_node = unsafe { &mut *self.head.add(prev_used.get()) };
+            prev_node.update_next(next_used);
+        }
+
+        if next_used.is_def() {
+            let next_node = unsafe { &mut *self.head.add(next_used.get()) };
+            next_node.update_prev(prev_used);
+        }
+
+        // 2. insert node into free list
+        node.update_next(self.first_free);
+        node.update_prev(NodeId::new(NodeId::UNDEF));
+
+        if self.first_free.is_def() {
+            let next_free = unsafe { &mut *self.head.add(self.first_free.get()) };
+            next_free.update_prev(NodeId::new(k));
+        }
+
+        self.first_free = NodeId::new(k);
+        node.replace_value(None);
     }
 
     /// Push to the rightmost position and return the key.
@@ -99,12 +111,37 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn insert(&mut self, k: usize, v: V) {
         self.assert_boundaries(k);
-        unsafe {
-            ptr::write(self.head.add(k), Some(v));
+        let node = unsafe { &mut *self.head.add(k) };
+
+        if node.is_some() {
+            node.replace_value(Some(v));
+            return;
         }
-        if self.max <= k {
-            self.max = k + 1;
+
+        // 1. remove node from free list
+        if node.get_prev().is_undef() {
+            self.first_free = node.get_next();
+        } else {
+            let prev_free = unsafe { &mut *self.head.add(node.get_prev().get()) };
+            prev_free.update_next(node.get_next());
         }
+
+        if node.get_next().is_def() {
+            let next_free = unsafe { &mut *self.head.add(node.get_next().get()) };
+            next_free.update_prev(node.get_prev());
+        }
+
+        // 2. insert node into element list
+        node.update_next(self.first_used);
+        node.update_prev(NodeId::new(NodeId::UNDEF));
+
+        if self.first_used.is_def() {
+            let next_used = unsafe { &mut *self.head.add(self.first_used.get()) };
+            next_used.update_prev(NodeId::new(k));
+        }
+
+        self.first_used = NodeId::new(k);
+        node.replace_value(Some(v));
     }
 
     /// Get a reference to a single value.
@@ -119,7 +156,7 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn get(&self, k: usize) -> Option<&V> {
         self.assert_boundaries(k);
-        unsafe { &*self.head.add(k) }.as_ref()
+        unsafe { &*self.head.add(k) }.get()
     }
 
     /// Get a mutable reference to a single value.
@@ -134,13 +171,15 @@ impl<V: Clone> Map<V> {
     #[must_use]
     pub fn get_mut(&mut self, k: usize) -> Option<&mut V> {
         self.assert_boundaries(k);
-        unsafe { &mut *(self.head.add(k)) }.as_mut()
+        unsafe { &mut *(self.head.add(k)) }.get_mut()
     }
 
     /// Remove all items from it, but keep the space intact for future use.
     #[inline]
     pub fn clear(&mut self) {
-        self.max = 0;
+        while self.first_used.is_def() {
+            self.remove(self.first_used.get());
+        }
     }
 
     /// Retains only the elements specified by the predicate.
@@ -152,12 +191,10 @@ impl<V: Clone> Map<V> {
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
-        for i in 0..self.max {
+        for i in self.keys() {
             if let Some(p) = self.get_mut(i) {
                 if !f(&i, p) {
-                    unsafe {
-                        ptr::write(self.head.add(i), None);
-                    }
+                    self.remove(i);
                 }
             }
         }
@@ -291,25 +328,99 @@ fn pushes_into() {
 }
 
 #[test]
-#[should_panic]
-#[cfg(debug_assertions)]
-fn insert_out_of_boundary() {
-    let mut m: Map<&str> = Map::with_capacity(1);
-    m.insert(5, "one");
+fn insert_in_free_list_head() {
+    let mut m: Map<i32> = Map::with_capacity_none(3);
+    m.insert(0, 1);
+    assert_eq!(m.next_key(), 1);
+    m.insert(1, 1);
+    assert_eq!(m.next_key(), 2);
 }
 
 #[test]
-#[should_panic]
-#[cfg(debug_assertions)]
-fn get_out_of_boundary() {
-    let m: Map<&str> = Map::with_capacity(1);
-    m.get(5).unwrap();
+fn insert_in_free_list_mid() {
+    let mut m: Map<i32> = Map::with_capacity_none(3);
+    m.insert(1, 1);
+    assert_eq!(m.next_key(), 0);
 }
 
 #[test]
-#[should_panic]
-#[cfg(debug_assertions)]
-fn remove_out_of_boundary() {
-    let mut m: Map<&str> = Map::with_capacity(1);
-    m.remove(5);
+fn insert_in_free_list_reinsert() {
+    let mut m: Map<i32> = Map::with_capacity_none(3);
+    m.insert(1, 1);
+    assert_eq!(m.next_key(), 0);
+    m.insert(1, 1);
+    assert_eq!(m.next_key(), 0);
+    m.insert(0, 1);
+    m.insert(0, 1);
+    assert_eq!(m.next_key(), 2);
+}
+
+#[test]
+fn len_remove_insert() {
+    let mut m: Map<i32> = Map::with_capacity_none(3);
+    assert_eq!(m.len(), 0);
+    m.clear();
+    assert_eq!(m.len(), 0);
+    m.insert(0, 1);
+    assert_eq!(m.len(), 1);
+    m.remove(0);
+    assert_eq!(m.len(), 0);
+    m.clear();
+    assert_eq!(m.len(), 0);
+}
+
+#[test]
+fn default_clear() {
+    let mut m: Map<i32> = Map::with_capacity_none(3);
+    m.insert(0, 0);
+    m.insert(1, 1);
+    m.insert(2, 2);
+    m.clear();
+    assert_eq!(m.len(), 0);
+    m.insert(0, 0);
+    m.insert(1, 1);
+    m.clear();
+    assert_eq!(m.len(), 0);
+}
+
+#[test]
+fn clear_and_len() {
+    let mut m: Map<&i32> = Map::with_capacity_none(3);
+    for _ in 0..2 {
+        for i in 0..3 {
+            m.insert(i, &42);
+        }
+        m.clear();
+        assert_eq!(0, m.len());
+    }
+}
+
+#[test]
+fn first_used_remove() {
+    let mut m: Map<i32> = Map::with_capacity_none(2);
+    m.insert(0, 1);
+    assert_eq!(m.first_used.get(), 0);
+    m.insert(1, 2);
+    assert_eq!(m.first_used.get(), 1);
+    assert_eq!(m.len(), 2);
+    m.remove(0);
+    assert_eq!(m.first_used.get(), 1);
+    m.remove(1);
+    assert_eq!(m.len(), 0);
+    assert!(m.first_used.is_undef());
+}
+
+#[test]
+fn insert_and_remove() {
+    let mut m: Map<i32> = Map::with_capacity_none(7);
+    assert_eq!(m.next_key(), 0);
+    m.insert(1, 11);
+    assert_eq!(m.next_key(), 0);
+    m.insert(0, 10);
+    assert_eq!(m.next_key(), 2);
+    m.insert(2, 12);
+    m.insert(5, 15);
+    assert_eq!(m.next_key(), 3);
+    m.remove(0);
+    assert_eq!(m.next_key(), 0);
 }

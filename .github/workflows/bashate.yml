@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MIT
 ---
 # yamllint disable rule:line-length
-name: pdd
-on:
+name: bashate
+'on':
   push:
     branches:
       - master
@@ -11,9 +11,15 @@ on:
     branches:
       - master
 jobs:
-  pdd:
+  bashate:
     timeout-minutes: 15
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: volodya-lombrozo/pdd-action@master
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - run: pip install bashate
+      - run: |
+          readarray -t files < <(find . -name '*.sh')
+          bashate -i E006,E003 "${files[@]}"

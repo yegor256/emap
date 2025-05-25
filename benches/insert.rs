@@ -1,47 +1,32 @@
-// Copyright (c) 2023 Yegor Bugayenko
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-License-Identifier: MIT
 
-#![feature(test)]
-
-extern crate test;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use emap::Map;
-use test::Bencher;
 
 const CAPACITY: usize = 65536;
 
-#[bench]
-fn insert_long_str(b: &mut Bencher) {
-    let mut m: Map<&str> = Map::with_capacity(CAPACITY);
-    b.iter(|| {
-        for i in 0..CAPACITY {
-            m.insert(i, &"Hello, world! How are you doing today?");
-        }
+fn insert_long_str(c: &mut Criterion) {
+    c.bench_function("insert_long_str", |b| {
+        let mut m: Map<&str> = Map::with_capacity_none(CAPACITY);
+        b.iter(|| {
+            for i in 0..CAPACITY {
+                black_box(m.insert(i, black_box("Hello, world! How are you doing today?")));
+            }
+        })
     });
 }
 
-#[bench]
-fn insert_eight_bytes(b: &mut Bencher) {
-    let mut m: Map<u64> = Map::with_capacity(CAPACITY);
-    b.iter(|| {
-        for i in 0..CAPACITY {
-            m.insert(i, 42);
-        }
+fn insert_eight_bytes(c: &mut Criterion) {
+    c.bench_function("insert_eight_bytes", |b| {
+        let mut m: Map<u64> = Map::with_capacity_none(CAPACITY);
+        b.iter(|| {
+            for i in 0..CAPACITY {
+                black_box(m.insert(i, black_box(42)));
+            }
+        })
     });
 }
+
+criterion_group!(benches, insert_long_str, insert_eight_bytes);
+criterion_main!(benches);

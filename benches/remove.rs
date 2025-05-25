@@ -1,67 +1,60 @@
-// Copyright (c) 2023 Yegor Bugayenko
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-License-Identifier: MIT
 
-#![feature(test)]
-
-extern crate test;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use emap::Map;
-use test::Bencher;
 
 const CAPACITY: usize = 65536;
 
-#[bench]
-fn remove_big_array(b: &mut Bencher) {
-    let mut m: Map<[u8; 1024]> = Map::with_capacity(CAPACITY);
-    b.iter(|| {
+fn remove_benchmarks(c: &mut Criterion) {
+    c.bench_function("remove_big_array", |b| {
+        let mut m: Map<[u8; 1024]> = Map::with_capacity_none(CAPACITY);
         for i in 0..CAPACITY {
-            m.remove(i);
+            m.insert(i, [0; 1024]);
         }
+        b.iter(|| {
+            for i in 0..CAPACITY {
+                black_box(m.remove(i));
+            }
+        })
+    });
+
+    c.bench_function("remove_bool", |b| {
+        let mut m: Map<bool> = Map::with_capacity_none(CAPACITY);
+        for i in 0..CAPACITY {
+            m.insert(i, true);
+        }
+        b.iter(|| {
+            for i in 0..CAPACITY {
+                black_box(m.remove(i));
+            }
+        })
+    });
+
+    c.bench_function("remove_eight_bytes", |b| {
+        let mut m: Map<u64> = Map::with_capacity_none(CAPACITY);
+        for i in 0..CAPACITY {
+            m.insert(i, 42);
+        }
+        b.iter(|| {
+            for i in 0..CAPACITY {
+                black_box(m.remove(i));
+            }
+        })
+    });
+
+    c.bench_function("remove_four_bytes", |b| {
+        let mut m: Map<u32> = Map::with_capacity_none(CAPACITY);
+        for i in 0..CAPACITY {
+            m.insert(i, 42);
+        }
+        b.iter(|| {
+            for i in 0..CAPACITY {
+                black_box(m.remove(i));
+            }
+        })
     });
 }
 
-#[bench]
-fn remove_bool(b: &mut Bencher) {
-    let mut m: Map<bool> = Map::with_capacity(CAPACITY);
-    b.iter(|| {
-        for i in 0..CAPACITY {
-            m.remove(i);
-        }
-    });
-}
-
-#[bench]
-fn remove_eight_bytes(b: &mut Bencher) {
-    let mut m: Map<u64> = Map::with_capacity(CAPACITY);
-    b.iter(|| {
-        for i in 0..CAPACITY {
-            m.remove(i);
-        }
-    });
-}
-
-#[bench]
-fn remove_four_bytes(b: &mut Bencher) {
-    let mut m: Map<u32> = Map::with_capacity(CAPACITY);
-    b.iter(|| {
-        for i in 0..CAPACITY {
-            m.remove(i);
-        }
-    });
-}
+criterion_group!(benches, remove_benchmarks);
+criterion_main!(benches);

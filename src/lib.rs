@@ -1,22 +1,5 @@
-// Copyright (c) 2023 Yegor Bugayenko
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-License-Identifier: MIT
 
 //! There is a map with a fixed capacity and integers as keys.
 //!
@@ -48,17 +31,20 @@ mod iterators;
 mod keys;
 mod map;
 mod next_key;
+pub mod node;
 #[cfg(feature = "serde")]
 mod serialization;
 mod values;
 
+use crate::node::{Node, NodeId};
+
 use std::alloc::Layout;
 use std::marker::PhantomData;
-
 /// A map with a fixed capacity and `usize` as keys.
 pub struct Map<V> {
-    max: usize,
-    head: *mut Option<V>,
+    first_free: NodeId, // head of free list
+    first_used: NodeId, // head of elements list
+    head: *mut Node<V>,
     layout: Layout,
     #[cfg(debug_assertions)]
     initialized: bool,
@@ -66,47 +52,40 @@ pub struct Map<V> {
 
 /// Iterator over the [`Map`].
 pub struct Iter<'a, V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
     _marker: PhantomData<&'a V>,
 }
 
 /// Mutable iterator over the [`Map`].
 pub struct IterMut<'a, V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
     _marker: PhantomData<&'a V>,
 }
 
 /// Into-iterator over the [`Map`].
 pub struct IntoIter<V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
 }
 
-/// Iterator over the values of a [`Map`].
 pub struct Values<'a, V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
     _marker: PhantomData<&'a V>,
 }
 
 /// Into-iterator over the values of a [`Map`].
 pub struct IntoValues<V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
 }
 
 /// Iterator over the keys of a [`Map`].
 pub struct Keys<V> {
-    max: usize,
-    pos: usize,
-    head: *mut Option<V>,
+    current: NodeId,
+    head: *mut Node<V>,
 }
 
 #[cfg(test)]

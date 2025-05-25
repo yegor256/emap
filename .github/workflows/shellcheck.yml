@@ -2,16 +2,18 @@
 # SPDX-License-Identifier: MIT
 ---
 # yamllint disable rule:line-length
-name: up
-on:
+name: shellcheck
+'on':
   push:
     branches:
       - master
-    tags:
-      - '*'
+  pull_request:
+    branches:
+      - master
 jobs:
-  up:
+  shellcheck:
     timeout-minutes: 15
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: ludeeus/action-shellcheck@master

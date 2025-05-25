@@ -1,22 +1,5 @@
-// Copyright (c) 2023 Yegor Bugayenko
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-License-Identifier: MIT
 
 use crate::{IntoIter, Iter, IterMut, Map};
 use std::marker::PhantomData;
@@ -26,25 +9,22 @@ impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
 
     /// This is an implementation of the `next` function that returns the next item in an iterator if it
     /// exists, or `None` if the end of the iterator has been reached.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// The `next` function returns an `Option` that contains a tuple of `(i, p)` where `i` is the index of
     /// the item and `p` is a reference to the item. If there are no more items to iterate over, it returns
     /// `None`.
     #[inline]
-    #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.max {
-            let item = unsafe { &*self.head.add(self.pos) };
-            if let Some(p) = item {
-                let i = self.pos;
-                self.pos += 1;
-                return Some((i, p));
-            }
-            self.pos += 1;
+        if self.current.is_def() {
+            let node = unsafe { &*self.head.add(self.current.get()) };
+            let mut next = node.get_next();
+            std::mem::swap(&mut self.current, &mut next);
+            Some((next.get(), node.get().unwrap()))
+        } else {
+            None
         }
-        None
     }
 }
 
@@ -52,49 +32,42 @@ impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
     type Item = (usize, &'a mut V);
 
     #[inline]
-    #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.max {
-            let item = unsafe { &mut *self.head.add(self.pos) };
-            if let Some(p) = item {
-                let i = self.pos;
-                self.pos += 1;
-                return Some((i, p));
-            }
-            self.pos += 1;
+        if self.current.is_def() {
+            let node = unsafe { &mut *self.head.add(self.current.get()) };
+            let mut next = node.get_next();
+            std::mem::swap(&mut self.current, &mut next);
+            Some((next.get(), node.get_mut().unwrap()))
+        } else {
+            None
         }
-        None
     }
 }
 
-impl<V: Copy> Iterator for IntoIter<V> {
+impl<V: Clone> Iterator for IntoIter<V> {
     type Item = (usize, V);
 
     #[inline]
-    #[must_use]
     fn next(&mut self) -> Option<Self::Item> {
-        while self.pos < self.max {
-            let item = unsafe { &*self.head.add(self.pos) };
-            if let Some(v) = item {
-                let i = self.pos;
-                self.pos += 1;
-                return Some((i, *v));
-            }
-            self.pos += 1;
+        if self.current.is_def() {
+            let node = unsafe { &mut *self.head.add(self.current.get()) };
+            let mut next = node.get_next();
+            std::mem::swap(&mut self.current, &mut next);
+            Some((next.get(), node.get().unwrap().clone()))
+        } else {
+            None
         }
-        None
     }
 }
 
-impl<'a, V: Copy> IntoIterator for &'a Map<V> {
+impl<V: Clone> IntoIterator for &Map<V> {
     type Item = (usize, V);
     type IntoIter = IntoIter<V>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
-            max: self.max,
-            pos: 0,
+            current: self.first_used,
             head: self.head,
         }
     }
@@ -112,13 +85,11 @@ impl<V: Clone> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
         Iter {
-            max: self.max,
-            pos: 0,
+            current: self.first_used,
             head: self.head,
             _marker: PhantomData,
         }
     }
-
     /// Make a mutable iterator over all items.
     ///
     /// For example:
@@ -144,8 +115,7 @@ impl<V: Clone> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
         IterMut {
-            max: self.max,
-            pos: 0,
+            current: self.first_used,
             head: self.head,
             _marker: PhantomData,
         }
@@ -162,8 +132,7 @@ impl<V: Clone> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't into_iter() non-initialized Map");
         IntoIter {
-            max: self.max,
-            pos: 0,
+            current: self.first_used,
             head: self.head,
         }
     }

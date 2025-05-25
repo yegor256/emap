@@ -1,4 +1,7 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+# SPDX-License-Identifier: MIT
 ---
+# yamllint disable rule:line-length
 name: xcop
 on:
   push:
@@ -9,7 +12,7 @@ on:
       - master
 jobs:
   xcop:
-    runs-on: ubuntu-20.04
+    timeout-minutes: 15
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: g4s8/xcop-action@master
+      - uses: actions/checkout@v4

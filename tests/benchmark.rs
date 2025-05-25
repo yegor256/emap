@@ -1,31 +1,14 @@
-// Copyright (c) 2023 Yegor Bugayenko
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
-// In order to run this single test from the command line:
-// $ cargo test --test benchmark -- --nocapture
+// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-License-Identifier: MIT
 
 use emap::Map;
+use intmap::IntMap;
 use std::env;
 use std::time::{Duration, Instant};
 
 const CAP: usize = 10;
+type FastIntMap<'a> = IntMap<u64, &'a i32>;
+type FastIntMapStr<'a> = IntMap<u64, &'a str>;
 
 macro_rules! measure {
     ($total:expr, $e:expr) => {{
@@ -38,19 +21,14 @@ macro_rules! measure {
 }
 
 macro_rules! compare {
-    ($title:expr, $ret:expr, $total:expr, $eV:expr, $eM:expr) => {{
+    ($title:expr, $ret:expr, $total:expr, $eI:expr, $eM:expr) => {{
         $ret.push((
             $title,
             measure!($total, {
-                $eV(std::hint::black_box(&mut Vec::with_capacity(CAP)))
+                $eI(std::hint::black_box(&mut IntMap::with_capacity(CAP)))
             }),
             measure!($total, {
-                $eM(std::hint::black_box(
-                    #[cfg(debug_assertions)]
-                    &mut Map::with_capacity_none(CAP),
-                    #[cfg(not(debug_assertions))]
-                    &mut Map::with_capacity(CAP),
-                ))
+                $eM(std::hint::black_box(&mut Map::with_capacity_none(CAP)))
             }),
         ));
     }};
@@ -59,49 +37,24 @@ macro_rules! compare {
 fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
     let mut ret = vec![];
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &42); s ∈ M.into_values() {sum += s}}",
-        ret,
-        total,
-        |v: &mut Vec<_>| {
-            let mut sum = 0;
-            for _ in 0..CAP {
-                v.push(&42);
-                for s in v.into_iter() {
-                    sum += *s;
-                }
-            }
-            sum
-        },
-        |v: &mut Map<_>| {
-            let mut sum = 0;
-            for i in 0..CAP {
-                v.insert(i, &42);
-                for s in v.into_values() {
-                    sum += *s;
-                }
-            }
-            sum
-        }
-    );
-    compare!(
         "i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}",
         ret,
         total,
-        |v: &mut Vec<_>| {
+        |mi: &mut FastIntMap| {
             let mut sum = 0;
-            for _ in 0..CAP {
-                v.push(&42);
-                for s in v.iter() {
+            for i in 0..CAP as u64 {
+                mi.insert(i, &42);
+                for s in mi.values() {
                     sum += *s;
                 }
             }
             sum
         },
-        |v: &mut Map<_>| {
+        |m: &mut Map<_>| {
             let mut sum = 0;
             for i in 0..CAP {
-                v.insert(i, &42);
-                for s in v.values() {
+                m.insert(i, &42);
+                for s in m.values() {
                     sum += *s;
                 }
             }
@@ -112,21 +65,21 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         "i ∈ 0..CAP {M.insert(i, &\"大家好\"); s ∈ M.values() {sum += s.len()}}",
         ret,
         total,
-        |v: &mut Vec<_>| {
+        |mi: &mut FastIntMapStr| {
             let mut sum = 0;
-            for _ in 0..CAP {
-                v.push(&"大家好");
-                for s in v.iter() {
+            for i in 0..CAP as u64 {
+                mi.insert(i, &"大家好");
+                for s in mi.values() {
                     sum += s.len();
                 }
             }
             sum
         },
-        |v: &mut Map<_>| {
+        |m: &mut Map<_>| {
             let mut sum = 0;
             for i in 0..CAP {
-                v.insert(i, &"大家好");
-                for s in v.values() {
+                m.insert(i, &"大家好");
+                for s in m.values() {
                     sum += s.len();
                 }
             }
@@ -137,21 +90,21 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         "i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}",
         ret,
         total,
-        |v: &mut Vec<_>| {
+        |mi: &mut FastIntMap| {
             let mut sum = 0;
-            for _ in 0..CAP {
-                v.push(&42);
-                for s in v.iter() {
-                    sum += *s;
+            for i in 0..CAP as u64 {
+                mi.insert(i, &42);
+                for k in mi.keys() {
+                    sum += k;
                 }
             }
             sum
         },
-        |v: &mut Map<_>| {
+        |m: &mut Map<_>| {
             let mut sum = 0;
             for i in 0..CAP {
-                v.insert(i, &42);
-                for k in v.keys() {
+                m.insert(i, &42);
+                for k in m.keys() {
                     sum += k;
                 }
             }
@@ -162,20 +115,20 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         "i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}",
         ret,
         total,
-        |v: &mut Vec<_>| {
-            for _ in 0..CAP {
-                v.push(&42);
+        |mi: &mut FastIntMap| {
+            for i in 0..CAP as u64 {
+                mi.insert(i, &42);
             }
-            for i in CAP - 1..0 {
-                v.remove(i);
+            for i in 0..CAP as u64 {
+                mi.remove(i);
             }
         },
-        |v: &mut Map<_>| {
+        |m: &mut Map<_>| {
             for i in 0..CAP {
-                v.insert(i, &42);
+                m.insert(i, &42);
             }
-            for i in CAP - 1..0 {
-                v.remove(i);
+            for i in 0..CAP {
+                m.remove(i);
             }
         }
     );
@@ -183,33 +136,33 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         "i ∈ 0..CAP {M.insert(i, &42)}; M.clear(); M.len();",
         ret,
         total,
-        |v: &mut Vec<_>| {
-            for _ in 0..CAP {
-                v.push(&42);
+        |mi: &mut FastIntMap| {
+            for i in 0..CAP as u64 {
+                mi.insert(i, &42);
             }
-            v.clear();
-            v.len()
+            mi.clear();
+            mi.len()
         },
-        |v: &mut Map<_>| {
+        |m: &mut Map<_>| {
             for i in 0..CAP {
-                v.insert(i, &42);
+                m.insert(i, &42);
             }
-            v.clear();
-            v.len()
+            m.clear();
+            m.len()
         }
     );
     compare!(
         "i ∈ 0..CAP {M.insert(i, &\"Hello, world!\")}",
         ret,
         total,
-        |v: &mut Vec<_>| {
-            for _ in 0..CAP {
-                v.push(&"Hello, world!");
+        |mi: &mut FastIntMapStr| {
+            for i in 0..CAP as u64 {
+                mi.insert(i, &"Hello, world!");
             }
         },
-        |v: &mut Map<_>| {
+        |m: &mut Map<_>| {
             for i in 0..CAP {
-                v.insert(i, &"Hello, world!");
+                m.insert(i, &"Hello, world!");
             }
         }
     );
@@ -224,9 +177,9 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
 #[test]
 pub fn benchmark_and_print() {
     let times = benchmark(1000);
-    for (m, dv, dm) in times {
-        println!("{m} -> {:.2}x", dv.as_nanos() as f64 / dm.as_nanos() as f64);
-        assert!(dv.as_nanos() > 0);
+    for (m, di, dm) in times {
+        println!("{m} -> {:.2}x", di.as_nanos() as f64 / dm.as_nanos() as f64);
+        assert!(di.as_nanos() > 0);
     }
 }
 
@@ -234,8 +187,8 @@ pub fn main() {
     let args: Vec<String> = env::args().collect();
     let times = benchmark(args.get(1).unwrap().parse::<usize>().unwrap());
     let mut lines = vec![];
-    for (m, dv, dm) in times {
-        lines.push(format!("{m}\t{}\t{}", dv.as_nanos(), dm.as_nanos()));
+    for (m, di, dm) in times {
+        lines.push(format!("{m}\t{}\t{}", di.as_nanos(), dm.as_nanos()));
     }
     lines.sort();
     for t in lines {
