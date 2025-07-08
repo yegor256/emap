@@ -1,7 +1,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+#![allow(clippy::unit_arg)]
+
+use std::hint::black_box;
+
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use emap::Map;
 use intmap::IntMap;
 
@@ -11,7 +15,7 @@ fn compare_ctors(c: &mut Criterion) {
     let mut group = c.benchmark_group("compare_with_capacity_some");
     let sizes: [usize; 5] = [10, 100, 1000, 10_000, 25_000];
 
-    for size in sizes.iter() {
+    for size in &sizes {
         group.bench_with_input(BenchmarkId::new("intmap", size), size, |b, size| {
             b.iter(|| {
                 let mut map = IntMapI32::with_capacity(*size);
@@ -19,7 +23,7 @@ fn compare_ctors(c: &mut Criterion) {
                     map.insert(i, black_box(42_i32));
                 }
                 black_box(map);
-            })
+            });
         });
 
         group.bench_with_input(BenchmarkId::new("map", size), size, |b, size| {
@@ -28,7 +32,7 @@ fn compare_ctors(c: &mut Criterion) {
                     black_box(*size),
                     black_box(42_i32),
                 ));
-            })
+            });
         });
     }
     group.finish();
@@ -38,14 +42,14 @@ fn compare_insert(c: &mut Criterion) {
     let mut group = c.benchmark_group("compare_insert");
     let sizes: [usize; 5] = [10, 100, 1000, 10_000, 25_000];
 
-    for size in sizes.iter() {
+    for size in &sizes {
         group.bench_with_input(BenchmarkId::new("intmap", size), size, |b, size| {
             let mut map = IntMapI32::with_capacity(*size);
             b.iter(|| {
                 for i in 0..*size {
                     black_box(map.insert(i, black_box(42_i32)));
                 }
-            })
+            });
         });
 
         group.bench_with_input(BenchmarkId::new("map", size), size, |b, size| {
@@ -64,7 +68,7 @@ fn compare_values(c: &mut Criterion) {
     let mut group = c.benchmark_group("compare_values");
     let sizes: [usize; 5] = [10, 100, 1000, 10_000, 25_000];
 
-    for size in sizes.iter() {
+    for size in &sizes {
         group.bench_with_input(BenchmarkId::new("intmap", size), size, |b, size| {
             let mut map = IntMapI32::with_capacity(*size);
             for i in 0..*size {
@@ -78,7 +82,7 @@ fn compare_values(c: &mut Criterion) {
                     }
                 }
                 black_box(sum)
-            })
+            });
         });
 
         group.bench_with_input(BenchmarkId::new("map", size), size, |b, size| {
@@ -101,7 +105,7 @@ fn compare_keys(c: &mut Criterion) {
     let mut group = c.benchmark_group("compare_keys");
     let sizes: [usize; 5] = [10, 100, 1000, 10_000, 25_000];
 
-    for size in sizes.iter() {
+    for size in &sizes {
         group.bench_with_input(BenchmarkId::new("intmap", size), size, |b, size| {
             let mut map = IntMapI32::with_capacity(*size);
             for i in 0..*size {
@@ -115,7 +119,7 @@ fn compare_keys(c: &mut Criterion) {
                     }
                 }
                 black_box(sum)
-            })
+            });
         });
 
         group.bench_with_input(BenchmarkId::new("map", size), size, |b, size| {

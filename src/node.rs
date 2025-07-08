@@ -178,6 +178,7 @@ mod node_tests {
         assert!(node.is_none());
     }
 
+    #[allow(clippy::approx_constant)]
     #[test]
     fn node_pointer_updates() {
         let mut node = Node::new(1, 2, Some(3.14));
@@ -191,7 +192,7 @@ mod node_tests {
     #[test]
     fn node_debug() {
         let node = Node::new(1, 2, Some("test"));
-        assert!(format!("{:?}", node).contains("test"));
+        assert!(format!("{node:?}").contains("test"));
     }
 
     #[test]

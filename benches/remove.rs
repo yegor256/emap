@@ -1,7 +1,12 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+#![allow(clippy::unit_arg)]
+
+use std::hint::black_box;
+
+use criterion::{criterion_group, criterion_main, Criterion};
+
 use emap::Map;
 
 const CAPACITY: usize = 65536;
@@ -16,7 +21,7 @@ fn remove_benchmarks(c: &mut Criterion) {
             for i in 0..CAPACITY {
                 black_box(m.remove(i));
             }
-        })
+        });
     });
 
     c.bench_function("remove_bool", |b| {
@@ -28,7 +33,7 @@ fn remove_benchmarks(c: &mut Criterion) {
             for i in 0..CAPACITY {
                 black_box(m.remove(i));
             }
-        })
+        });
     });
 
     c.bench_function("remove_eight_bytes", |b| {
@@ -40,7 +45,7 @@ fn remove_benchmarks(c: &mut Criterion) {
             for i in 0..CAPACITY {
                 black_box(m.remove(i));
             }
-        })
+        });
     });
 
     c.bench_function("remove_four_bytes", |b| {
@@ -52,7 +57,7 @@ fn remove_benchmarks(c: &mut Criterion) {
             for i in 0..CAPACITY {
                 black_box(m.remove(i));
             }
-        })
+        });
     });
 }
 

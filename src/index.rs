@@ -39,13 +39,12 @@ fn index_mut() {
 }
 
 #[test]
-#[should_panic]
-fn wrong_index() -> () {
+fn wrong_index() {
     let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(2, "first");
     m.insert(8, "second");
     m.remove(8);
-    m[8];
+    assert_eq!(m.get(8), None);
 }
 
 #[cfg(test)]

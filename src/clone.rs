@@ -24,6 +24,7 @@ fn map_can_be_cloned() {
 
 #[test]
 #[ignore]
+#[allow(clippy::redundant_clone)]
 fn empty_clone() {
     let m: Map<u8> = Map::with_capacity_none(16);
     assert!(m.clone().is_empty());
@@ -43,15 +44,15 @@ fn larger_map_can_be_cloned() {
 #[derive(Clone)]
 #[allow(dead_code)]
 struct Foo {
-    _m: Map<u64>,
+    m: Map<u64>,
 }
 
 #[test]
 #[ignore]
 fn clone_of_wrapper() {
     let mut f: Foo = Foo {
-        _m: Map::with_capacity_none(16),
+        m: Map::with_capacity_none(16),
     };
-    f._m.insert(7, 42);
-    assert_eq!(1, f.clone()._m.len());
+    f.m.insert(7, 42);
+    assert_eq!(1, f.clone().m.len());
 }
