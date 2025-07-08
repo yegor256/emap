@@ -34,6 +34,7 @@ macro_rules! compare {
     }};
 }
 
+#[allow(clippy::too_many_lines)]
 fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
     let mut ret = vec![];
     compare!(
@@ -68,7 +69,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         |mi: &mut FastIntMapStr| {
             let mut sum = 0;
             for i in 0..CAP as u64 {
-                mi.insert(i, &"大家好");
+                mi.insert(i, "大家好");
                 for s in mi.values() {
                     sum += s.len();
                 }
@@ -78,7 +79,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         |m: &mut Map<_>| {
             let mut sum = 0;
             for i in 0..CAP {
-                m.insert(i, &"大家好");
+                m.insert(i, "大家好");
                 for s in m.values() {
                     sum += s.len();
                 }
@@ -157,12 +158,12 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         total,
         |mi: &mut FastIntMapStr| {
             for i in 0..CAP as u64 {
-                mi.insert(i, &"Hello, world!");
+                mi.insert(i, "Hello, world!");
             }
         },
         |m: &mut Map<_>| {
             for i in 0..CAP {
-                m.insert(i, &"Hello, world!");
+                m.insert(i, "Hello, world!");
             }
         }
     );
