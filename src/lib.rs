@@ -46,6 +46,7 @@ pub struct Map<V> {
     first_used: NodeId, // head of elements list
     head: *mut Node<V>,
     layout: Layout,
+    len: usize,
     #[cfg(debug_assertions)]
     initialized: bool,
 }

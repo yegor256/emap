@@ -30,6 +30,7 @@ impl<V> Map<V> {
                 first_used: NodeId::new(NodeId::UNDEF),
                 layout,
                 head: ptr.cast(),
+                len: 0,
                 #[cfg(debug_assertions)]
                 initialized: false,
             }
@@ -93,6 +94,7 @@ impl<V: Clone> Map<V> {
     pub fn with_capacity_some(cap: usize, v: V) -> Self {
         let mut m = Self::with_capacity(cap);
         m.init_with_some(cap, v);
+        m.len = cap;
         #[cfg(debug_assertions)]
         {
             m.initialized = true;

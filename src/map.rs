@@ -21,13 +21,7 @@ impl<V> Map<V> {
     pub fn len(&self) -> usize {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do len() on non-initialized Map");
-        let mut busy = 0;
-        for i in 0..self.capacity() {
-            if self.get(i).is_some() {
-                busy += 1;
-            }
-        }
-        busy
+        self.len
     }
 
     /// Does the map contain this key?
@@ -90,6 +84,7 @@ impl<V> Map<V> {
 
         self.first_free = NodeId::new(k);
         node.replace_value(None);
+        self.len -= 1;
     }
 
     /// Push to the rightmost position and return the key.
@@ -97,6 +92,7 @@ impl<V> Map<V> {
     pub fn push(&mut self, v: V) -> usize {
         let k = self.next_key();
         self.insert(k, v);
+        self.len += 1;
         k
     }
 
@@ -142,6 +138,7 @@ impl<V> Map<V> {
 
         self.first_used = NodeId::new(k);
         node.replace_value(Some(v));
+        self.len += 1;
     }
 
     /// Get a reference to a single value.
