@@ -174,7 +174,7 @@ impl<V> Map<V> {
     /// # Panics
     ///
     /// Panics if k is out of bound.
-    pub fn get(&self, k: usize) -> Option<&V> {
+    #[must_use] pub fn get(&self, k: usize) -> Option<&V> {
         self.assert_boundaries(k);
         unsafe { self.get_unchecked(k) }
     }
