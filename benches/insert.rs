@@ -15,8 +15,12 @@ fn insert_long_str(c: &mut Criterion) {
         let mut m: Map<&str> = Map::with_capacity_none(CAPACITY);
         b.iter(|| {
             for i in 0..CAPACITY {
-                black_box(m.insert(i, black_box("Hello, world! How are you doing today?")));
+                unsafe {
+                    m.insert_unchecked(i, black_box("Hello, world! How are you doing today?"))
+                };
             }
+            // Prevent optimization removing the loop
+            black_box(&m);
         });
     });
 }
@@ -26,8 +30,10 @@ fn insert_eight_bytes(c: &mut Criterion) {
         let mut m: Map<u64> = Map::with_capacity_none(CAPACITY);
         b.iter(|| {
             for i in 0..CAPACITY {
-                black_box(m.insert(i, black_box(42)));
+                unsafe { m.insert_unchecked(i, black_box(42)) };
             }
+            // Prevent optimization removing the loop
+            black_box(&m);
         });
     });
 }

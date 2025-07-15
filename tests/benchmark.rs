@@ -54,7 +54,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         |m: &mut Map<_>| {
             let mut sum = 0;
             for i in 0..CAP {
-                m.insert(i, &42);
+                unsafe { m.insert_unchecked(i, &42) };
                 for s in m.values() {
                     sum += *s;
                 }
@@ -79,7 +79,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         |m: &mut Map<_>| {
             let mut sum = 0;
             for i in 0..CAP {
-                m.insert(i, "大家好");
+                unsafe { m.insert_unchecked(i, "大家好") };
                 for s in m.values() {
                     sum += s.len();
                 }
@@ -104,7 +104,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         |m: &mut Map<_>| {
             let mut sum = 0;
             for i in 0..CAP {
-                m.insert(i, &42);
+                unsafe { m.insert_unchecked(i, &42) };
                 for k in m.keys() {
                     sum += k;
                 }
@@ -126,10 +126,10 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         },
         |m: &mut Map<_>| {
             for i in 0..CAP {
-                m.insert(i, &42);
+                unsafe { m.insert_unchecked(i, &42) };
             }
             for i in 0..CAP {
-                m.remove(i);
+                unsafe { m.remove_unchecked(i) };
             }
         }
     );
@@ -146,7 +146,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         },
         |m: &mut Map<_>| {
             for i in 0..CAP {
-                m.insert(i, &42);
+                unsafe { m.insert_unchecked(i, &42) };
             }
             m.clear();
             m.len()
@@ -163,7 +163,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         },
         |m: &mut Map<_>| {
             for i in 0..CAP {
-                m.insert(i, "Hello, world!");
+                unsafe { m.insert_unchecked(i, "Hello, world!") };
             }
         }
     );

@@ -56,8 +56,9 @@ fn compare_insert(c: &mut Criterion) {
             let mut map = Map::<i32>::with_capacity_none(*size);
             b.iter(|| {
                 for i in 0..*size {
-                    black_box(map.insert(black_box(i), black_box(42_i32)));
+                    unsafe { map.insert_unchecked(black_box(i), black_box(42_i32)) };
                 }
+                black_box(&map);
             });
         });
     }

@@ -25,9 +25,9 @@ criterion = { version = "0.6", features = ["html_reports"] }
 [[bench]]
 name = "insert_bench"
 harness = false
-path = "benches/insert_unchecked.rs"
+path = "benches/insert.rs"
 
 [[bench]]
 name = "remove_bench"
 harness = false
-path = "benches/remove_unchecked.rs"
+path = "benches/remove.rs"
