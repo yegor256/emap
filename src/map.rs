@@ -28,15 +28,26 @@ impl<V> Map<V> {
     ///
     /// # Panics
     ///
-    /// It may panic if you attempt to refer to they key that is outside
-    /// of the boundary of this map. It will not return `None`, it will panic.
-    /// However, in "release" mode it will not panic, but will lead to
-    /// undefined behavior.
+    /// Panics if k is out of bound.
     #[inline]
     #[must_use]
     #[allow(clippy::missing_const_for_fn)]
     pub fn contains_key(&self, k: usize) -> bool {
         self.assert_boundaries(k);
+        unsafe { self.contains_key_unchecked(k) }
+    }
+
+    /// Does the map contain this key?
+    ///
+    /// # Safety
+    ///
+    /// In debug builds, this may panic if `k` is out of bounds, but in release builds,
+    /// passing an out-of-bounds `k` will result in undefined behavior.
+    #[inline]
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
+    pub unsafe fn contains_key_unchecked(&self, k: usize) -> bool {
+        self.assert_boundaries_debug(k);
         unsafe { &*self.head.add(k) }.is_some()
     }
 
@@ -44,13 +55,22 @@ impl<V> Map<V> {
     ///
     /// # Panics
     ///
-    /// It may panic if you attempt to refer to they key that is outside
-    /// of the boundary of this map. It will not return `None`, it will panic.
-    /// However, in "release" mode it will not panic, but will lead to
-    /// undefined behavior.
+    /// Panics if k is out of bound.
     #[inline]
     pub fn remove(&mut self, k: usize) {
         self.assert_boundaries(k);
+        unsafe { self.remove_unchecked(k) }
+    }
+
+    /// Remove by key.
+    ///
+    /// # Safety
+    ///
+    /// In debug builds, this may panic if `k` is out of bounds, but in release builds,
+    /// passing an out-of-bounds `k` will result in undefined behavior.
+    #[inline]
+    pub unsafe fn remove_unchecked(&mut self, k: usize) {
+        self.assert_boundaries_debug(k);
         let node = unsafe { &mut *self.head.add(k) };
 
         if node.is_none() {
@@ -100,13 +120,21 @@ impl<V> Map<V> {
     ///
     /// # Panics
     ///
-    /// It may panic if you attempt to refer to they key that is outside
-    /// of the boundary of this map. It will not return `None`, it will panic.
-    /// However, in "release" mode it will not panic, but will lead to
-    /// undefined behavior.
-    #[inline]
+    /// Panics if k is out of bound.
     pub fn insert(&mut self, k: usize, v: V) {
         self.assert_boundaries(k);
+        unsafe { self.insert_unchecked(k, v) }
+    }
+
+    /// Insert a single pair into the map.
+    ///
+    /// # Safety
+    ///
+    /// In debug builds, this may panic if `k` is out of bounds, but in release builds,
+    /// passing an out-of-bounds `k` will result in undefined behavior.
+    #[inline]
+    pub unsafe fn insert_unchecked(&mut self, k: usize, v: V) {
+        self.assert_boundaries_debug(k);
         let node = unsafe { &mut *self.head.add(k) };
 
         if node.is_some() {
@@ -145,14 +173,22 @@ impl<V> Map<V> {
     ///
     /// # Panics
     ///
-    /// It may panic if you attempt to refer to they key that is outside
-    /// of the boundary of this map. It will not return `None`, it will panic.
-    /// However, in "release" mode it will not panic, but will lead to
-    /// undefined behavior.
+    /// Panics if k is out of bound.
+    #[must_use] pub fn get(&self, k: usize) -> Option<&V> {
+        self.assert_boundaries(k);
+        unsafe { self.get_unchecked(k) }
+    }
+
+    /// Get a reference to a single value.
+    ///
+    /// # Safety
+    ///
+    /// In debug builds, this may panic if `k` is out of bounds, but in release builds,
+    /// passing an out-of-bounds `k` will result in undefined behavior.
     #[inline]
     #[must_use]
-    pub fn get(&self, k: usize) -> Option<&V> {
-        self.assert_boundaries(k);
+    pub unsafe fn get_unchecked(&self, k: usize) -> Option<&V> {
+        self.assert_boundaries_debug(k);
         unsafe { &*self.head.add(k) }.get()
     }
 
@@ -160,14 +196,22 @@ impl<V> Map<V> {
     ///
     /// # Panics
     ///
-    /// It may panic if you attempt to refer to they key that is outside
-    /// of the boundary of this map. It will not return `None`, it will panic.
-    /// However, in "release" mode it will not panic, but will lead to
-    /// undefined behavior.
-    #[inline]
-    #[must_use]
+    /// Panics if k is out of bound.
     pub fn get_mut(&mut self, k: usize) -> Option<&mut V> {
         self.assert_boundaries(k);
+        unsafe { self.get_mut_unchecked(k) }
+    }
+
+    /// Get a mutable reference to a single value.
+    ///
+    /// # Safety
+    ///
+    /// In debug builds, this may panic if `k` is out of bounds, but in release builds,
+    /// passing an out-of-bounds `k` will result in undefined behavior.
+    #[inline]
+    #[must_use]
+    pub unsafe fn get_mut_unchecked(&mut self, k: usize) -> Option<&mut V> {
+        self.assert_boundaries_debug(k);
         unsafe { &mut *(self.head.add(k)) }.get_mut()
     }
 
@@ -197,11 +241,22 @@ impl<V> Map<V> {
         }
     }
 
+    /// Check the boundary condition only in debug mode.
+    #[inline]
+    #[allow(unused_variables)]
+    fn assert_boundaries_debug(&self, k: usize) {
+        #[cfg(debug_assertions)]
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
+    }
+
     /// Check the boundary condition.
     #[inline]
     #[allow(unused_variables)]
     fn assert_boundaries(&self, k: usize) {
-        #[cfg(debug_assertions)]
         assert!(
             k < self.capacity(),
             "The key {k} is over the boundary {}",
