@@ -212,9 +212,9 @@ dependencies = [
 
 [[package]]
 name = "intmap"
-version = "3.1.1"
+version = "3.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6958acfd72ba79d943b048ab4064c671018b6a348a715b5b8931baf975439553"
+checksum = "16dd999647b7a027fadf2b3041a4ea9c8ae21562823fe5cbdecd46537d535ae2"
 
 [[package]]
 name = "itertools"
