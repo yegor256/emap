@@ -2,62 +2,62 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{Map, Node, NodeId};
-use std::alloc::{Layout, alloc, dealloc};
+use std::alloc::{Layout, alloc, dealloc, handle_alloc_error};
 use std::mem;
 use std::ptr;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
+        #[cfg(debug_assertions)]
+        if self.initialized {
+            unsafe { self.drop_all_initialized_nodes() };
+        } else {
+            unsafe { self.drop_used_nodes() };
+        }
+
+        #[cfg(not(debug_assertions))]
         unsafe {
-            #[cfg(debug_assertions)]
-            if self.initialized {
-                self.drop_all_initialized_nodes();
-            } else {
-                self.drop_used_nodes();
-            }
+            self.drop_used_nodes();
+        }
 
-            #[cfg(not(debug_assertions))]
-            {
-                self.drop_used_nodes();
-            }
-
+        unsafe {
             dealloc(self.head.cast(), self.layout);
         }
     }
 }
 
 impl<V> Map<V> {
-    /// Make it.
+    /// Create a map with the given capacity without initializing values.
     ///
     /// # Panics
     ///
-    /// May panic if out of memory.
+    /// Panics on allocation error.
     #[inline]
     #[must_use]
     fn with_capacity(cap: usize) -> Self {
-        unsafe {
-            let layout = Layout::array::<Node<V>>(cap).unwrap();
-            let ptr = alloc(layout);
-            Self {
-                first_free: NodeId::new(NodeId::UNDEF),
-                first_used: NodeId::new(NodeId::UNDEF),
-                layout,
-                head: ptr.cast(),
-                len: 0,
-                #[cfg(debug_assertions)]
-                initialized: false,
-            }
+        let layout = Layout::array::<Node<V>>(cap).expect("invalid layout");
+        let ptr = unsafe { alloc(layout) };
+        if ptr.is_null() {
+            handle_alloc_error(layout);
+        }
+        Self {
+            first_free: NodeId::new(NodeId::UNDEF),
+            first_used: NodeId::new(NodeId::UNDEF),
+            layout,
+            head: ptr.cast(),
+            len: 0,
+            #[cfg(debug_assertions)]
+            initialized: false,
         }
     }
 
-    /// Make it and prepare all keys.
+    /// Create a map and initialize all slots with `None`.
     ///
-    /// This is a more expensive operation that `with_capacity`, because it has
-    /// to go through all keys and fill them up with `None`.
+    /// More expensive than `with_capacity` since it initializes every slot.
     ///
     /// # Panics
     ///
-    /// May panic if out of memory.
+    /// Panics on allocation error.
     #[inline]
     #[must_use]
     pub fn with_capacity_none(cap: usize) -> Self {
@@ -70,22 +70,24 @@ impl<V> Map<V> {
         m
     }
 
+    /// Initialize all slots as free and link the free-list.
+    #[inline]
     fn init_with_none(&mut self) {
-        let mut ptr = self.head;
         let cap = self.capacity();
         self.first_free = NodeId::new(0);
+        let mut p = self.head;
         for i in 0..cap {
             let free_next = if i + 1 == cap { NodeId::UNDEF } else { i + 1 };
             let free_prev = if i == 0 { NodeId::UNDEF } else { i - 1 };
             let node = Node::new(free_next, free_prev, None);
             unsafe {
-                ptr::write(ptr, node);
-                ptr = ptr.add(1);
+                ptr::write(p, node);
+                p = p.add(1);
             }
         }
     }
 
-    /// Return capacity.
+    /// Return the map capacity.
     #[inline]
     #[must_use]
     pub const fn capacity(&self) -> usize {
@@ -94,14 +96,11 @@ impl<V> Map<V> {
 }
 
 impl<V: Clone> Map<V> {
-    /// Make it and prepare all keys with some value set.
-    ///
-    /// This is a more expensive operation that `with_capacity`, because it has
-    /// to go through all keys and fill them up with `Some`.
+    /// Create a map and fill all slots with the provided value.
     ///
     /// # Panics
     ///
-    /// May panic if out of memory.
+    /// Panics on allocation error or if `Clone` panics during initialization.
     #[inline]
     #[must_use]
     pub fn with_capacity_some(cap: usize, v: V) -> Self {
@@ -114,6 +113,7 @@ impl<V: Clone> Map<V> {
         m
     }
 
+    /// Fill all slots with `Some(v.clone())` and build the used-list.
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
         let mut previous_used = NodeId::new(NodeId::UNDEF);
@@ -124,11 +124,9 @@ impl<V: Clone> Map<V> {
         for index in 0..cap {
             let cloned = v.clone();
             let node = Node::new(NodeId::UNDEF, previous_used.get(), Some(cloned));
-
             unsafe {
                 ptr::write(self.head.add(index), node);
             }
-
             if previous_used.is_def() {
                 unsafe {
                     let previous_node = &mut *self.head.add(previous_used.get());
@@ -137,7 +135,6 @@ impl<V: Clone> Map<V> {
             } else {
                 self.first_used = NodeId::new(index);
             }
-
             previous_used = NodeId::new(index);
             self.len = index + 1;
         }
@@ -145,27 +142,37 @@ impl<V: Clone> Map<V> {
 }
 
 impl<V> Map<V> {
+    /// Drop values reachable through the used-list only.
+    ///
+    /// # Safety
+    ///
+    /// `self.head` must point to a valid array of `Node<V>` of size `capacity()`.
+    #[inline]
     unsafe fn drop_used_nodes(&mut self) {
-        unsafe {
-            let mut current = self.first_used;
-            while current.is_def() {
-                let node = &mut *self.head.add(current.get());
-                if let Some(value) = node.take_value() {
-                    drop(value);
-                }
-                current = node.get_next();
+        let mut current = self.first_used;
+        while current.is_def() {
+            let node = unsafe { &mut *self.head.add(current.get()) };
+            if let Some(value) = node.take_value() {
+                drop(value);
             }
+            current = node.get_next();
         }
     }
 
+    /// Drop all values in initialized slots regardless of list integrity.
+    ///
+    /// Enabled only in debug builds to detect leaks when invariants are violated.
+    ///
+    /// # Safety
+    ///
+    /// `self.head` must point to a valid array of `Node<V>` of size `capacity()`.
     #[cfg(debug_assertions)]
+    #[inline]
     unsafe fn drop_all_initialized_nodes(&mut self) {
-        unsafe {
-            for index in 0..self.capacity() {
-                let node = &mut *self.head.add(index);
-                if let Some(value) = node.take_value() {
-                    drop(value);
-                }
+        for index in 0..self.capacity() {
+            let node = unsafe { &mut *self.head.add(index) };
+            if let Some(value) = node.take_value() {
+                drop(value);
             }
         }
     }
@@ -178,6 +185,7 @@ mod tests {
     use std::panic::{AssertUnwindSafe, catch_unwind};
     use std::rc::Rc;
 
+    /// Out-of-bounds insert must panic in debug builds.
     #[test]
     #[should_panic]
     #[cfg(debug_assertions)]
@@ -186,6 +194,7 @@ mod tests {
         m.insert(5, "one");
     }
 
+    /// Out-of-bounds get must panic in debug builds.
     #[test]
     #[should_panic]
     #[cfg(debug_assertions)]
@@ -194,6 +203,7 @@ mod tests {
         m.get(5).unwrap();
     }
 
+    /// Out-of-bounds remove must panic in debug builds.
     #[test]
     #[should_panic]
     #[cfg(debug_assertions)]
@@ -202,6 +212,7 @@ mod tests {
         m.remove(5);
     }
 
+    /// Memory layout size must reflect Node<V> array size.
     #[test]
     fn calculates_size_of_memory() {
         let m1: Map<u8> = Map::with_capacity_none(8);
@@ -210,33 +221,38 @@ mod tests {
         assert_eq!(24 * 8, m2.layout.size());
     }
 
+    /// New map must start empty.
     #[test]
     fn makes_new_map() {
         let m: Map<&str> = Map::with_capacity_none(16);
         assert_eq!(0, m.len());
     }
 
+    /// Capacity must match constructor argument.
     #[test]
     fn returns_capacity() {
         let m: Map<&str> = Map::with_capacity_none(16);
         assert_eq!(16, m.capacity());
     }
 
+    /// Contains check must return false for uninitialized slot.
     #[test]
     fn with_init() {
         let m: Map<&str> = Map::with_capacity_none(16);
         assert!(!m.contains_key(8));
     }
 
+    /// Dropping an empty map should be safe.
     #[test]
     fn drops_correctly() {
         let m: Map<Vec<u8>> = Map::with_capacity_none(16);
         assert_eq!(0, m.len());
+        drop(m);
     }
 
+    /// Values must be dropped on map drop.
     #[test]
     fn drops_values() {
-        use std::rc::Rc;
         let mut m: Map<Rc<()>> = Map::with_capacity_none(1);
         let v = Rc::new(());
         m.insert(0, Rc::clone(&v));
@@ -244,6 +260,7 @@ mod tests {
         assert_eq!(Rc::strong_count(&v), 1);
     }
 
+    /// Multiple values must be dropped on map drop.
     #[test]
     fn drops_multiple_values() {
         let mut m: Map<Rc<()>> = Map::with_capacity_none(3);
@@ -262,6 +279,7 @@ mod tests {
         assert_eq!(Rc::strong_count(&c), 1);
     }
 
+    /// Values must not leak after repeated insert/remove cycles.
     #[test]
     fn drops_values_after_remove_cycles() {
         let mut m: Map<Rc<()>> = Map::with_capacity_none(2);
@@ -278,18 +296,19 @@ mod tests {
         assert_eq!(Rc::strong_count(&value), 1);
     }
 
-    #[cfg(test)]
     #[derive(Clone, PartialEq, Eq)]
     struct Foo {
         pub t: i32,
     }
 
+    /// Struct values must initialize as expected.
     #[test]
     fn init_with_structs() {
         let m: Map<Foo> = Map::with_capacity_none(16);
         assert_eq!(16, m.capacity());
     }
 
+    /// `with_capacity_some` must fill all slots and set len accordingly.
     #[test]
     fn init_with_some() {
         let m: Map<Foo> = Map::with_capacity_some(16, Foo { t: 42 });
@@ -297,6 +316,7 @@ mod tests {
         assert_eq!(16, m.len());
     }
 
+    /// Zero capacity must be supported.
     #[test]
     fn init_with_empty() {
         let m: Map<Foo> = Map::with_capacity_some(0, Foo { t: 42 });
@@ -304,13 +324,13 @@ mod tests {
         assert_eq!(0, m.len());
     }
 
+    /// Partial initialization that panics must still be drop-safe.
     #[test]
     fn drop_after_boundary_panic_without_initialization() {
         let result = catch_unwind(AssertUnwindSafe(|| {
             let mut map: Map<&str> = Map::with_capacity(1);
             map.insert(1, "boom");
         }));
-
         assert!(result.is_err());
     }
 
@@ -350,6 +370,7 @@ mod tests {
         }
     }
 
+    /// If cloning panics during `with_capacity_some`, no values must leak.
     #[test]
     fn drop_after_partial_with_capacity_some_panics() {
         let clones = Rc::new(Cell::new(0));

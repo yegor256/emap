@@ -6,7 +6,9 @@
 use std::hint::black_box;
 use std::time::Duration;
 
-use criterion::{BatchSize, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use criterion::{
+    BatchSize, BenchmarkId, Criterion, SamplingMode, Throughput, criterion_group, criterion_main,
+};
 use emap::Map as EMap;
 use intmap::IntMap;
 
@@ -15,6 +17,15 @@ type IntMapI32 = IntMap<usize, i32>;
 
 const SIZES: &[usize] = &[10, 100, 1_000, 10_000, 25_000];
 const PASSES: usize = 64; // how many repeated scans in read-only benches
+
+/// Global Criterion config tuned for stability on heavy batches.
+fn criterion_config() -> Criterion {
+    Criterion::default()
+        .warm_up_time(Duration::from_secs(2))
+        .measurement_time(Duration::from_secs(8))
+        .sample_size(60)
+        .noise_threshold(0.01)
+}
 
 /// Builds a fresh `IntMapI32` prefilled with `size` elements.
 fn setup_intmap_prefilled(size: usize, value: i32) -> IntMapI32 {
@@ -48,12 +59,13 @@ fn setup_emap_prefilled_unchecked(size: usize, value: i32) -> EMap<i32> {
 /// Compare constructors without prefill (empty maps).
 fn compare_ctors_empty(c: &mut Criterion) {
     let mut group = c.benchmark_group("ctors_empty");
+    group.sampling_mode(SamplingMode::Flat);
+
     for &size in SIZES {
-        group.throughput(Throughput::Elements(size as u64));
+        group.throughput(Throughput::Elements(1));
 
         group.bench_with_input(BenchmarkId::new("intmap_empty", size), &size, |b, &n| {
             b.iter(|| {
-                // ctor only
                 let m = IntMapI32::with_capacity(black_box(n));
                 black_box(m);
             });
@@ -61,7 +73,6 @@ fn compare_ctors_empty(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("emap_empty", size), &size, |b, &n| {
             b.iter(|| {
-                // ctor only; emap doesn't initialize values here
                 let m = EMap::<i32>::with_capacity_none(black_box(n));
                 black_box(m);
             });
@@ -73,6 +84,8 @@ fn compare_ctors_empty(c: &mut Criterion) {
 /// Compare constructors with prefill to target size.
 fn compare_ctors_prefill(c: &mut Criterion) {
     let mut group = c.benchmark_group("ctors_prefill");
+    group.sampling_mode(SamplingMode::Flat);
+
     for &size in SIZES {
         group.throughput(Throughput::Elements(size as u64));
 
@@ -103,12 +116,7 @@ fn compare_ctors_prefill(c: &mut Criterion) {
             &size,
             |b, &n| {
                 b.iter(|| {
-                    let mut m = EMap::<i32>::with_capacity_none(n);
-                    let v = black_box(42_i32);
-                    for i in 0..n {
-                        // SAFETY: keys 0..n inserted once into fresh map
-                        unsafe { m.insert_unchecked(i, v) };
-                    }
+                    let m = setup_emap_prefilled_unchecked(n, black_box(42_i32));
                     black_box(m);
                 });
             },
@@ -120,6 +128,8 @@ fn compare_ctors_prefill(c: &mut Criterion) {
 /// Compare insertion throughput into a fresh map per iteration.
 fn compare_insert(c: &mut Criterion) {
     let mut group = c.benchmark_group("insert_throughput");
+    group.sampling_mode(SamplingMode::Flat);
+
     for &size in SIZES {
         group.throughput(Throughput::Elements(size as u64));
 
@@ -173,6 +183,8 @@ fn compare_insert(c: &mut Criterion) {
 /// We count elements visited as throughput: size * PASSES per batch.
 fn compare_values(c: &mut Criterion) {
     let mut group = c.benchmark_group("scan_values");
+    group.sampling_mode(SamplingMode::Flat);
+
     for &size in SIZES {
         group.throughput(Throughput::Elements((size * PASSES) as u64));
 
@@ -228,9 +240,11 @@ fn compare_values(c: &mut Criterion) {
 }
 
 /// Compare sequential scans over keys on prefilled maps.
-/// Again, throughput = size * PASSES.
+/// Throughput = size * PASSES.
 fn compare_keys(c: &mut Criterion) {
     let mut group = c.benchmark_group("scan_keys");
+    group.sampling_mode(SamplingMode::Flat);
+
     for &size in SIZES {
         group.throughput(Throughput::Elements((size * PASSES) as u64));
 
@@ -271,10 +285,7 @@ fn compare_keys(c: &mut Criterion) {
 
 criterion_group! {
     name = benches;
-    config = Criterion::default()
-        .warm_up_time(Duration::from_secs(2))
-        .measurement_time(Duration::from_secs(3))
-        .sample_size(20);
+    config = criterion_config();
     targets =
         compare_ctors_empty,
         compare_ctors_prefill,

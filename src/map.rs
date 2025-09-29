@@ -237,10 +237,10 @@ impl<V> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
         for i in self.keys() {
-            if let Some(p) = self.get_mut(i) {
-                if !f(&i, p) {
-                    self.remove(i);
-                }
+            if let Some(p) = self.get_mut(i)
+                && !f(&i, p)
+            {
+                self.remove(i);
             }
         }
     }
