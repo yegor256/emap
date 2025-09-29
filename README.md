@@ -60,14 +60,35 @@ the numbers over 1.0 indicate performance gain of `Map` against `IntMap`,
 while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
-| | 4 | 16 | 256 | 4096 |
-| --- | --: | --: | --: | --: |
-| `i ∈ 0..CAP {M.insert(i, &"Hello, world!")}` |6.33 |16.46 |23.98 |24.08 |
-| `i ∈ 0..CAP {M.insert(i, &"大家好"); s ∈ M.values() {sum += s.len()}}` |4.59 |5.80 |1.02 |0.91 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}` |7.51 |7.03 |1.15 |0.90 |
-| `i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}` |6.31 |6.13 |0.94 |0.76 |
-| `i ∈ 0..CAP {M.insert(i, &42)}; M.clear(); M.len();` |4.52 |8.74 |9.45 |10.67 |
-| `i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}` |5.32 |12.26 |15.57 |14.62 |
+
+| Case                    |   4 |   16 |  256 | 4096 |
+|------------------------|----:|-----:|-----:|-----:|
+| insert_str             | 6.33| 16.46| 23.98| 24.08|
+| insert_unicode_vals    | 4.59|  5.80|  1.02|  0.91|
+| insert_u64_scan_keys   | 7.51|  7.03|  1.15|  0.90|
+| insert_u64_scan_vals   | 6.31|  6.13|  0.94|  0.76|
+| insert_u64_clear_len   | 4.52|  8.74|  9.45| 10.67|
+| insert_u64_remove_rev  | 5.32| 12.26| 15.57| 14.62|
+
+### Cases
+
+- `insert_str`:
+  `i in 0..CAP { M.insert(i, "Hello, world!") }`
+- `insert_unicode_vals`:
+  `i in 0..CAP { M.insert(i, "大家好") }`
+  `for s in M.values() { sum += s.len() }`
+- `insert_u64_scan_keys`:
+  `i in 0..CAP { M.insert(i, 42) }`
+  `for k in M.keys() { sum += k }`
+- `insert_u64_scan_vals`:
+  `i in 0..CAP { M.insert(i, 42) }`
+  `for s in M.values() { sum += s }`
+- `insert_u64_clear_len`:
+  `i in 0..CAP { M.insert(i, 42) }`
+  `M.clear(); M.len();`
+- `insert_u64_remove_rev`:
+  `i in 0..CAP { M.insert(i, 42) }`
+  `for i in (0..CAP).rev() { M.remove(i) }`
 
 The experiment was performed on 13-05-2025.
  There were 10000 repetition cycles.
