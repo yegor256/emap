@@ -3,7 +3,7 @@
 ---
 # yamllint disable rule:line-length
 name: pdd
-on:
+"on":
   push:
     branches:
       - master

@@ -3,7 +3,7 @@
 ---
 # yamllint disable rule:line-length
 name: up
-on:
+"on":
   push:
     branches:
       - master

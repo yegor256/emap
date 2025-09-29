@@ -3,19 +3,20 @@
 ---
 # yamllint disable rule:line-length
 name: markdown-lint
-'on':
+"on":
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    branches:
-      - master
+    branches: [master]
+
 jobs:
   markdown-lint:
     timeout-minutes: 15
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: DavidAnson/markdownlint-cli2-action@v20.0.0
         with:
-          config: .github/markdownlint.yml
+          globs: |
+            **/*.md
+            **/*.markdown
