@@ -81,7 +81,7 @@ impl<V: Clone> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn iter(&self) -> Iter<V> {
+    pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
         Iter {
@@ -111,7 +111,7 @@ impl<V: Clone> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn iter_mut(&self) -> IterMut<V> {
+    pub const fn iter_mut(&self) -> IterMut<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
         IterMut {

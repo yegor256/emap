@@ -8,6 +8,13 @@ use std::mem;
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
         unsafe {
+            for index in 0..self.capacity() {
+                let node = &mut *self.head.add(index);
+                if node.is_some() {
+                    let previous = node.take_value();
+                    drop(previous);
+                }
+            }
             dealloc(self.head.cast(), self.layout);
         }
     }
@@ -179,14 +186,49 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn drops_values() {
         use std::rc::Rc;
-        let mut m: Map<Rc<()>> = Map::with_capacity(1);
+        let mut m: Map<Rc<()>> = Map::with_capacity_none(1);
         let v = Rc::new(());
         m.insert(0, Rc::clone(&v));
         drop(m);
         assert_eq!(Rc::strong_count(&v), 1);
+    }
+
+    #[test]
+    fn drops_multiple_values() {
+        use std::rc::Rc;
+        let mut m: Map<Rc<()>> = Map::with_capacity_none(3);
+        let a = Rc::new(());
+        let b = Rc::new(());
+        let c = Rc::new(());
+
+        m.insert(0, Rc::clone(&a));
+        m.insert(1, Rc::clone(&b));
+        m.insert(2, Rc::clone(&c));
+
+        drop(m);
+
+        assert_eq!(Rc::strong_count(&a), 1);
+        assert_eq!(Rc::strong_count(&b), 1);
+        assert_eq!(Rc::strong_count(&c), 1);
+    }
+
+    #[test]
+    fn drops_values_after_remove_cycles() {
+        use std::rc::Rc;
+        let mut m: Map<Rc<()>> = Map::with_capacity_none(2);
+        let value = Rc::new(());
+
+        for _ in 0..3 {
+            m.insert(0, Rc::clone(&value));
+            m.remove(0);
+            assert_eq!(Rc::strong_count(&value), 1);
+        }
+
+        m.insert(0, Rc::clone(&value));
+        drop(m);
+        assert_eq!(Rc::strong_count(&value), 1);
     }
 
     #[cfg(test)]

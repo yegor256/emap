@@ -43,7 +43,7 @@ impl<V> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn values(&self) -> Values<V> {
+    pub const fn values(&self) -> Values<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't values() non-initialized Map");
         Values {
