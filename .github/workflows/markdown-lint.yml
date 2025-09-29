@@ -3,11 +3,11 @@
 ---
 # yamllint disable rule:line-length
 name: markdown-lint
-on:
+"on":
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   markdown-lint:
