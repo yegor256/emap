@@ -103,7 +103,8 @@ impl<V> Map<V> {
         }
 
         self.first_free = NodeId::new(k);
-        node.replace_value(None);
+        let previous = node.replace_value(None);
+        drop(previous);
         self.len -= 1;
     }
 
@@ -138,7 +139,8 @@ impl<V> Map<V> {
         let node = unsafe { &mut *self.head.add(k) };
 
         if node.is_some() {
-            node.replace_value(Some(v));
+            let previous = node.replace_value(Some(v));
+            drop(previous);
             return;
         }
 
@@ -165,7 +167,8 @@ impl<V> Map<V> {
         }
 
         self.first_used = NodeId::new(k);
-        node.replace_value(Some(v));
+        let previous = node.replace_value(Some(v));
+        drop(previous);
         self.len += 1;
     }
 
@@ -174,7 +177,8 @@ impl<V> Map<V> {
     /// # Panics
     ///
     /// Panics if k is out of bound.
-    #[must_use] pub fn get(&self, k: usize) -> Option<&V> {
+    #[must_use]
+    pub fn get(&self, k: usize) -> Option<&V> {
         self.assert_boundaries(k);
         unsafe { self.get_unchecked(k) }
     }
@@ -233,10 +237,10 @@ impl<V> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
         for i in self.keys() {
-            if let Some(p) = self.get_mut(i) {
-                if !f(&i, p) {
-                    self.remove(i);
-                }
+            if let Some(p) = self.get_mut(i)
+                && !f(&i, p)
+            {
+                self.remove(i);
             }
         }
     }
@@ -246,22 +250,14 @@ impl<V> Map<V> {
     #[allow(unused_variables)]
     fn assert_boundaries_debug(&self, k: usize) {
         #[cfg(debug_assertions)]
-        assert!(
-            k < self.capacity(),
-            "The key {k} is over the boundary {}",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
     }
 
     /// Check the boundary condition.
     #[inline]
     #[allow(unused_variables)]
     fn assert_boundaries(&self, k: usize) {
-        assert!(
-            k < self.capacity(),
-            "The key {k} is over the boundary {}",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
     }
 }
 
@@ -342,6 +338,26 @@ fn removes_simple_pair() {
     m.remove(0);
     m.remove(1);
     assert!(m.get(0).is_none());
+}
+
+#[test]
+fn replacing_value_drops_old_reference() {
+    use std::rc::Rc;
+
+    let mut m: Map<Rc<()>> = Map::with_capacity_none(2);
+    let original = Rc::new(());
+    let replacement = Rc::new(());
+
+    m.insert(0, Rc::clone(&original));
+    assert_eq!(Rc::strong_count(&original), 2);
+
+    m.insert(0, Rc::clone(&replacement));
+    assert_eq!(Rc::strong_count(&original), 1);
+    assert_eq!(Rc::strong_count(&replacement), 2);
+
+    drop(m);
+
+    assert_eq!(Rc::strong_count(&replacement), 1);
 }
 
 #[cfg(test)]

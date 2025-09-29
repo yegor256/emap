@@ -30,10 +30,7 @@ impl<V> Map<V> {
     pub const fn keys(&self) -> Keys<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't keys() non-initialized Map");
-        Keys {
-            current: self.first_used,
-            head: self.head,
-        }
+        Keys { current: self.first_used, head: self.head }
     }
 }
 

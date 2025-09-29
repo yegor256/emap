@@ -43,14 +43,10 @@ impl<V> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn values(&self) -> Values<V> {
+    pub const fn values(&self) -> Values<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't values() non-initialized Map");
-        Values {
-            current: self.first_used,
-            head: self.head,
-            _marker: PhantomData,
-        }
+        Values { current: self.first_used, head: self.head, _marker: PhantomData }
     }
 
     /// Make an into-iterator over all items.
@@ -63,10 +59,7 @@ impl<V> Map<V> {
     pub const fn into_values(&self) -> IntoValues<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't into_values() non-initialized Map");
-        IntoValues {
-            current: self.first_used,
-            head: self.head,
-        }
+        IntoValues { current: self.first_used, head: self.head }
     }
 }
 

@@ -4,7 +4,7 @@
 [package]
 name = "emap"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 repository = "https://github.com/yegor256/emap"
 description = "A map with a fixed capacity and integers as keys"
 readme = "README.md"
@@ -20,7 +20,10 @@ serde = { version = "1.0.185", optional = true, default-features = false }
 [dev-dependencies]
 bincode = "2.0.0"
 paste = "1.0"
-criterion = { version = "0.6", features = ["html_reports"] }
+criterion = { version = "0.7", features = ["html_reports"] }
+
+[features]
+bench_unchecked = []
 
 [[bench]]
 name = "insert_bench"
@@ -31,3 +34,8 @@ path = "benches/insert.rs"
 name = "remove_bench"
 harness = false
 path = "benches/remove.rs"
+
+[[bench]]
+name = "compare_with_initmap"
+harness = false
+path = "benches/compare_with_intmap.rs"

@@ -45,11 +45,7 @@ impl<V> Node<V> {
     #[inline]
     #[must_use]
     pub const fn new(next: usize, prev: usize, value: Option<V>) -> Self {
-        Self {
-            next: NodeId::new(next),
-            prev: NodeId::new(prev),
-            value,
-        }
+        Self { next: NodeId::new(next), prev: NodeId::new(prev), value }
     }
 
     #[inline]
@@ -87,8 +83,18 @@ impl<V> Node<V> {
     }
 
     #[inline]
-    pub fn replace_value(&mut self, value: Option<V>) {
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn replace_value(&mut self, value: Option<V>) -> Option<V> {
+        let previous = self.value.take();
         self.value = value;
+        previous
+    }
+
+    #[inline]
+    #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn take_value(&mut self) -> Option<V> {
+        self.value.take()
     }
 
     #[inline]
@@ -174,7 +180,14 @@ mod node_tests {
         *node.get_mut().unwrap() = 20;
         assert_eq!(node.get(), Some(&20));
 
-        node.replace_value(None);
+        assert_eq!(node.replace_value(None), Some(20));
+        assert!(node.is_none());
+    }
+
+    #[test]
+    fn node_take_value() {
+        let mut node = Node::new(0, 0, Some(42));
+        assert_eq!(node.take_value(), Some(42));
         assert!(node.is_none());
     }
 
