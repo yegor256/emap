@@ -4,17 +4,23 @@
 use crate::{Map, Node, NodeId};
 use std::alloc::{alloc, dealloc, Layout};
 use std::mem;
+use std::ptr;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
         unsafe {
-            for index in 0..self.capacity() {
-                let node = &mut *self.head.add(index);
-                if node.is_some() {
-                    let previous = node.take_value();
-                    drop(previous);
-                }
+            #[cfg(debug_assertions)]
+            if self.initialized {
+                self.drop_all_initialized_nodes();
+            } else {
+                self.drop_used_nodes();
             }
+
+            #[cfg(not(debug_assertions))]
+            {
+                self.drop_used_nodes();
+            }
+
             dealloc(self.head.cast(), self.layout);
         }
     }
@@ -73,7 +79,7 @@ impl<V> Map<V> {
             let free_prev = if i == 0 { NodeId::UNDEF } else { i - 1 };
             let node = Node::new(free_next, free_prev, None);
             unsafe {
-                std::ptr::write(ptr, node);
+                ptr::write(ptr, node);
                 ptr = ptr.add(1);
             }
         }
@@ -101,7 +107,6 @@ impl<V: Clone> Map<V> {
     pub fn with_capacity_some(cap: usize, v: V) -> Self {
         let mut m = Self::with_capacity(cap);
         m.init_with_some(cap, v);
-        m.len = cap;
         #[cfg(debug_assertions)]
         {
             m.initialized = true;
@@ -111,15 +116,52 @@ impl<V: Clone> Map<V> {
 
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
-        let mut ptr = self.head;
-        self.first_used = NodeId::new(0);
-        for i in 0..cap {
-            let free_next = if i + 1 == cap { NodeId::UNDEF } else { i + 1 };
-            let free_prev = if i == 0 { NodeId::UNDEF } else { i - 1 };
-            let node = Node::new(free_next, free_prev, Some(v.clone()));
+        let mut previous_used = NodeId::new(NodeId::UNDEF);
+        self.first_free = NodeId::new(NodeId::UNDEF);
+        self.first_used = NodeId::new(NodeId::UNDEF);
+        self.len = 0;
+
+        for index in 0..cap {
+            let cloned = v.clone();
+            let node = Node::new(NodeId::UNDEF, previous_used.get(), Some(cloned));
+
             unsafe {
-                std::ptr::write(ptr, node);
-                ptr = ptr.add(1);
+                ptr::write(self.head.add(index), node);
+            }
+
+            if previous_used.is_def() {
+                unsafe {
+                    let previous_node = &mut *self.head.add(previous_used.get());
+                    previous_node.update_next(NodeId::new(index));
+                }
+            } else {
+                self.first_used = NodeId::new(index);
+            }
+
+            previous_used = NodeId::new(index);
+            self.len = index + 1;
+        }
+    }
+}
+
+impl<V> Map<V> {
+    unsafe fn drop_used_nodes(&mut self) {
+        let mut current = self.first_used;
+        while current.is_def() {
+            let node = &mut *self.head.add(current.get());
+            if let Some(value) = node.take_value() {
+                drop(value);
+            }
+            current = node.get_next();
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    unsafe fn drop_all_initialized_nodes(&mut self) {
+        for index in 0..self.capacity() {
+            let node = &mut *self.head.add(index);
+            if let Some(value) = node.take_value() {
+                drop(value);
             }
         }
     }
@@ -128,6 +170,9 @@ impl<V: Clone> Map<V> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::Cell;
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    use std::rc::Rc;
 
     #[test]
     #[should_panic]
@@ -197,7 +242,6 @@ mod tests {
 
     #[test]
     fn drops_multiple_values() {
-        use std::rc::Rc;
         let mut m: Map<Rc<()>> = Map::with_capacity_none(3);
         let a = Rc::new(());
         let b = Rc::new(());
@@ -216,7 +260,6 @@ mod tests {
 
     #[test]
     fn drops_values_after_remove_cycles() {
-        use std::rc::Rc;
         let mut m: Map<Rc<()>> = Map::with_capacity_none(2);
         let value = Rc::new(());
 
@@ -255,5 +298,70 @@ mod tests {
         let m: Map<Foo> = Map::with_capacity_some(0, Foo { t: 42 });
         assert_eq!(0, m.capacity());
         assert_eq!(0, m.len());
+    }
+
+    #[test]
+    fn drop_after_boundary_panic_without_initialization() {
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            let mut map: Map<&str> = Map::with_capacity(1);
+            map.insert(1, "boom");
+        }));
+
+        assert!(result.is_err());
+    }
+
+    #[derive(Debug)]
+    struct PanicOnClone {
+        clones: Rc<Cell<usize>>,
+        active: Rc<Cell<usize>>,
+        panic_after: usize,
+    }
+
+    impl PanicOnClone {
+        fn new(panic_after: usize, clones: Rc<Cell<usize>>, active: Rc<Cell<usize>>) -> Self {
+            active.set(active.get() + 1);
+            Self {
+                clones,
+                active,
+                panic_after,
+            }
+        }
+    }
+
+    impl Clone for PanicOnClone {
+        fn clone(&self) -> Self {
+            if self.clones.get() >= self.panic_after {
+                panic!("clone limit reached");
+            }
+            self.clones.set(self.clones.get() + 1);
+            self.active.set(self.active.get() + 1);
+            Self {
+                clones: Rc::clone(&self.clones),
+                active: Rc::clone(&self.active),
+                panic_after: self.panic_after,
+            }
+        }
+    }
+
+    impl Drop for PanicOnClone {
+        fn drop(&mut self) {
+            let current = self.active.get();
+            self.active.set(current.saturating_sub(1));
+        }
+    }
+
+    #[test]
+    fn drop_after_partial_with_capacity_some_panics() {
+        let clones = Rc::new(Cell::new(0));
+        let active = Rc::new(Cell::new(0));
+
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            let value = PanicOnClone::new(1, Rc::clone(&clones), Rc::clone(&active));
+            let _ = Map::with_capacity_some(3, value);
+        }));
+
+        assert!(result.is_err());
+        assert_eq!(clones.get(), 1);
+        assert_eq!(active.get(), 0);
     }
 }
