@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
 #![allow(clippy::unit_arg)]

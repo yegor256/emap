@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2023 Yegor Bugayenko
+// SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
 //! There is a map with a fixed capacity and integers as keys.
