@@ -45,11 +45,7 @@ impl<V> Node<V> {
     #[inline]
     #[must_use]
     pub const fn new(next: usize, prev: usize, value: Option<V>) -> Self {
-        Self {
-            next: NodeId::new(next),
-            prev: NodeId::new(prev),
-            value,
-        }
+        Self { next: NodeId::new(next), prev: NodeId::new(prev), value }
     }
 
     #[inline]

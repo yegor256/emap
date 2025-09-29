@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{Map, Node, NodeId};
-use std::alloc::{alloc, dealloc, Layout};
+use std::alloc::{Layout, alloc, dealloc};
 use std::mem;
 use std::ptr;
 
@@ -146,22 +146,26 @@ impl<V: Clone> Map<V> {
 
 impl<V> Map<V> {
     unsafe fn drop_used_nodes(&mut self) {
-        let mut current = self.first_used;
-        while current.is_def() {
-            let node = &mut *self.head.add(current.get());
-            if let Some(value) = node.take_value() {
-                drop(value);
+        unsafe {
+            let mut current = self.first_used;
+            while current.is_def() {
+                let node = &mut *self.head.add(current.get());
+                if let Some(value) = node.take_value() {
+                    drop(value);
+                }
+                current = node.get_next();
             }
-            current = node.get_next();
         }
     }
 
     #[cfg(debug_assertions)]
     unsafe fn drop_all_initialized_nodes(&mut self) {
-        for index in 0..self.capacity() {
-            let node = &mut *self.head.add(index);
-            if let Some(value) = node.take_value() {
-                drop(value);
+        unsafe {
+            for index in 0..self.capacity() {
+                let node = &mut *self.head.add(index);
+                if let Some(value) = node.take_value() {
+                    drop(value);
+                }
             }
         }
     }
@@ -171,7 +175,7 @@ impl<V> Map<V> {
 mod tests {
     use super::*;
     use std::cell::Cell;
-    use std::panic::{catch_unwind, AssertUnwindSafe};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
     use std::rc::Rc;
 
     #[test]
@@ -320,11 +324,7 @@ mod tests {
     impl PanicOnClone {
         fn new(panic_after: usize, clones: Rc<Cell<usize>>, active: Rc<Cell<usize>>) -> Self {
             active.set(active.get() + 1);
-            Self {
-                clones,
-                active,
-                panic_after,
-            }
+            Self { clones, active, panic_after }
         }
     }
 
