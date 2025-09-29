@@ -70,7 +70,7 @@ while the numbers below 1.0 demonstrate performance loss.
 | insert_u64_clear_len   | 4.52|  8.74|  9.45| 10.67|
 | insert_u64_remove_rev  | 5.32| 12.26| 15.57| 14.62|
 
-**Cases**
+### Cases
 
 - `insert_str`:
   `i in 0..CAP { M.insert(i, "Hello, world!") }`
