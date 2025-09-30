@@ -248,18 +248,26 @@ impl<V> Map<V> {
     /// m.insert(0, 10);
     /// m.insert(1, 20);
     /// m.insert(2, 30);
-    /// m.retain(|_, v| *v >= 20);
+    /// m.retain(|_, v| {
+    ///     *v += 5;
+    ///     *v >= 25
+    /// });
     /// assert_eq!(m.len(), 2);
     /// assert!(m.get(0).is_none());
-    /// assert_eq!(*m.get(1).unwrap(), 20);
-    /// assert_eq!(*m.get(2).unwrap(), 30);
+    /// assert_eq!(*m.get(1).unwrap(), 25);
+    /// assert_eq!(*m.get(2).unwrap(), 35);
     /// ```
     #[inline]
-    pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
+    pub fn retain<F: FnMut(&usize, &mut V) -> bool>(&mut self, mut f: F) {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
         for i in self.keys() {
-            let should_remove = self.get_mut(i).is_some_and(|p| !f(&i, p));
+            let mut should_remove = false;
+            {
+                if let Some(value) = self.get_mut(i) {
+                    should_remove = !f(&i, value);
+                }
+            }
             if should_remove {
                 self.remove(i);
             }
@@ -271,14 +279,22 @@ impl<V> Map<V> {
     #[allow(unused_variables)]
     fn assert_boundaries_debug(&self, k: usize) {
         #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 
     /// Check the boundary condition.
     #[inline]
     #[allow(unused_variables)]
     fn assert_boundaries(&self, k: usize) {
-        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 }
 
@@ -407,6 +423,28 @@ fn clears_it_up() {
     m.insert(7, "one");
     m.clear();
     assert_eq!(0, m.len());
+}
+
+#[test]
+fn retain_allows_mutation() {
+    let mut m: Map<i32> = Map::with_capacity_none(4);
+    m.insert(0, 10);
+    m.insert(1, 20);
+    m.insert(2, 30);
+
+    m.retain(|key, value| {
+        if *key % 2 == 0 {
+            *value += 5;
+        } else {
+            *value += 7;
+        }
+        *value >= 25
+    });
+
+    assert_eq!(2, m.len());
+    assert!(m.get(0).is_none());
+    assert_eq!(Some(&27), m.get(1));
+    assert_eq!(Some(&35), m.get(2));
 }
 
 #[test]
