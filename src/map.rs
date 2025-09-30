@@ -113,7 +113,6 @@ impl<V> Map<V> {
     pub fn push(&mut self, v: V) -> usize {
         let k = self.next_key();
         self.insert(k, v);
-        self.len += 1;
         k
     }
 
@@ -403,6 +402,18 @@ fn pushes_into() {
     let mut m: Map<&str> = Map::with_capacity_none(16);
     assert_eq!(0, m.push("one"));
     assert_eq!(1, m.push("two"));
+}
+
+#[test]
+fn push_updates_length() {
+    let mut m: Map<&str> = Map::with_capacity_none(8);
+    let values = ["one", "two", "three", "four"];
+
+    for (index, value) in values.into_iter().enumerate() {
+        let key = m.push(value);
+        assert_eq!(index, key);
+        assert_eq!(index + 1, m.len());
+    }
 }
 
 #[test]
