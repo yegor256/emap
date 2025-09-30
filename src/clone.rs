@@ -8,7 +8,7 @@ impl<V: Clone> Clone for Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't clone() non-initialized Map");
         let mut m = Self::with_capacity_none(self.capacity());
-        for (k, v) in self.iter() {
+        for (k, v) in self {
             m.insert(k, v.clone());
         }
         m
@@ -50,7 +50,9 @@ struct Foo {
 #[test]
 #[ignore]
 fn clone_of_wrapper() {
-    let mut f: Foo = Foo { m: Map::with_capacity_none(16) };
+    let mut f: Foo = Foo {
+        m: Map::with_capacity_none(16),
+    };
     f.m.insert(7, 42);
     assert_eq!(1, f.clone().m.len());
 }

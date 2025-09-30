@@ -65,10 +65,9 @@ pub struct IterMut<'a, V> {
     _marker: PhantomData<&'a V>,
 }
 
-/// Into-iterator over the [`Map`].
-pub struct IntoIter<V> {
-    current: NodeId,
-    head: *mut Node<V>,
+/// Into-iterator over the [`Map`] that yields immutable references to stored values.
+pub struct IntoIter<'a, V> {
+    inner: Iter<'a, V>,
 }
 
 pub struct Values<'a, V> {
@@ -110,8 +109,12 @@ fn perf() {
         for i in 0..cap {
             m.remove(i);
         }
-        for (k, _) in m.into_iter() {
-            m.remove(k);
+        let mut keys = Vec::with_capacity(m.len());
+        for (k, _) in m.iter() {
+            keys.push(k);
+        }
+        for key in keys {
+            m.remove(key);
         }
         for i in 0..cap {
             assert!(!m.contains_key(i));

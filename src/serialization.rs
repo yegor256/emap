@@ -126,17 +126,27 @@ mod tests {
     use bincode::config::standard;
     use bincode::serde::{decode_from_slice, encode_to_vec};
 
-    #[test]
-    fn serialize_and_deserialize_roundtrip() {
-        let mut before: Map<u8> = Map::with_capacity_none(2);
-        before.insert(0, 42);
-        before.insert(1, 99);
-        let bytes = encode_to_vec(&before, standard()).unwrap();
-        let (after, _): (Map<u8>, usize) = decode_from_slice(&bytes, standard()).unwrap();
-        assert_eq!(after.len(), 2);
-        assert_eq!(after.get(0), Some(&42));
-        assert_eq!(after.get(1), Some(&99));
-    }
+#[test]
+fn serialize_and_deserialize() {
+    let mut before: Map<u8> = Map::with_capacity_none(2);
+    before.insert(0, 42);
+    before.insert(1, 42);
+    let bytes: Vec<u8> = serialize(&before).unwrap();
+    let after: Map<u8> = deserialize(&bytes).unwrap();
+    assert_eq!(42, *after.into_iter().next().unwrap().1);
+}
+
+#[test]
+fn serialize_and_deserialize_roundtrip() {
+    let mut before: Map<u8> = Map::with_capacity_none(2);
+    before.insert(0, 42);
+    before.insert(1, 99);
+    let bytes = encode_to_vec(&before, standard()).unwrap();
+    let (after, _): (Map<u8>, usize) = decode_from_slice(&bytes, standard()).unwrap();
+    assert_eq!(after.len(), 2);
+    assert_eq!(after.get(0), Some(&42));
+    assert_eq!(after.get(1), Some(&99));
+}
 
     #[test]
     fn sparse_keys_capacity_is_max_key_plus_one() {

@@ -4,7 +4,7 @@
 use crate::{IntoIter, Iter, IterMut, Map};
 use std::marker::PhantomData;
 
-impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
+impl<'a, V> Iterator for Iter<'a, V> {
     type Item = (usize, &'a V);
 
     /// This is an implementation of the `next` function that returns the next item in an iterator if it
@@ -28,7 +28,7 @@ impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     }
 }
 
-impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
+impl<'a, V> Iterator for IterMut<'a, V> {
     type Item = (usize, &'a mut V);
 
     #[inline]
@@ -44,33 +44,33 @@ impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
     }
 }
 
-impl<V: Clone> Iterator for IntoIter<V> {
-    type Item = (usize, V);
+impl<'a, V> Iterator for IntoIter<'a, V> {
+    type Item = (usize, &'a V);
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current.is_def() {
-            let node = unsafe { &mut *self.head.add(self.current.get()) };
-            let mut next = node.get_next();
-            std::mem::swap(&mut self.current, &mut next);
-            Some((next.get(), node.get().unwrap().clone()))
-        } else {
-            None
-        }
+        self.inner.next()
     }
 }
 
-impl<V: Clone> IntoIterator for &Map<V> {
-    type Item = (usize, V);
-    type IntoIter = IntoIter<V>;
+impl<'a, V> IntoIter<'a, V> {
+    #[inline]
+    pub(crate) const fn new(inner: Iter<'a, V>) -> Self {
+        Self { inner }
+    }
+}
+
+impl<'a, V> IntoIterator for &'a Map<V> {
+    type Item = (usize, &'a V);
+    type IntoIter = Iter<'a, V>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IntoIter { current: self.first_used, head: self.head }
+        self.iter()
     }
 }
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Make an iterator over all items.
     ///
     /// # Panics
@@ -81,7 +81,11 @@ impl<V: Clone> Map<V> {
     pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
-        Iter { current: self.first_used, head: self.head, _marker: PhantomData }
+        Iter {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
     /// Make a mutable iterator over all items.
     ///
@@ -107,7 +111,11 @@ impl<V: Clone> Map<V> {
     pub const fn iter_mut(&self) -> IterMut<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
-        IterMut { current: self.first_used, head: self.head, _marker: PhantomData }
+        IterMut {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 
     /// Make an iterator over all items.
@@ -117,10 +125,10 @@ impl<V: Clone> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn into_iter(&self) -> IntoIter<V> {
+    pub const fn into_iter(&self) -> IntoIter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't into_iter() non-initialized Map");
-        IntoIter { current: self.first_used, head: self.head }
+        IntoIter::new(self.iter())
     }
 }
 
@@ -135,7 +143,7 @@ fn insert_and_jump_over_next() {
     let mut m: Map<&str> = Map::with_capacity_none(16);
     m.insert(0, "foo");
     let mut iter = m.into_iter();
-    assert_eq!("foo", iter.next().unwrap().1);
+    assert_eq!("foo", *iter.next().unwrap().1);
     assert!(iter.next().is_none());
 }
 
@@ -196,4 +204,40 @@ fn iterate_and_mutate() {
         sum += v;
     }
     assert_eq!(115, sum);
+}
+
+#[test]
+fn iterate_non_clone_values() {
+    struct NoClone {
+        id: usize,
+    }
+
+    let mut map: Map<NoClone> = Map::with_capacity_none(4);
+    map.insert(0, NoClone { id: 1 });
+    map.insert(1, NoClone { id: 3 });
+
+    for (idx, value) in map.iter_mut() {
+        value.id += idx;
+    }
+
+    let mut seen = [false; 2];
+    let mut sum = 0;
+    for (idx, value) in map.iter() {
+        sum += value.id;
+        seen[idx] = true;
+    }
+    assert!(seen.iter().all(|flag| *flag));
+    assert_eq!(5, sum);
+
+    let mut borrowed_sum = 0;
+    for (_, value) in &map {
+        borrowed_sum += value.id;
+    }
+    assert_eq!(5, borrowed_sum);
+
+    let mut owned_sum = 0;
+    for (_, value) in map.into_iter() {
+        owned_sum += value.id;
+    }
+    assert_eq!(5, owned_sum);
 }
