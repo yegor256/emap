@@ -62,7 +62,7 @@ pub struct Iter<'a, V> {
 pub struct IterMut<'a, V> {
     current: NodeId,
     head: *mut Node<V>,
-    _marker: PhantomData<&'a V>,
+    _marker: PhantomData<&'a mut V>,
 }
 
 /// Into-iterator over the [`Map`] that yields immutable references to stored values.

@@ -70,6 +70,16 @@ impl<'a, V> IntoIterator for &'a Map<V> {
     }
 }
 
+impl<'a, V> IntoIterator for &'a mut Map<V> {
+    type Item = (usize, &'a mut V);
+    type IntoIter = IterMut<'a, V>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
 impl<V> Map<V> {
     /// Make an iterator over all items.
     ///
@@ -81,7 +91,11 @@ impl<V> Map<V> {
     pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
-        Iter { current: self.first_used, head: self.head, _marker: PhantomData }
+        Iter {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
     /// Make a mutable iterator over all items.
     ///
@@ -104,10 +118,14 @@ impl<V> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn iter_mut(&self) -> IterMut<'_, V> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
-        IterMut { current: self.first_used, head: self.head, _marker: PhantomData }
+        IterMut {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 
     /// Make an iterator over all items.
@@ -180,6 +198,18 @@ fn iterate_without_function() {
         count += 1;
     }
     assert_eq!(1, count);
+}
+
+#[test]
+fn iterate_mutably_without_function() {
+    let mut m: Map<u64> = Map::with_capacity_none(16);
+    m.insert(0, 1);
+    m.insert(1, 2);
+    for (_, value) in &mut m {
+        *value *= 2;
+    }
+    assert_eq!(Some(&2), m.get(0));
+    assert_eq!(Some(&4), m.get(1));
 }
 
 #[test]
