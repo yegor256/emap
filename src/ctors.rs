@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{Map, Node, NodeId};
-use std::alloc::{Layout, alloc, dealloc, handle_alloc_error};
+use std::alloc::{alloc, dealloc, handle_alloc_error, Layout};
 use std::mem;
 use std::ptr;
 
@@ -74,7 +74,11 @@ impl<V> Map<V> {
     #[inline]
     fn init_with_none(&mut self) {
         let cap = self.capacity();
-        self.first_free = NodeId::new(0);
+        self.first_free = if cap == 0 {
+            NodeId::new(NodeId::UNDEF)
+        } else {
+            NodeId::new(0)
+        };
         let mut p = self.head;
         for i in 0..cap {
             let free_next = if i + 1 == cap { NodeId::UNDEF } else { i + 1 };
@@ -182,7 +186,7 @@ impl<V> Map<V> {
 mod tests {
     use super::*;
     use std::cell::Cell;
-    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::panic::{catch_unwind, AssertUnwindSafe};
     use std::rc::Rc;
 
     /// Out-of-bounds insert must panic in debug builds.
@@ -344,7 +348,11 @@ mod tests {
     impl PanicOnClone {
         fn new(panic_after: usize, clones: Rc<Cell<usize>>, active: Rc<Cell<usize>>) -> Self {
             active.set(active.get() + 1);
-            Self { clones, active, panic_after }
+            Self {
+                clones,
+                active,
+                panic_after,
+            }
         }
     }
 

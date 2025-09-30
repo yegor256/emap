@@ -27,6 +27,13 @@ fn get_next_key_empty_map() {
 }
 
 #[test]
+#[should_panic]
+fn next_key_panics_for_zero_capacity() {
+    let m: Map<&str> = Map::with_capacity_none(0);
+    let _ = m.next_key();
+}
+
+#[test]
 fn get_next_in_the_middle() {
     let mut m: Map<u32> = Map::with_capacity_none(16);
     m.insert(0, 42);
