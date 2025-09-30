@@ -59,15 +59,15 @@ impl<'de, V: Clone + Deserialize<'de>> Deserialize<'de> for Map<V> {
 }
 
 #[cfg(test)]
-use bincode::{deserialize, serialize};
+use bincode::{config::standard, serde};
 
 #[test]
 fn serialize_and_deserialize() {
     let mut before: Map<u8> = Map::with_capacity_none(2);
     before.insert(0, 42);
     before.insert(1, 42);
-    let bytes: Vec<u8> = serialize(&before).unwrap();
-    let after: Map<u8> = deserialize(&bytes).unwrap();
+    let bytes: Vec<u8> = serde::encode_to_vec(&before, standard()).unwrap();
+    let (after, _): (Map<u8>, usize) = serde::decode_from_slice(&bytes, standard()).unwrap();
     assert_eq!(42, after.into_iter().next().unwrap().1);
 }
 
@@ -77,7 +77,7 @@ fn serde_big_map() {
     let mut before: Map<u8> = Map::with_capacity_none(cap);
     before.insert(0, 42);
     before.insert(1, 42);
-    let bytes: Vec<u8> = serialize(&before).unwrap();
-    let after: Map<u8> = deserialize(&bytes).unwrap();
+    let bytes: Vec<u8> = serde::encode_to_vec(&before, standard()).unwrap();
+    let (after, _): (Map<u8>, usize) = serde::decode_from_slice(&bytes, standard()).unwrap();
     assert_eq!(2, after.capacity());
 }
