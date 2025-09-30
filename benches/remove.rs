@@ -7,8 +7,8 @@ use std::hint::black_box;
 use std::time::Duration;
 
 use criterion::{
-    criterion_group, criterion_main, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId,
-    Criterion, SamplingMode, Throughput,
+    BatchSize, BenchmarkGroup, BenchmarkId, Criterion, SamplingMode, Throughput, criterion_group,
+    criterion_main, measurement::WallTime,
 };
 use emap::Map;
 
@@ -116,4 +116,3 @@ criterion_group! {
     targets = remove_benchmarks
 }
 criterion_main!(benches);
-

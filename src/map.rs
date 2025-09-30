@@ -251,22 +251,14 @@ impl<V> Map<V> {
     #[allow(unused_variables)]
     fn assert_boundaries_debug(&self, k: usize) {
         #[cfg(debug_assertions)]
-        assert!(
-            k < self.capacity(),
-            "The key {k} is over the boundary {}",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
     }
 
     /// Check the boundary condition.
     #[inline]
     #[allow(unused_variables)]
     fn assert_boundaries(&self, k: usize) {
-        assert!(
-            k < self.capacity(),
-            "The key {k} is over the boundary {}",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
     }
 }
 
