@@ -237,9 +237,11 @@ impl<V> Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
         for i in self.keys() {
-            if let Some(p) = self.get_mut(i)
-                && !f(&i, p)
-            {
+            let mut should_remove = false;
+            if let Some(p) = self.get_mut(i) {
+                should_remove = !f(&i, p);
+            }
+            if should_remove {
                 self.remove(i);
             }
         }
@@ -250,14 +252,22 @@ impl<V> Map<V> {
     #[allow(unused_variables)]
     fn assert_boundaries_debug(&self, k: usize) {
         #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 
     /// Check the boundary condition.
     #[inline]
     #[allow(unused_variables)]
     fn assert_boundaries(&self, k: usize) {
-        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 }
 
