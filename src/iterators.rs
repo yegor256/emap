@@ -81,11 +81,7 @@ impl<V> Map<V> {
     pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
-        Iter {
-            current: self.first_used,
-            head: self.head,
-            _marker: PhantomData,
-        }
+        Iter { current: self.first_used, head: self.head, _marker: PhantomData }
     }
     /// Make a mutable iterator over all items.
     ///
@@ -111,11 +107,7 @@ impl<V> Map<V> {
     pub const fn iter_mut(&self) -> IterMut<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
-        IterMut {
-            current: self.first_used,
-            head: self.head,
-            _marker: PhantomData,
-        }
+        IterMut { current: self.first_used, head: self.head, _marker: PhantomData }
     }
 
     /// Make an iterator over all items.
