@@ -14,15 +14,17 @@ keywords = ["memory", "map"]
 categories = ["data-structures", "memory-management"]
 
 [dependencies]
-intmap = "3.1.0"
-serde = { version = "1.0.185", optional = true, default-features = false }
+intmap = "3.1.2"
+serde = { version = "1", features = ["derive"], optional = true }
+bincode = { version = "2", features = ["serde"], optional = true }
 
 [dev-dependencies]
-bincode = "2.0.0"
 paste = "1.0"
 criterion = { version = "0.7", features = ["html_reports"] }
 
 [features]
+default = []
+serde = ["dep:serde", "dep:bincode"]
 bench_unchecked = []
 
 [[bench]]
