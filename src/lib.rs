@@ -79,7 +79,7 @@ pub struct Values<'a, V> {
 /// Into-iterator over the values of a [`Map`].
 pub struct IntoValues<V> {
     current: NodeId,
-    head: *mut Node<V>,
+    head: *const Node<V>,
 }
 
 /// Iterator over the keys of a [`Map`].
