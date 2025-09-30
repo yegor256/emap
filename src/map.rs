@@ -228,18 +228,38 @@ impl<V> Map<V> {
 
     /// Retains only the elements specified by the predicate.
     ///
+    /// The predicate is applied to each occupied key/value pair. If the predicate
+    /// returns `false` for a given pair, that entry is removed. The iteration
+    /// order follows the internal key sequence provided by `keys()`.
+    ///
+    /// The predicate receives the key by reference and a mutable reference to the
+    /// value. Any mutation performed by the predicate is applied in place prior
+    /// to deciding whether the entry should be removed.
+    ///
     /// # Panics
     ///
-    /// It may panic in debug mode, if the [`Map`] is not initialized.
+    /// Panics in debug mode if the map is not initialized.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use emap::Map;
+    /// let mut m: Map<i32> = Map::with_capacity_none(4);
+    /// m.insert(0, 10);
+    /// m.insert(1, 20);
+    /// m.insert(2, 30);
+    /// m.retain(|_, v| *v >= 20);
+    /// assert_eq!(m.len(), 2);
+    /// assert!(m.get(0).is_none());
+    /// assert_eq!(*m.get(1).unwrap(), 20);
+    /// assert_eq!(*m.get(2).unwrap(), 30);
+    /// ```
     #[inline]
     pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
         for i in self.keys() {
-            let mut should_remove = false;
-            if let Some(p) = self.get_mut(i) {
-                should_remove = !f(&i, p);
-            }
+            let should_remove = self.get_mut(i).is_some_and(|p| !f(&i, p));
             if should_remove {
                 self.remove(i);
             }
