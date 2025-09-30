@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{Map, Node, NodeId};
-use std::alloc::{Layout, alloc, dealloc, handle_alloc_error};
+use std::alloc::{alloc, dealloc, handle_alloc_error, Layout};
 use std::mem;
 use std::ptr;
 
@@ -74,7 +74,7 @@ impl<V> Map<V> {
     #[inline]
     fn init_with_none(&mut self) {
         let cap = self.capacity();
-        self.first_free = if cap == 0 { NodeId::new(NodeId::UNDEF) } else { NodeId::new(0) };
+        self.first_free = NodeId::new(if cap == 0 { NodeId::UNDEF } else { 0 });
         let mut p = self.head;
         for i in 0..cap {
             let free_next = if i + 1 == cap { NodeId::UNDEF } else { i + 1 };
@@ -114,8 +114,17 @@ impl<V: Clone> Map<V> {
     }
 
     /// Fill all slots with `Some(v.clone())` and build the used-list.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `cap` exceeds [`Map::capacity`].
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
+        let capacity = self.capacity();
+        assert!(
+            cap <= capacity,
+            "initialization bound {cap} exceeds capacity {capacity}",
+        );
         let mut previous_used = NodeId::new(NodeId::UNDEF);
         self.first_free = NodeId::new(NodeId::UNDEF);
         self.first_used = NodeId::new(NodeId::UNDEF);
@@ -182,7 +191,7 @@ impl<V> Map<V> {
 mod tests {
     use super::*;
     use std::cell::Cell;
-    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::panic::{catch_unwind, AssertUnwindSafe};
     use std::rc::Rc;
 
     /// Out-of-bounds insert must panic in debug builds.
@@ -324,6 +333,14 @@ mod tests {
         assert_eq!(0, m.len());
     }
 
+    /// Oversized initialization bounds must panic instead of causing UB.
+    #[test]
+    #[should_panic(expected = "initialization bound")]
+    fn init_with_some_panics_when_bound_exceeds_capacity() {
+        let mut map: Map<Foo> = Map::with_capacity(1);
+        map.init_with_some(2, Foo { t: 1 });
+    }
+
     /// Partial initialization that panics must still be drop-safe.
     #[test]
     fn drop_after_boundary_panic_without_initialization() {
@@ -344,7 +361,11 @@ mod tests {
     impl PanicOnClone {
         fn new(panic_after: usize, clones: Rc<Cell<usize>>, active: Rc<Cell<usize>>) -> Self {
             active.set(active.get() + 1);
-            Self { clones, active, panic_after }
+            Self {
+                clones,
+                active,
+                panic_after,
+            }
         }
     }
 
