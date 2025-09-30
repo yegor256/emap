@@ -68,7 +68,7 @@ fn serialize_and_deserialize() {
     before.insert(1, 42);
     let bytes: Vec<u8> = serialize(&before).unwrap();
     let after: Map<u8> = deserialize(&bytes).unwrap();
-    assert_eq!(42, after.into_iter().next().unwrap().1);
+    assert_eq!(42, *after.into_iter().next().unwrap().1);
 }
 
 #[test]
