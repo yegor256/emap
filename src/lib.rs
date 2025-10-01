@@ -15,7 +15,7 @@
 //! assert_eq!(2, m.len());
 //! ```
 //!
-//! An attempt to add an element when the map is full will panic.
+//! An attempt to add an element when the map is full returns [`MapFullError`].
 
 #![doc(html_root_url = "https://docs.rs/emap/0.0.0")]
 #![deny(warnings)]
@@ -109,7 +109,7 @@ fn perf() {
     for _ in 0..1000 {
         m.clear();
         for _ in 0..cap {
-            m.push("Hello, world!");
+            assert!(m.push("Hello, world!").is_ok());
         }
         for i in 0..cap {
             m.remove(i);
@@ -125,6 +125,5 @@ fn perf() {
             assert!(!m.contains_key(i));
         }
     }
-    let d = start.elapsed();
-    println!("Total time: {}", d.as_millis());
+    let _duration = start.elapsed();
 }
