@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-use crate::{Map, NodeId};
+use crate::{Map, MapFullError, NodeId};
 
 impl<V> Map<V> {
     /// Is it empty?
@@ -109,11 +109,38 @@ impl<V> Map<V> {
     }
 
     /// Push to the rightmost position and return the key.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the map has no free slots left. Use [`Map::try_push`] to
+    /// handle this situation without panicking.
     #[inline]
     pub fn push(&mut self, v: V) -> usize {
-        let k = self.next_key();
-        self.insert(k, v);
-        k
+        match self.try_push(v) {
+            Ok(key) => key,
+            Err(error) => panic!("{error}"),
+        }
+    }
+
+    /// Try to push to the rightmost position and return the key.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapFullError`] if the map has no free slots left.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emap::Map;
+    /// let mut map: Map<&str> = Map::with_capacity_none(1);
+    /// assert_eq!(map.try_push("hello"), Ok(0));
+    /// assert!(map.try_push("world").is_err());
+    /// ```
+    #[inline]
+    pub fn try_push(&mut self, v: V) -> Result<usize, MapFullError> {
+        let key = self.try_next_key()?;
+        self.insert(key, v);
+        Ok(key)
     }
 
     /// Insert a single pair into the map.
@@ -279,14 +306,22 @@ impl<V> Map<V> {
     #[allow(unused_variables)]
     fn assert_boundaries_debug(&self, k: usize) {
         #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 
     /// Check the boundary condition.
     #[inline]
     #[allow(unused_variables)]
     fn assert_boundaries(&self, k: usize) {
-        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 }
 
@@ -456,6 +491,23 @@ fn push_updates_length() {
         assert_eq!(index, key);
         assert_eq!(index + 1, m.len());
     }
+}
+
+#[test]
+fn try_push_provides_next_slot() {
+    let mut map: Map<&str> = Map::with_capacity_none(2);
+    assert_eq!(Ok(0), map.try_push("alpha"));
+    assert_eq!(Ok(1), map.try_push("beta"));
+    assert!(map.try_push("gamma").is_err());
+}
+
+#[test]
+fn try_push_does_not_modify_on_error() {
+    let mut map: Map<&str> = Map::with_capacity_none(1);
+    assert!(map.try_push("alpha").is_ok());
+    assert!(map.try_push("beta").is_err());
+    assert_eq!(Some(&"alpha"), map.get(0));
+    assert_eq!(1, map.len());
 }
 
 #[test]

@@ -45,6 +45,17 @@ If more than 100 keys will be added to the map, it will panic.
 The map doesn't increase its size automatically, like [`Vec`][Vec] does
 (this is one of the reasons why we are faster).
 
+When you need to avoid a panic at the capacity limit, use [`Map::try_push`]
+which reports the problem as an error:
+
+```rust
+use emap::{Map, MapFullError};
+let mut m: Map<&str> = Map::with_capacity_none(1);
+m.try_push("foo")?;
+assert!(matches!(m.try_push("bar"), Err(MapFullError)));
+# Ok::<(), MapFullError>(())
+```
+
 Read [the API documentation](https://docs.rs/emap/latest/emap/).
 The struct [`emap::Map`][Map] is designed as closely similar to
 [`std::collections::HashMap`][HashMap] as possible.
