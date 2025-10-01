@@ -16,7 +16,7 @@ of a CBOR item on the wire.
 
 This is a brief anatomy of a CBOR item on the wire.
 
-```
+```text
 +------------+-----------+
 |            |           |
 |   Major    |   Minor   |
