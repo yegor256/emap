@@ -24,12 +24,8 @@ macro_rules! compare {
     ($title:expr, $ret:expr, $total:expr, $eI:expr, $eM:expr) => {{
         $ret.push((
             $title,
-            measure!($total, {
-                $eI(std::hint::black_box(&mut IntMap::with_capacity(CAP)))
-            }),
-            measure!($total, {
-                $eM(std::hint::black_box(&mut Map::with_capacity_none(CAP)))
-            }),
+            measure!($total, { $eI(std::hint::black_box(&mut IntMap::with_capacity(CAP))) }),
+            measure!($total, { $eM(std::hint::black_box(&mut Map::with_capacity_none(CAP))) }),
         ));
     }};
 }
