@@ -207,7 +207,7 @@ mod tests {
 
     /// Out-of-bounds insert must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn insert_out_of_boundary() {
         let mut m: Map<&str> = Map::with_capacity(1);
@@ -216,7 +216,7 @@ mod tests {
 
     /// Out-of-bounds get must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn get_out_of_boundary() {
         let m: Map<&str> = Map::with_capacity(1);
@@ -225,7 +225,7 @@ mod tests {
 
     /// Out-of-bounds remove must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn remove_out_of_boundary() {
         let mut m: Map<&str> = Map::with_capacity(1);
@@ -388,9 +388,7 @@ mod tests {
 
     impl Clone for PanicOnClone {
         fn clone(&self) -> Self {
-            if self.clones.get() >= self.panic_after {
-                panic!("clone limit reached");
-            }
+            assert!(self.clones.get() < self.panic_after, "clone limit reached");
             self.clones.set(self.clones.get() + 1);
             self.active.set(self.active.get() + 1);
             Self {
