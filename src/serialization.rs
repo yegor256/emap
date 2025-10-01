@@ -1,7 +1,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-#![cfg(feature = "serde")]
+//! Serde support for `emap::Map`.
+//!
+//! The map is serialized as a standard map from `usize` keys to values `V`.
+//! The binary layout is compatible with serde-based codecs such as `bincode`
+//! when the corresponding feature flags are enabled.
 
 use crate::Map;
 use serde::de::{MapAccess, Visitor};
@@ -10,10 +14,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Formatter, Result as FmtResult};
 use std::marker::PhantomData;
 
-/// Serializes the map as a map of `usize` keys to values `V`.
-///
-/// The output is compatible with serde-based codecs such as bincode (with its
-/// `serde` feature enabled).
+/// Serializes [`Map<V>`] as a map from `usize` to `V`.
 ///
 /// # Examples
 ///
@@ -21,7 +22,7 @@ use std::marker::PhantomData;
 /// # #[cfg(feature = "serde")]
 /// # {
 /// use emap::Map;
-/// use bincode::serde::{encode_to_vec, decode_from_slice};
+/// use bincode::serde::{decode_from_slice, encode_to_vec};
 /// use bincode::config::standard;
 ///
 /// let mut m: Map<u8> = Map::with_capacity_none(4);
@@ -77,7 +78,7 @@ impl<'de, V: Deserialize<'de>> Visitor<'de> for Vi<V> {
             }
             entries.push((k, v));
         }
-        let cap = max_key.map(|mk| mk.saturating_add(1)).unwrap_or(0);
+        let cap = max_key.map_or(0, |mk| mk.saturating_add(1));
         let mut m: Self::Value = Map::with_capacity_none(cap);
         for (k, v) in entries {
             m.insert(k, v);
@@ -86,10 +87,10 @@ impl<'de, V: Deserialize<'de>> Visitor<'de> for Vi<V> {
     }
 }
 
-/// Deserializes a map previously produced by [`Serialize`] into `Map<V>`.
+/// Deserializes data produced by [`Serialize`] back into [`Map<V>`].
 ///
-/// Capacity is chosen as `max_key + 1`, ensuring all entries can be inserted
-/// directly by key.
+/// Capacity is set to `max_key + 1` so that all entries can be inserted
+/// directly by key without reallocation.
 ///
 /// # Examples
 ///
@@ -97,7 +98,7 @@ impl<'de, V: Deserialize<'de>> Visitor<'de> for Vi<V> {
 /// # #[cfg(feature = "serde")]
 /// # {
 /// use emap::Map;
-/// use bincode::serde::{encode_to_vec, decode_from_slice};
+/// use bincode::serde::{decode_from_slice, encode_to_vec};
 /// use bincode::config::standard;
 ///
 /// let mut before: Map<String> = Map::with_capacity_none(8);
