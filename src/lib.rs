@@ -26,6 +26,7 @@
 mod clone;
 mod ctors;
 mod debug;
+mod error;
 mod index;
 mod iterators;
 mod keys;
@@ -36,6 +37,7 @@ pub mod node;
 mod serialization;
 mod values;
 
+pub use crate::error::MapFullError;
 use crate::node::{Node, NodeId};
 use std::alloc::Layout;
 use std::marker::PhantomData;

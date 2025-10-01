@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-use crate::Map;
+use crate::{Map, MapFullError};
 
 impl<V> Map<V> {
     /// Get the next key available for insertion.
@@ -12,10 +12,34 @@ impl<V> Map<V> {
     #[inline]
     #[must_use]
     pub fn next_key(&self) -> usize {
+        match self.try_next_key() {
+            Ok(next) => next,
+            Err(error) => panic!("{error}"),
+        }
+    }
+
+    /// Get the next key available for insertion without panicking on overflow.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapFullError`] if the map has no free slots left.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emap::Map;
+    /// let mut map: Map<&str> = Map::with_capacity_none(2);
+    /// map.insert(0, "hello");
+    /// assert_eq!(map.try_next_key(), Ok(1));
+    /// map.insert(1, "world");
+    /// assert!(map.try_next_key().is_err());
+    /// ```
+    #[inline]
+    pub const fn try_next_key(&self) -> Result<usize, MapFullError> {
         if self.first_free.is_def() {
-            self.first_free.get()
+            Ok(self.first_free.get())
         } else {
-            panic!("No more keys available left");
+            Err(MapFullError)
         }
     }
 }
@@ -41,6 +65,21 @@ fn get_next_in_the_middle() {
     m.remove(1);
     m.insert(2, 42);
     assert_eq!(1, m.next_key());
+}
+
+#[test]
+fn try_next_key_reports_free_slot() {
+    let mut map: Map<u32> = Map::with_capacity_none(4);
+    map.insert(1, 7);
+    assert_eq!(Ok(0), map.try_next_key());
+}
+
+#[test]
+fn try_next_key_reports_full_map() {
+    let mut map: Map<u32> = Map::with_capacity_none(2);
+    map.insert(0, 11);
+    map.insert(1, 12);
+    assert!(map.try_next_key().is_err());
 }
 
 #[test]
