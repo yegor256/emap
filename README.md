@@ -130,8 +130,14 @@ run `cargo fmt` and `cargo clippy`.
 Also, before you start making changes, run benchmarks:
 
 ```bash
-cargo bench
+cargo bench --features benchmarks
 ```
+
+The Criterion benches live under `benches/` and are gated behind the
+`benchmarks` feature, which pulls in Criterion only when you intend to run
+them. If you want to include the unchecked API scenarios, add the optional
+`bench_unchecked` feature when invoking `cargo bench` (for example,
+`cargo bench --features "benchmarks bench_unchecked"`).
 
 Then, after the changes you make, run it again. Compare the results.
 If your changes degrade performance, think twice before submitting
