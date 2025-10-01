@@ -30,12 +30,8 @@ criterion = { version = "0.7", features = ["html_reports"], optional = true }
 [features]
 default = []
 serde = ["dep:serde", "dep:bincode"]
-# Отдельная фича под бенчи
 benchmarks = ["dep:criterion"]
 bench_unchecked = []
-
-[patch.crates-io]
-ciborium-ll = { path = "vendor/ciborium-ll" }
 
 [[bench]]
 name = "insert_bench"
