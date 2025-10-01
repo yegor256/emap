@@ -36,11 +36,7 @@ impl<V> Map<V> {
     /// ```
     #[inline]
     pub const fn try_next_key(&self) -> Result<usize, MapFullError> {
-        if self.first_free.is_def() {
-            Ok(self.first_free.get())
-        } else {
-            Err(MapFullError)
-        }
+        if self.first_free.is_def() { Ok(self.first_free.get()) } else { Err(MapFullError) }
     }
 }
 
