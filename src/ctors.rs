@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{Map, Node, NodeId};
-use std::alloc::{Layout, alloc, dealloc, handle_alloc_error};
+use std::alloc::{alloc, dealloc, handle_alloc_error, Layout};
 use std::mem;
 use std::ptr;
 
@@ -121,7 +121,10 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
         let capacity = self.capacity();
-        assert!(cap <= capacity, "initialization bound {cap} exceeds capacity {capacity}",);
+        assert!(
+            cap <= capacity,
+            "initialization bound {cap} exceeds capacity {capacity}",
+        );
         let mut previous_used = NodeId::new(NodeId::UNDEF);
         self.first_free = NodeId::new(NodeId::UNDEF);
         self.first_used = NodeId::new(NodeId::UNDEF);
@@ -188,12 +191,12 @@ impl<V> Map<V> {
 mod tests {
     use super::*;
     use std::cell::Cell;
-    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::panic::{catch_unwind, AssertUnwindSafe};
     use std::rc::Rc;
 
     /// Out-of-bounds insert must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn insert_out_of_boundary() {
         let mut m: Map<&str> = Map::with_capacity(1);
@@ -202,7 +205,7 @@ mod tests {
 
     /// Out-of-bounds get must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn get_out_of_boundary() {
         let m: Map<&str> = Map::with_capacity(1);
@@ -211,7 +214,7 @@ mod tests {
 
     /// Out-of-bounds remove must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn remove_out_of_boundary() {
         let mut m: Map<&str> = Map::with_capacity(1);
@@ -358,15 +361,17 @@ mod tests {
     impl PanicOnClone {
         fn new(panic_after: usize, clones: Rc<Cell<usize>>, active: Rc<Cell<usize>>) -> Self {
             active.set(active.get() + 1);
-            Self { clones, active, panic_after }
+            Self {
+                clones,
+                active,
+                panic_after,
+            }
         }
     }
 
     impl Clone for PanicOnClone {
         fn clone(&self) -> Self {
-            if self.clones.get() >= self.panic_after {
-                panic!("clone limit reached");
-            }
+            assert!(self.clones.get() < self.panic_after, "clone limit reached");
             self.clones.set(self.clones.get() + 1);
             self.active.set(self.active.get() + 1);
             Self {
