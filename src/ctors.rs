@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{Map, Node, NodeId};
-use std::alloc::{Layout, alloc, dealloc, handle_alloc_error};
+use std::alloc::{alloc, dealloc, handle_alloc_error, Layout};
 use std::mem;
 use std::ptr;
+use std::ptr::NonNull;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
@@ -20,8 +21,10 @@ impl<V> Drop for Map<V> {
             self.drop_used_nodes();
         }
 
-        unsafe {
-            dealloc(self.head.cast(), self.layout);
+        if self.layout.size() != 0 {
+            unsafe {
+                dealloc(self.head.cast(), self.layout);
+            }
         }
     }
 }
@@ -36,6 +39,17 @@ impl<V> Map<V> {
     #[must_use]
     fn with_capacity(cap: usize) -> Self {
         let layout = Layout::array::<Node<V>>(cap).expect("invalid layout");
+        if layout.size() == 0 {
+            return Self {
+                first_free: NodeId::new(NodeId::UNDEF),
+                first_used: NodeId::new(NodeId::UNDEF),
+                layout,
+                head: NonNull::<Node<V>>::dangling().as_ptr(),
+                len: 0,
+                #[cfg(debug_assertions)]
+                initialized: false,
+            };
+        }
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
             handle_alloc_error(layout);
@@ -121,7 +135,10 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
         let capacity = self.capacity();
-        assert!(cap <= capacity, "initialization bound {cap} exceeds capacity {capacity}",);
+        assert!(
+            cap <= capacity,
+            "initialization bound {cap} exceeds capacity {capacity}",
+        );
         let mut previous_used = NodeId::new(NodeId::UNDEF);
         self.first_free = NodeId::new(NodeId::UNDEF);
         self.first_used = NodeId::new(NodeId::UNDEF);
@@ -188,7 +205,7 @@ impl<V> Map<V> {
 mod tests {
     use super::*;
     use std::cell::Cell;
-    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::panic::{catch_unwind, AssertUnwindSafe};
     use std::rc::Rc;
 
     /// Out-of-bounds insert must panic in debug builds.
@@ -232,6 +249,16 @@ mod tests {
     fn makes_new_map() {
         let m: Map<&str> = Map::with_capacity_none(16);
         assert_eq!(0, m.len());
+    }
+
+    #[test]
+    fn zero_capacity_map_behaves_consistently() {
+        let mut map: Map<u8> = Map::with_capacity_none(0);
+        assert_eq!(map.capacity(), 0);
+        assert!(map.next_key().is_err());
+        assert!(map.push(42).is_err());
+        map.clear();
+        assert_eq!(map.len(), 0);
     }
 
     /// Capacity must match constructor argument.
@@ -358,7 +385,11 @@ mod tests {
     impl PanicOnClone {
         fn new(panic_after: usize, clones: Rc<Cell<usize>>, active: Rc<Cell<usize>>) -> Self {
             active.set(active.get() + 1);
-            Self { clones, active, panic_after }
+            Self {
+                clones,
+                active,
+                panic_after,
+            }
         }
     }
 
