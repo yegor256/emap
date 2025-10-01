@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
+#[cfg(test)]
+use crate::node::NodeId;
 use crate::{IntoIter, Iter, IterMut, Map};
 use std::marker::PhantomData;
 
@@ -17,14 +19,15 @@ impl<'a, V> Iterator for Iter<'a, V> {
     /// `None`.
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current.is_def() {
-            let node = unsafe { &*self.head.add(self.current.get()) };
-            let mut next = node.get_next();
-            std::mem::swap(&mut self.current, &mut next);
-            Some((next.get(), node.get().unwrap()))
-        } else {
-            None
+        while self.current.is_def() {
+            let index = self.current.get();
+            let node = unsafe { &*self.head.add(index) };
+            self.current = node.get_next();
+            if let Some(value) = node.get() {
+                return Some((index, value));
+            }
         }
+        None
     }
 }
 
@@ -33,14 +36,15 @@ impl<'a, V> Iterator for IterMut<'a, V> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current.is_def() {
-            let node = unsafe { &mut *self.head.add(self.current.get()) };
-            let mut next = node.get_next();
-            std::mem::swap(&mut self.current, &mut next);
-            Some((next.get(), node.get_mut().unwrap()))
-        } else {
-            None
+        while self.current.is_def() {
+            let index = self.current.get();
+            let node = unsafe { &mut *self.head.add(index) };
+            self.current = node.get_next();
+            if let Some(value) = node.get_mut() {
+                return Some((index, value));
+            }
         }
+        None
     }
 }
 
@@ -91,7 +95,11 @@ impl<V> Map<V> {
     pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
-        Iter { current: self.first_used, head: self.head, _marker: PhantomData }
+        Iter {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
     /// Make a mutable iterator over all items.
     ///
@@ -117,7 +125,11 @@ impl<V> Map<V> {
     pub fn iter_mut(&mut self) -> IterMut<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
-        IterMut { current: self.first_used, head: self.head, _marker: PhantomData }
+        IterMut {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 
     /// Make an iterator over all items.
@@ -254,4 +266,64 @@ fn iterate_non_clone_values() {
         owned_sum += value.id;
     }
     assert_eq!(5, owned_sum);
+}
+
+#[test]
+fn iterator_skips_nodes_without_values() {
+    let mut map: Map<u32> = Map::with_capacity_none(2);
+    map.insert(0, 10);
+    map.insert(1, 20);
+
+    unsafe {
+        let removed = &mut *map.head.add(0);
+        removed.replace_value(None);
+        removed.update_next(NodeId::new(NodeId::UNDEF));
+        removed.update_prev(NodeId::new(NodeId::UNDEF));
+
+        map.first_free = NodeId::new(0);
+        map.first_used = NodeId::new(1);
+        map.len = 1;
+
+        let remaining = &mut *map.head.add(1);
+        remaining.update_prev(NodeId::new(NodeId::UNDEF));
+        remaining.update_next(NodeId::new(NodeId::UNDEF));
+    }
+
+    let collected: Vec<_> = map.iter().map(|(k, v)| (k, *v)).collect();
+    assert_eq!(collected, vec![(1, 20)]);
+}
+
+#[test]
+fn iterator_mut_skips_nodes_without_values() {
+    let mut map: Map<u32> = Map::with_capacity_none(3);
+    map.insert(0, 5);
+    map.insert(1, 15);
+    map.insert(2, 25);
+
+    unsafe {
+        let removed = &mut *map.head.add(0);
+        removed.replace_value(None);
+        removed.update_next(NodeId::new(NodeId::UNDEF));
+        removed.update_prev(NodeId::new(NodeId::UNDEF));
+
+        map.first_free = NodeId::new(0);
+        map.first_used = NodeId::new(1);
+        map.len = 2;
+
+        let middle = &mut *map.head.add(1);
+        middle.update_prev(NodeId::new(NodeId::UNDEF));
+        middle.update_next(NodeId::new(2));
+
+        let tail = &mut *map.head.add(2);
+        tail.update_prev(NodeId::new(1));
+        tail.update_next(NodeId::new(NodeId::UNDEF));
+    }
+
+    for (index, value) in map.iter_mut() {
+        *value += index as u32;
+    }
+
+    assert_eq!(map.get(0), None);
+    assert_eq!(map.get(1).copied(), Some(16));
+    assert_eq!(map.get(2).copied(), Some(27));
 }
