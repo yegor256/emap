@@ -110,19 +110,27 @@ impl<V> Map<V> {
 
     /// Push to the rightmost position and return the key.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics when the map has no free slots left. Use [`Map::try_push`] to
-    /// handle this situation without panicking.
+    /// Returns [`MapFullError`] if the map has no free slots left.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emap::{Map, MapFullError};
+    /// let mut map: Map<&str> = Map::with_capacity_none(1);
+    /// assert_eq!(map.push("hello"), Ok(0));
+    /// assert_eq!(map.push("world"), Err(MapFullError));
+    /// ```
     #[inline]
-    pub fn push(&mut self, v: V) -> usize {
-        match self.try_push(v) {
-            Ok(key) => key,
-            Err(error) => panic!("{error}"),
-        }
+    pub fn push(&mut self, v: V) -> Result<usize, MapFullError> {
+        self.try_push(v)
     }
 
     /// Try to push to the rightmost position and return the key.
+    ///
+    /// This is equivalent to [`Map::push`] and is retained for callers that
+    /// prefer the explicit "try" naming convention.
     ///
     /// # Errors
     ///
@@ -306,14 +314,22 @@ impl<V> Map<V> {
     #[allow(unused_variables)]
     fn assert_boundaries_debug(&self, k: usize) {
         #[cfg(debug_assertions)]
-        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 
     /// Check the boundary condition.
     #[inline]
     #[allow(unused_variables)]
     fn assert_boundaries(&self, k: usize) {
-        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
+        assert!(
+            k < self.capacity(),
+            "The key {k} is over the boundary {}",
+            self.capacity()
+        );
     }
 }
 
@@ -469,8 +485,8 @@ fn retain_allows_mutation() {
 #[test]
 fn pushes_into() {
     let mut m: Map<&str> = Map::with_capacity_none(16);
-    assert_eq!(0, m.push("one"));
-    assert_eq!(1, m.push("two"));
+    assert_eq!(Ok(0), m.push("one"));
+    assert_eq!(Ok(1), m.push("two"));
 }
 
 #[test]
@@ -479,10 +495,16 @@ fn push_updates_length() {
     let values = ["one", "two", "three", "four"];
 
     for (index, value) in values.into_iter().enumerate() {
-        let key = m.push(value);
-        assert_eq!(index, key);
+        assert_eq!(Ok(index), m.push(value));
         assert_eq!(index + 1, m.len());
     }
+}
+
+#[test]
+fn push_reports_error_on_full_map() {
+    let mut map: Map<&str> = Map::with_capacity_none(1);
+    assert_eq!(Ok(0), map.push("alpha"));
+    assert_eq!(Err(MapFullError), map.push("beta"));
 }
 
 #[test]
@@ -506,28 +528,28 @@ fn try_push_does_not_modify_on_error() {
 fn insert_in_free_list_head() {
     let mut m: Map<i32> = Map::with_capacity_none(3);
     m.insert(0, 1);
-    assert_eq!(m.next_key(), 1);
+    assert_eq!(m.next_key(), Ok(1));
     m.insert(1, 1);
-    assert_eq!(m.next_key(), 2);
+    assert_eq!(m.next_key(), Ok(2));
 }
 
 #[test]
 fn insert_in_free_list_mid() {
     let mut m: Map<i32> = Map::with_capacity_none(3);
     m.insert(1, 1);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
 }
 
 #[test]
 fn insert_in_free_list_reinsert() {
     let mut m: Map<i32> = Map::with_capacity_none(3);
     m.insert(1, 1);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
     m.insert(1, 1);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
     m.insert(0, 1);
     m.insert(0, 1);
-    assert_eq!(m.next_key(), 2);
+    assert_eq!(m.next_key(), Ok(2));
 }
 
 #[test]
@@ -588,14 +610,14 @@ fn first_used_remove() {
 #[test]
 fn insert_and_remove() {
     let mut m: Map<i32> = Map::with_capacity_none(7);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
     m.insert(1, 11);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
     m.insert(0, 10);
-    assert_eq!(m.next_key(), 2);
+    assert_eq!(m.next_key(), Ok(2));
     m.insert(2, 12);
     m.insert(5, 15);
-    assert_eq!(m.next_key(), 3);
+    assert_eq!(m.next_key(), Ok(3));
     m.remove(0);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
 }

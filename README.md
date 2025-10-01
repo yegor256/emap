@@ -34,25 +34,29 @@ emap = "0.0.13"
 Then, use it like a standard hash map... well, almost:
 
 ```rust
-use emap::Map;
+use emap::{Map, MapFullError};
 let mut m : Map<&str> = Map::with_capacity_init(100); // allocation on heap
-m.insert(m.next_key(), "foo");
-m.insert(m.next_key(), "bar");
+let first_key = m.next_key()?;
+m.insert(first_key, "foo");
+let second_key = m.next_key()?;
+m.insert(second_key, "bar");
 assert_eq!(2, m.len());
+# Ok::<(), MapFullError>(())
 ```
 
-If more than 100 keys will be added to the map, it will panic.
+If more than 100 keys will be added to the map, the methods will return
+[`MapFullError`].
 The map doesn't increase its size automatically, like [`Vec`][Vec] does
 (this is one of the reasons why we are faster).
 
-When you need to avoid a panic at the capacity limit, use [`Map::try_push`]
-which reports the problem as an error:
+When you need a convenience API that allocates the next available slot,
+use [`Map::push`], which now reports exhaustion as an error:
 
 ```rust
 use emap::{Map, MapFullError};
-let mut m: Map<&str> = Map::with_capacity_none(1);
-m.try_push("foo")?;
-assert!(matches!(m.try_push("bar"), Err(MapFullError)));
+let mut map: Map<&str> = Map::with_capacity_none(1);
+map.push("foo")?;
+assert!(matches!(map.push("bar"), Err(MapFullError)));
 # Ok::<(), MapFullError>(())
 ```
 
@@ -139,3 +143,5 @@ a pull request.
 [benchmark]: https://github.com/yegor256/emap/blob/master/tests/benchmark.rs
 [associative array]: https://en.wikipedia.org/wiki/Associative_array
 [IntMap]: https://docs.rs/intmap/latest/intmap/
+[Map::push]: https://docs.rs/emap/0.0.13/emap/struct.Map.html#method.push
+[MapFullError]: https://docs.rs/emap/0.0.13/emap/struct.MapFullError.html
