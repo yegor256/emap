@@ -50,9 +50,7 @@ struct Foo {
 #[test]
 #[ignore = "requires benchmarking to validate clone performance"]
 fn clone_of_wrapper() {
-    let mut f: Foo = Foo {
-        m: Map::with_capacity_none(16),
-    };
+    let mut f: Foo = Foo { m: Map::with_capacity_none(16) };
     f.m.insert(7, 42);
     assert_eq!(1, f.clone().m.len());
 }
