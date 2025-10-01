@@ -37,6 +37,9 @@ serde = ["dep:serde", "dep:bincode"]
 benchmarks = ["dep:criterion"]
 bench_unchecked = []
 
+[patch.crates-io]
+ciborium-ll = { path = "vendor/ciborium-ll" }
+
 [[bench]]
 name = "insert_bench"
 harness = false
