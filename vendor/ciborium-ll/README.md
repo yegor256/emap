@@ -1,9 +1,9 @@
+# ciborium-ll
+
 [![Workflow Status](https://github.com/enarx/ciborium/workflows/test/badge.svg)](https://github.com/enarx/ciborium/actions?query=workflow%3A%22test%22)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/enarx/ciborium.svg)](https://isitmaintained.com/project/enarx/ciborium "Average time to resolve an issue")
 [![Percentage of issues still open](https://isitmaintained.com/badge/open/enarx/ciborium.svg)](https://isitmaintained.com/project/enarx/ciborium "Percentage of issues still open")
 ![Maintenance](https://img.shields.io/badge/maintenance-activly--developed-brightgreen.svg)
-
-# ciborium-ll
 
 Low level CBOR parsing tools
 
@@ -68,7 +68,7 @@ tricky. Therefore, we provide helper functions to parse these types. See
 Array and map items have a body which contains child items. These can be
 parsed by simply doing `Decoder::pull()` to parse the child items.
 
-### Example
+### Decoding example
 
 ```rust
 use ciborium_ll::{Decoder, Header};
@@ -109,7 +109,7 @@ For bytes and text, there are the `Encoder::bytes()` and `Encoder::text()`
 utility functions, respectively, which will properly segment the output
 on the wire for you.
 
-### Example
+### Encoding example
 
 ```rust
 use ciborium_ll::{Encoder, Header};
