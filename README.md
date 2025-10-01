@@ -143,5 +143,3 @@ a pull request.
 [benchmark]: https://github.com/yegor256/emap/blob/master/tests/benchmark.rs
 [associative array]: https://en.wikipedia.org/wiki/Associative_array
 [IntMap]: https://docs.rs/intmap/latest/intmap/
-[Map::push]: https://docs.rs/emap/0.0.13/emap/struct.Map.html#method.push
-[MapFullError]: https://docs.rs/emap/0.0.13/emap/struct.MapFullError.html
