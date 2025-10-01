@@ -13,7 +13,7 @@ merge:
     cargo --color=never test -vv
     cargo --color=never fmt --check
     cargo doc --no-deps
-    cargo clippy
+    cargo --color=never clippy --no-deps
 release:
   pre: false
   script: |-
