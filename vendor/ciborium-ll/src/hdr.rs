@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
+// SPDX-License-Identifier: MIT
+
 use super::*;
 
 use half::f16;
