@@ -4,6 +4,8 @@
 #[cfg(test)]
 use crate::node::NodeId;
 use crate::{IntoIter, Iter, IterMut, Map};
+#[cfg(test)]
+use std::convert::TryFrom;
 use std::marker::PhantomData;
 
 impl<'a, V> Iterator for Iter<'a, V> {
@@ -95,7 +97,11 @@ impl<V> Map<V> {
     pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
-        Iter { current: self.first_used, head: self.head, _marker: PhantomData }
+        Iter {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
     /// Make a mutable iterator over all items.
     ///
@@ -121,7 +127,11 @@ impl<V> Map<V> {
     pub fn iter_mut(&mut self) -> IterMut<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
-        IterMut { current: self.first_used, head: self.head, _marker: PhantomData }
+        IterMut {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 
     /// Make an iterator over all items.
@@ -161,7 +171,7 @@ fn insert_and_iterate() {
     m.insert(2, "three");
     let mut sum = 0;
     let mut count = 0;
-    for (k, _v) in m.iter() {
+    for (k, _v) in &m {
         sum += k;
         count += 1;
     }
@@ -214,7 +224,7 @@ fn iterate_and_mutate() {
     m.insert(0, 16);
     m.insert(1, 32);
     m.insert(2, 64);
-    for (_, v) in m.iter_mut() {
+    for (_, v) in &mut m {
         *v += 1;
     }
     let mut sum = 0;
@@ -234,13 +244,13 @@ fn iterate_non_clone_values() {
     map.insert(0, NoClone { id: 1 });
     map.insert(1, NoClone { id: 3 });
 
-    for (idx, value) in map.iter_mut() {
+    for (idx, value) in &mut map {
         value.id += idx;
     }
 
     let mut seen = [false; 2];
     let mut sum = 0;
-    for (idx, value) in map.iter() {
+    for (idx, value) in &map {
         sum += value.id;
         seen[idx] = true;
     }
@@ -311,8 +321,11 @@ fn iterator_mut_skips_nodes_without_values() {
         tail.update_next(NodeId::new(NodeId::UNDEF));
     }
 
-    for (index, value) in map.iter_mut() {
-        *value += index as u32;
+    for (index, value) in &mut map {
+        let Ok(offset) = u32::try_from(index) else {
+            panic!("index {index} overflows u32");
+        };
+        *value += offset;
     }
 
     assert_eq!(map.get(0), None);

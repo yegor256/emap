@@ -115,7 +115,7 @@ fn perf() {
             m.remove(i);
         }
         let mut keys = Vec::with_capacity(m.len());
-        for (k, _) in m.iter() {
+        for (k, _) in &m {
             keys.push(k);
         }
         for key in keys {

@@ -23,7 +23,7 @@ fn map_can_be_cloned() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "requires benchmarking to validate clone performance"]
 #[allow(clippy::redundant_clone)]
 fn empty_clone() {
     let m: Map<u8> = Map::with_capacity_none(16);
@@ -31,7 +31,7 @@ fn empty_clone() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "requires benchmarking to validate clone performance"]
 fn larger_map_can_be_cloned() {
     let cap = 16;
     let mut m: Map<u8> = Map::with_capacity_none(cap);
@@ -48,9 +48,11 @@ struct Foo {
 }
 
 #[test]
-#[ignore]
+#[ignore = "requires benchmarking to validate clone performance"]
 fn clone_of_wrapper() {
-    let mut f: Foo = Foo { m: Map::with_capacity_none(16) };
+    let mut f: Foo = Foo {
+        m: Map::with_capacity_none(16),
+    };
     f.m.insert(7, 42);
     assert_eq!(1, f.clone().m.len());
 }
