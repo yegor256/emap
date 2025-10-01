@@ -13,31 +13,44 @@ homepage = "https://github.com/yegor256/emap"
 keywords = ["memory", "map"]
 categories = ["data-structures", "memory-management"]
 
+[lints.rust]
+unexpected_cfgs = "allow"
+mismatched_lifetime_syntaxes = "allow"
+unused_parens = "allow"
+deprecated = "allow"
+irrefutable_let_patterns = "allow"
+
 [dependencies]
 intmap = "3.1.2"
 serde = { version = "1", features = ["derive"], optional = true }
 bincode = { version = "2", features = ["serde"], optional = true }
 
+criterion = { version = "0.7", features = ["html_reports"], optional = true }
+
 [dev-dependencies]
 paste = "1.0"
-criterion = { version = "0.7", features = ["html_reports"] }
 
 [features]
 default = []
 serde = ["dep:serde", "dep:bincode"]
+# Отдельная фича под бенчи
+benchmarks = ["dep:criterion"]
 bench_unchecked = []
 
 [[bench]]
 name = "insert_bench"
 harness = false
 path = "benches/insert.rs"
+required-features = ["benchmarks"]
 
 [[bench]]
 name = "remove_bench"
 harness = false
 path = "benches/remove.rs"
+required-features = ["benchmarks"]
 
 [[bench]]
 name = "compare_with_initmap"
 harness = false
 path = "benches/compare_with_intmap.rs"
+required-features = ["benchmarks"]

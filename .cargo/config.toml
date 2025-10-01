@@ -1,0 +1,5 @@
+[target.'cfg(all())']
+rustflags = [
+  "--check-cfg=cfg(crossbeam_loom)",
+  "--check-cfg=cfg(crossbeam_sanitize)"
+]
