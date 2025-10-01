@@ -46,7 +46,7 @@ path = "benches/remove.rs"
 required-features = ["benchmarks"]
 
 [[bench]]
-name = "compare_with_initmap"
+name = "compare_with_intmap"
 harness = false
 path = "benches/compare_with_intmap.rs"
 required-features = ["benchmarks"]
