@@ -4,15 +4,21 @@
 //! Serde support for `emap::Map`.
 //!
 //! The map is serialized as a standard map from `usize` keys to values `V`.
-//! The binary layout is compatible with serde-based codecs such as `bincode`
-//! when the corresponding feature flags are enabled.
+//! Keys must be strictly less than [`usize::MAX`], as the maximum value is
+//! reserved internally as a sentinel. The binary layout is compatible with
+//! serde-based codecs such as `bincode` when the corresponding feature flags
+//! are enabled.
 
-use crate::Map;
-use serde::de::{MapAccess, Visitor};
-use serde::ser::SerializeMap;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::alloc::Layout;
 use std::fmt::{Formatter, Result as FmtResult};
 use std::marker::PhantomData;
+
+use serde::de::{Error as DeError, MapAccess, Visitor};
+use serde::ser::SerializeMap;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+use crate::node::Node;
+use crate::Map;
 
 /// Serializes [`Map<V>`] as a map from `usize` to `V`.
 ///
@@ -66,9 +72,19 @@ impl<'de, V: Deserialize<'de>> Visitor<'de> for Vi<V> {
     where
         M: MapAccess<'de>,
     {
-        let mut entries: Vec<(usize, V)> = Vec::with_capacity(access.size_hint().unwrap_or(0));
+        const MAX_PREALLOCATED_ENTRIES: usize = 1024;
+        let mut entries: Vec<(usize, V)> = Vec::new();
+        if let Some(hint) = access.size_hint() {
+            entries.reserve(hint.min(MAX_PREALLOCATED_ENTRIES));
+        }
+
         let mut max_key: Option<usize> = None;
         while let Some((k, v)) = access.next_entry()? {
+            if k == usize::MAX {
+                return Err(DeError::custom(
+                    "key usize::MAX is reserved and cannot be used",
+                ));
+            }
             if let Some(mk) = max_key {
                 if k > mk {
                     max_key = Some(k);
@@ -78,7 +94,18 @@ impl<'de, V: Deserialize<'de>> Visitor<'de> for Vi<V> {
             }
             entries.push((k, v));
         }
-        let cap = max_key.map_or(0, |mk| mk.saturating_add(1));
+        let cap = match max_key {
+            Some(mk) => mk
+                .checked_add(1)
+                .ok_or_else(|| DeError::custom("key range exceeds supported maximum"))?,
+            None => 0,
+        };
+
+        if Layout::array::<Node<V>>(cap).is_err() {
+            return Err(DeError::custom(
+                "calculated capacity exceeds addressable memory",
+            ));
+        }
         let mut m: Self::Value = Map::with_capacity_none(cap);
         for (k, v) in entries {
             m.insert(k, v);
@@ -148,5 +175,30 @@ mod tests {
         let (after, _): (Map<u8>, usize) = decode_from_slice(&bytes, standard()).unwrap();
         assert_eq!(after.capacity(), 32);
         assert_eq!(after.get(31), Some(&2));
+    }
+
+    #[test]
+    fn deserialize_rejects_reserved_key() {
+        use serde::de::value::{Error as ValueError, MapDeserializer};
+        use serde::de::IntoDeserializer;
+
+        let entry = std::iter::once((usize::MAX.into_deserializer(), 0u8.into_deserializer()));
+        let deserializer = MapDeserializer::<_, ValueError>::new(entry);
+        let err = Map::<u8>::deserialize(deserializer).unwrap_err();
+        assert!(err.to_string().contains("reserved and cannot be used"));
+    }
+
+    #[test]
+    fn deserialize_rejects_capacity_overflow() {
+        use serde::de::value::{Error as ValueError, MapDeserializer};
+        use serde::de::IntoDeserializer;
+
+        let large_key = usize::MAX - 1;
+        let entry = std::iter::once((large_key.into_deserializer(), 0u8.into_deserializer()));
+        let deserializer = MapDeserializer::<_, ValueError>::new(entry);
+        let err = Map::<u8>::deserialize(deserializer).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("capacity exceeds addressable memory"));
     }
 }
