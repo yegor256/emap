@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{Map, Node, NodeId};
-use std::alloc::{alloc, dealloc, handle_alloc_error, Layout};
+use std::alloc::{Layout, alloc, dealloc, handle_alloc_error};
 use std::mem;
 use std::ptr;
 use std::ptr::NonNull;
@@ -135,10 +135,7 @@ impl<V: Clone> Map<V> {
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
         let capacity = self.capacity();
-        assert!(
-            cap <= capacity,
-            "initialization bound {cap} exceeds capacity {capacity}",
-        );
+        assert!(cap <= capacity, "initialization bound {cap} exceeds capacity {capacity}",);
         let mut previous_used = NodeId::new(NodeId::UNDEF);
         self.first_free = NodeId::new(NodeId::UNDEF);
         self.first_used = NodeId::new(NodeId::UNDEF);
@@ -205,7 +202,7 @@ impl<V> Map<V> {
 mod tests {
     use super::*;
     use std::cell::Cell;
-    use std::panic::{catch_unwind, AssertUnwindSafe};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
     use std::rc::Rc;
 
     /// Out-of-bounds insert must panic in debug builds.
@@ -385,11 +382,7 @@ mod tests {
     impl PanicOnClone {
         fn new(panic_after: usize, clones: Rc<Cell<usize>>, active: Rc<Cell<usize>>) -> Self {
             active.set(active.get() + 1);
-            Self {
-                clones,
-                active,
-                panic_after,
-            }
+            Self { clones, active, panic_after }
         }
     }
 
