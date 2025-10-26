@@ -81,7 +81,9 @@ impl<'de, V: Deserialize<'de>> Visitor<'de> for Vi<V> {
         let mut max_key: Option<usize> = None;
         while let Some((k, v)) = access.next_entry()? {
             if k == usize::MAX {
-                return Err(DeError::custom("key usize::MAX is reserved and cannot be used"));
+                return Err(DeError::custom(
+                    "key usize::MAX is reserved and cannot be used",
+                ));
             }
             if let Some(mk) = max_key {
                 if k > mk {
@@ -100,7 +102,9 @@ impl<'de, V: Deserialize<'de>> Visitor<'de> for Vi<V> {
         };
 
         if Layout::array::<Node<V>>(cap).is_err() {
-            return Err(DeError::custom("calculated capacity exceeds addressable memory"));
+            return Err(DeError::custom(
+                "calculated capacity exceeds addressable memory",
+            ));
         }
         let mut m: Self::Value = Map::with_capacity_none(cap);
         for (k, v) in entries {
@@ -193,6 +197,9 @@ mod tests {
         let entry = std::iter::once((large_key.into_deserializer(), 0u8.into_deserializer()));
         let deserializer = MapDeserializer::<_, ValueError>::new(entry);
         let err = Map::<u8>::deserialize(deserializer).unwrap_err();
-        assert!(err.to_string().contains("capacity exceeds addressable memory"));
+        assert!(
+            err.to_string()
+                .contains("capacity exceeds addressable memory")
+        );
     }
 }

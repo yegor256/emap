@@ -48,7 +48,7 @@ fn bench_remove_safe<T: Copy + 'static>(
             || setup_prefilled_map(value),
             |mut m| {
                 for i in 0..CAPACITY {
-                    let _ = m.remove(i);
+                    m.remove(i);
                 }
                 black_box(m);
             },
