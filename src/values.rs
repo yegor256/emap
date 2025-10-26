@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-use crate::Map;
-use crate::{IntoValues, Values};
+use crate::{IntoValues, Map, Values};
 use std::marker::PhantomData;
 
 impl<'a, V: 'a> Iterator for Values<'a, V> {
@@ -26,9 +25,9 @@ impl<V: Clone> Iterator for IntoValues<V> {
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.current.is_def() {
-            let node = unsafe { &mut *self.head.add(self.current.get()) };
+            let node = unsafe { &*self.head.add(self.current.get()) };
             self.current = node.get_next();
-            Some(node.get_mut().unwrap().clone())
+            node.get().cloned()
         } else {
             None
         }
@@ -46,7 +45,11 @@ impl<V> Map<V> {
     pub const fn values(&self) -> Values<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't values() non-initialized Map");
-        Values { current: self.first_used, head: self.head, _marker: PhantomData }
+        Values {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 
     /// Make an into-iterator over all items.
@@ -59,7 +62,10 @@ impl<V> Map<V> {
     pub const fn into_values(&self) -> IntoValues<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't into_values() non-initialized Map");
-        IntoValues { current: self.first_used, head: self.head }
+        IntoValues {
+            current: self.first_used,
+            head: self.head.cast_const(),
+        }
     }
 }
 

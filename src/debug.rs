@@ -16,7 +16,7 @@ impl<V: Clone + Display> Debug for Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't debug() non-initialized Map");
         let mut parts = vec![];
-        for (k, v) in self.iter() {
+        for (k, v) in self {
             parts.push(format!("{k}: {v}"));
         }
         parts.sort_unstable();

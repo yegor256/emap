@@ -13,7 +13,7 @@ cp tests/benchmark.rs src/bin/benchmark.rs
 sed -E -i 's/\[dev-dependencies\]//g' Cargo.toml
 
 caps="4 16 256 4096"
-cycles=10000
+cycles="${CYCLES:-10000}"
 first=$(echo "${caps}" | cut -f1 -d' ')
 
 rm -rf target/benchmark
@@ -26,7 +26,7 @@ for cap in ${caps}; do
 done
 
 {
-    echo -n '| |'
+    echo -n '| Case |'
     for cap in ${caps}; do
         echo -n " ${cap} |"
     done

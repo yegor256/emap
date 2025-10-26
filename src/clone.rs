@@ -8,7 +8,7 @@ impl<V: Clone> Clone for Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't clone() non-initialized Map");
         let mut m = Self::with_capacity_none(self.capacity());
-        for (k, v) in self.iter() {
+        for (k, v) in self {
             m.insert(k, v.clone());
         }
         m
@@ -23,7 +23,7 @@ fn map_can_be_cloned() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "requires benchmarking to validate clone performance"]
 #[allow(clippy::redundant_clone)]
 fn empty_clone() {
     let m: Map<u8> = Map::with_capacity_none(16);
@@ -31,7 +31,7 @@ fn empty_clone() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "requires benchmarking to validate clone performance"]
 fn larger_map_can_be_cloned() {
     let cap = 16;
     let mut m: Map<u8> = Map::with_capacity_none(cap);
@@ -48,7 +48,7 @@ struct Foo {
 }
 
 #[test]
-#[ignore]
+#[ignore = "requires benchmarking to validate clone performance"]
 fn clone_of_wrapper() {
     let mut f: Foo = Foo { m: Map::with_capacity_none(16) };
     f.m.insert(7, 42);
