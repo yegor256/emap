@@ -116,4 +116,3 @@ criterion_group! {
     targets = remove_benchmarks
 }
 criterion_main!(benches);
-
