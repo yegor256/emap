@@ -34,7 +34,7 @@ macro_rules! compare {
 fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
     let mut ret = vec![];
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &42); s ∈ M.values() {sum += s}}",
+        "insert_u64_scan_vals",
         ret,
         total,
         |mi: &mut FastIntMap| {
@@ -59,7 +59,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &\"大家好\"); s ∈ M.values() {sum += s.len()}}",
+        "insert_unicode_vals",
         ret,
         total,
         |mi: &mut FastIntMapStr| {
@@ -84,7 +84,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &42); s ∈ M.keys() {sum += s}}",
+        "insert_u64_scan_keys",
         ret,
         total,
         |mi: &mut FastIntMap| {
@@ -109,7 +109,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &42)}; i ∈ CAP-1..0 {M.remove(&i)}",
+        "insert_u64_remove_rev",
         ret,
         total,
         |mi: &mut FastIntMap| {
@@ -130,7 +130,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &42)}; M.clear(); M.len();",
+        "insert_u64_clear_len",
         ret,
         total,
         |mi: &mut FastIntMap| {
@@ -149,7 +149,7 @@ fn benchmark(total: usize) -> Vec<(&'static str, Duration, Duration)> {
         }
     );
     compare!(
-        "i ∈ 0..CAP {M.insert(i, &\"Hello, world!\")}",
+        "insert_str",
         ret,
         total,
         |mi: &mut FastIntMapStr| {

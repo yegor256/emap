@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2023-2026 Yegor Bugayenko
 // SPDX-License-Identifier: MIT
 
-use crate::{Map, NodeId};
+use crate::{Map, MapFullError, NodeId};
 
 impl<V> Map<V> {
     /// Is it empty?
@@ -109,12 +109,46 @@ impl<V> Map<V> {
     }
 
     /// Push to the rightmost position and return the key.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapFullError`] if the map has no free slots left.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emap::{Map, MapFullError};
+    /// let mut map: Map<&str> = Map::with_capacity_none(1);
+    /// assert_eq!(map.push("hello"), Ok(0));
+    /// assert_eq!(map.push("world"), Err(MapFullError));
+    /// ```
     #[inline]
-    pub fn push(&mut self, v: V) -> usize {
-        let k = self.next_key();
-        self.insert(k, v);
-        self.len += 1;
-        k
+    pub fn push(&mut self, v: V) -> Result<usize, MapFullError> {
+        self.try_push(v)
+    }
+
+    /// Try to push to the rightmost position and return the key.
+    ///
+    /// This is equivalent to [`Map::push`] and is retained for callers that
+    /// prefer the explicit "try" naming convention.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapFullError`] if the map has no free slots left.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use emap::Map;
+    /// let mut map: Map<&str> = Map::with_capacity_none(1);
+    /// assert_eq!(map.try_push("hello"), Ok(0));
+    /// assert!(map.try_push("world").is_err());
+    /// ```
+    #[inline]
+    pub fn try_push(&mut self, v: V) -> Result<usize, MapFullError> {
+        let key = self.try_next_key()?;
+        self.insert(key, v);
+        Ok(key)
     }
 
     /// Insert a single pair into the map.
@@ -229,17 +263,45 @@ impl<V> Map<V> {
 
     /// Retains only the elements specified by the predicate.
     ///
+    /// The predicate is applied to each occupied key/value pair. If the predicate
+    /// returns `false` for a given pair, that entry is removed. The iteration
+    /// order follows the internal key sequence provided by `keys()`.
+    ///
+    /// The predicate receives the key by reference and a mutable reference to the
+    /// value. Any mutation performed by the predicate is applied in place prior
+    /// to deciding whether the entry should be removed.
+    ///
     /// # Panics
     ///
-    /// It may panic in debug mode, if the [`Map`] is not initialized.
+    /// Panics in debug mode if the map is not initialized.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use emap::Map;
+    /// let mut m: Map<i32> = Map::with_capacity_none(4);
+    /// m.insert(0, 10);
+    /// m.insert(1, 20);
+    /// m.insert(2, 30);
+    /// m.retain(|_, v| {
+    ///     *v += 5;
+    ///     *v >= 25
+    /// });
+    /// assert_eq!(m.len(), 2);
+    /// assert!(m.get(0).is_none());
+    /// assert_eq!(*m.get(1).unwrap(), 25);
+    /// assert_eq!(*m.get(2).unwrap(), 35);
+    /// ```
     #[inline]
-    pub fn retain<F: Fn(&usize, &V) -> bool>(&mut self, f: F) {
+    pub fn retain<F: FnMut(&usize, &mut V) -> bool>(&mut self, mut f: F) {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
         for i in self.keys() {
             let mut should_remove = false;
-            if let Some(p) = self.get_mut(i) {
-                should_remove = !f(&i, p);
+            {
+                if let Some(value) = self.get_mut(i) {
+                    should_remove = !f(&i, value);
+                }
             }
             if should_remove {
                 self.remove(i);
@@ -252,22 +314,14 @@ impl<V> Map<V> {
     #[allow(unused_variables)]
     fn assert_boundaries_debug(&self, k: usize) {
         #[cfg(debug_assertions)]
-        assert!(
-            k < self.capacity(),
-            "The key {k} is over the boundary {}",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
     }
 
     /// Check the boundary condition.
     #[inline]
     #[allow(unused_variables)]
     fn assert_boundaries(&self, k: usize) {
-        assert!(
-            k < self.capacity(),
-            "The key {k} is over the boundary {}",
-            self.capacity()
-        );
+        assert!(k < self.capacity(), "The key {k} is over the boundary {}", self.capacity());
     }
 }
 
@@ -399,38 +453,95 @@ fn clears_it_up() {
 }
 
 #[test]
+fn retain_allows_mutation() {
+    let mut m: Map<i32> = Map::with_capacity_none(4);
+    m.insert(0, 10);
+    m.insert(1, 20);
+    m.insert(2, 30);
+
+    m.retain(|key, value| {
+        if *key % 2 == 0 {
+            *value += 5;
+        } else {
+            *value += 7;
+        }
+        *value >= 25
+    });
+
+    assert_eq!(2, m.len());
+    assert!(m.get(0).is_none());
+    assert_eq!(Some(&27), m.get(1));
+    assert_eq!(Some(&35), m.get(2));
+}
+
+#[test]
 fn pushes_into() {
     let mut m: Map<&str> = Map::with_capacity_none(16);
-    assert_eq!(0, m.push("one"));
-    assert_eq!(1, m.push("two"));
+    assert_eq!(Ok(0), m.push("one"));
+    assert_eq!(Ok(1), m.push("two"));
+}
+
+#[test]
+fn push_updates_length() {
+    let mut m: Map<&str> = Map::with_capacity_none(8);
+    let values = ["one", "two", "three", "four"];
+
+    for (index, value) in values.into_iter().enumerate() {
+        assert_eq!(Ok(index), m.push(value));
+        assert_eq!(index + 1, m.len());
+    }
+}
+
+#[test]
+fn push_reports_error_on_full_map() {
+    let mut map: Map<&str> = Map::with_capacity_none(1);
+    assert_eq!(Ok(0), map.push("alpha"));
+    assert_eq!(Err(MapFullError), map.push("beta"));
+}
+
+#[test]
+fn try_push_provides_next_slot() {
+    let mut map: Map<&str> = Map::with_capacity_none(2);
+    assert_eq!(Ok(0), map.try_push("alpha"));
+    assert_eq!(Ok(1), map.try_push("beta"));
+    assert!(map.try_push("gamma").is_err());
+}
+
+#[test]
+fn try_push_does_not_modify_on_error() {
+    let mut map: Map<&str> = Map::with_capacity_none(1);
+    assert!(map.try_push("alpha").is_ok());
+    assert!(map.try_push("beta").is_err());
+    assert_eq!(Some(&"alpha"), map.get(0));
+    assert_eq!(1, map.len());
 }
 
 #[test]
 fn insert_in_free_list_head() {
     let mut m: Map<i32> = Map::with_capacity_none(3);
     m.insert(0, 1);
-    assert_eq!(m.next_key(), 1);
+    assert_eq!(m.next_key(), Ok(1));
     m.insert(1, 1);
-    assert_eq!(m.next_key(), 2);
+    assert_eq!(m.next_key(), Ok(2));
 }
 
 #[test]
 fn insert_in_free_list_mid() {
     let mut m: Map<i32> = Map::with_capacity_none(3);
     m.insert(1, 1);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
 }
 
 #[test]
 fn insert_in_free_list_reinsert() {
     let mut m: Map<i32> = Map::with_capacity_none(3);
     m.insert(1, 1);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
     m.insert(1, 1);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
     m.insert(0, 1);
     m.insert(0, 1);
-    assert_eq!(m.next_key(), 2);
+    assert_eq!(m.next_key(), Ok(2));
 }
 
 #[test]
@@ -491,14 +602,14 @@ fn first_used_remove() {
 #[test]
 fn insert_and_remove() {
     let mut m: Map<i32> = Map::with_capacity_none(7);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
     m.insert(1, 11);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
     m.insert(0, 10);
-    assert_eq!(m.next_key(), 2);
+    assert_eq!(m.next_key(), Ok(2));
     m.insert(2, 12);
     m.insert(5, 15);
-    assert_eq!(m.next_key(), 3);
+    assert_eq!(m.next_key(), Ok(3));
     m.remove(0);
-    assert_eq!(m.next_key(), 0);
+    assert_eq!(m.next_key(), Ok(0));
 }

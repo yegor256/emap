@@ -5,6 +5,7 @@ use crate::{Map, Node, NodeId};
 use std::alloc::{Layout, alloc, dealloc, handle_alloc_error};
 use std::mem;
 use std::ptr;
+use std::ptr::NonNull;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
@@ -20,8 +21,10 @@ impl<V> Drop for Map<V> {
             self.drop_used_nodes();
         }
 
-        unsafe {
-            dealloc(self.head.cast(), self.layout);
+        if self.layout.size() != 0 {
+            unsafe {
+                dealloc(self.head.cast(), self.layout);
+            }
         }
     }
 }
@@ -36,6 +39,17 @@ impl<V> Map<V> {
     #[must_use]
     fn with_capacity(cap: usize) -> Self {
         let layout = Layout::array::<Node<V>>(cap).expect("invalid layout");
+        if layout.size() == 0 {
+            return Self {
+                first_free: NodeId::new(NodeId::UNDEF),
+                first_used: NodeId::new(NodeId::UNDEF),
+                layout,
+                head: NonNull::<Node<V>>::dangling().as_ptr(),
+                len: 0,
+                #[cfg(debug_assertions)]
+                initialized: false,
+            };
+        }
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
             handle_alloc_error(layout);
@@ -74,7 +88,7 @@ impl<V> Map<V> {
     #[inline]
     fn init_with_none(&mut self) {
         let cap = self.capacity();
-        self.first_free = NodeId::new(0);
+        self.first_free = NodeId::new(if cap == 0 { NodeId::UNDEF } else { 0 });
         let mut p = self.head;
         for i in 0..cap {
             let free_next = if i + 1 == cap { NodeId::UNDEF } else { i + 1 };
@@ -114,8 +128,14 @@ impl<V: Clone> Map<V> {
     }
 
     /// Fill all slots with `Some(v.clone())` and build the used-list.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `cap` exceeds [`Map::capacity`].
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
+        let capacity = self.capacity();
+        assert!(cap <= capacity, "initialization bound {cap} exceeds capacity {capacity}",);
         let mut previous_used = NodeId::new(NodeId::UNDEF);
         self.first_free = NodeId::new(NodeId::UNDEF);
         self.first_used = NodeId::new(NodeId::UNDEF);
@@ -187,7 +207,7 @@ mod tests {
 
     /// Out-of-bounds insert must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn insert_out_of_boundary() {
         let mut m: Map<&str> = Map::with_capacity(1);
@@ -196,7 +216,7 @@ mod tests {
 
     /// Out-of-bounds get must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn get_out_of_boundary() {
         let m: Map<&str> = Map::with_capacity(1);
@@ -205,7 +225,7 @@ mod tests {
 
     /// Out-of-bounds remove must panic in debug builds.
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "over the boundary")]
     #[cfg(debug_assertions)]
     fn remove_out_of_boundary() {
         let mut m: Map<&str> = Map::with_capacity(1);
@@ -226,6 +246,16 @@ mod tests {
     fn makes_new_map() {
         let m: Map<&str> = Map::with_capacity_none(16);
         assert_eq!(0, m.len());
+    }
+
+    #[test]
+    fn zero_capacity_map_behaves_consistently() {
+        let mut map: Map<u8> = Map::with_capacity_none(0);
+        assert_eq!(map.capacity(), 0);
+        assert!(map.next_key().is_err());
+        assert!(map.push(42).is_err());
+        map.clear();
+        assert_eq!(map.len(), 0);
     }
 
     /// Capacity must match constructor argument.
@@ -324,6 +354,14 @@ mod tests {
         assert_eq!(0, m.len());
     }
 
+    /// Oversized initialization bounds must panic instead of causing UB.
+    #[test]
+    #[should_panic(expected = "initialization bound")]
+    fn init_with_some_panics_when_bound_exceeds_capacity() {
+        let mut map: Map<Foo> = Map::with_capacity(1);
+        map.init_with_some(2, Foo { t: 1 });
+    }
+
     /// Partial initialization that panics must still be drop-safe.
     #[test]
     fn drop_after_boundary_panic_without_initialization() {
@@ -350,9 +388,7 @@ mod tests {
 
     impl Clone for PanicOnClone {
         fn clone(&self) -> Self {
-            if self.clones.get() >= self.panic_after {
-                panic!("clone limit reached");
-            }
+            assert!(self.clones.get() < self.panic_after, "clone limit reached");
             self.clones.set(self.clones.get() + 1);
             self.active.set(self.active.get() + 1);
             Self {

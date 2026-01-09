@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
+# SPDX-License-Identifier: MIT
+
+[advisories]
+ignore = []
+
+[licenses]
+allow = ["MIT"]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+
+[sources.allow-org]
+github = []
+gitlab = []
+bitbucket = []

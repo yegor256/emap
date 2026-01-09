@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023-2025 Yegor Bugayenko
+# SPDX-License-Identifier: MIT
+
+[target.'cfg(all())']
+rustflags = [
+  "--check-cfg=cfg(crossbeam_loom)",
+  "--check-cfg=cfg(crossbeam_sanitize)",
+]
