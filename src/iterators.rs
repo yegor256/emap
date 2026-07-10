@@ -66,7 +66,11 @@ impl<'a, V: Clone> IntoIterator for &'a Map<V> {
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IntoIter { current: self.first_used, head: self.head, _marker: PhantomData }
+        IntoIter {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -81,7 +85,11 @@ impl<V: Clone> Map<V> {
     pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
-        Iter { current: self.first_used, head: self.head, _marker: PhantomData }
+        Iter {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
     /// Make a mutable iterator over all items.
     ///
@@ -107,7 +115,11 @@ impl<V: Clone> Map<V> {
     pub const fn iter_mut(&self) -> IterMut<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter_mut() non-initialized Map");
-        IterMut { current: self.first_used, head: self.head, _marker: PhantomData }
+        IterMut {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 
     /// Make an iterator over all items.
@@ -120,7 +132,11 @@ impl<V: Clone> Map<V> {
     pub const fn into_iter(&self) -> IntoIter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't into_iter() non-initialized Map");
-        IntoIter { current: self.first_used, head: self.head, _marker: PhantomData }
+        IntoIter {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 }
 

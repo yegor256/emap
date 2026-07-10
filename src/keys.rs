@@ -3,10 +3,10 @@
 
 use crate::Keys;
 use crate::Map;
-use std::mem;
 use std::marker::PhantomData;
+use std::mem;
 
-impl<'a, V> Iterator for Keys<'a, V> {
+impl<V> Iterator for Keys<'_, V> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -31,7 +31,11 @@ impl<V> Map<V> {
     pub const fn keys(&self) -> Keys<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't keys() non-initialized Map");
-        Keys { current: self.first_used, head: self.head, _marker: PhantomData }
+        Keys {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
     }
 }
 

@@ -238,10 +238,7 @@ impl<V> Map<V> {
         assert!(self.initialized, "Can't do retain() on non-initialized Map");
         let keys: Vec<usize> = self.keys().collect();
         for i in keys {
-            let mut should_remove = false;
-            if let Some(p) = self.get_mut(i) {
-                should_remove = !f(&i, p);
-            }
+            let should_remove = self.get_mut(i).is_some_and(|p| !f(&i, p));
             if should_remove {
                 self.remove(i);
             }

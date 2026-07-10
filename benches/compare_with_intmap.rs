@@ -89,27 +89,35 @@ fn compare_ctors_prefill(c: &mut Criterion) {
     for &size in SIZES {
         group.throughput(Throughput::Elements(size as u64));
 
-        group.bench_with_input(BenchmarkId::new("intmap_ctor+fill", size), &size, |b, &n| {
-            b.iter(|| {
-                let mut m = IntMapI32::with_capacity(n);
-                let v = black_box(42_i32);
-                for i in 0..n {
-                    m.insert(i, v);
-                }
-                black_box(m);
-            });
-        });
+        group.bench_with_input(
+            BenchmarkId::new("intmap_ctor+fill", size),
+            &size,
+            |b, &n| {
+                b.iter(|| {
+                    let mut m = IntMapI32::with_capacity(n);
+                    let v = black_box(42_i32);
+                    for i in 0..n {
+                        m.insert(i, v);
+                    }
+                    black_box(m);
+                });
+            },
+        );
 
-        group.bench_with_input(BenchmarkId::new("emap_ctor+fill_safe", size), &size, |b, &n| {
-            b.iter(|| {
-                let mut m = EMap::<i32>::with_capacity_none(n);
-                let v = black_box(42_i32);
-                for i in 0..n {
-                    m.insert(i, v);
-                }
-                black_box(m);
-            });
-        });
+        group.bench_with_input(
+            BenchmarkId::new("emap_ctor+fill_safe", size),
+            &size,
+            |b, &n| {
+                b.iter(|| {
+                    let mut m = EMap::<i32>::with_capacity_none(n);
+                    let v = black_box(42_i32);
+                    for i in 0..n {
+                        m.insert(i, v);
+                    }
+                    black_box(m);
+                });
+            },
+        );
 
         group.bench_with_input(
             BenchmarkId::new("emap_ctor+fill_unchecked", size),
@@ -220,21 +228,25 @@ fn compare_values(c: &mut Criterion) {
             );
         });
 
-        group.bench_with_input(BenchmarkId::new("emap_values_unchecked", size), &size, |b, &n| {
-            b.iter_batched(
-                || setup_emap_prefilled_unchecked(n, 42),
-                |m| {
-                    let mut acc = 0i64;
-                    for _ in 0..PASSES {
-                        for v in m.values() {
-                            acc += black_box(*v as i64);
+        group.bench_with_input(
+            BenchmarkId::new("emap_values_unchecked", size),
+            &size,
+            |b, &n| {
+                b.iter_batched(
+                    || setup_emap_prefilled_unchecked(n, 42),
+                    |m| {
+                        let mut acc = 0i64;
+                        for _ in 0..PASSES {
+                            for v in m.values() {
+                                acc += black_box(*v as i64);
+                            }
                         }
-                    }
-                    black_box(acc);
-                },
-                BatchSize::SmallInput,
-            );
-        });
+                        black_box(acc);
+                    },
+                    BatchSize::SmallInput,
+                );
+            },
+        );
     }
     group.finish();
 }
