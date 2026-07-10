@@ -20,7 +20,7 @@ impl<'a, V: 'a> Iterator for Values<'a, V> {
     }
 }
 
-impl<V: Clone> Iterator for IntoValues<V> {
+impl<'a, V: Clone + 'a> Iterator for IntoValues<'a, V> {
     type Item = V;
 
     #[inline]
@@ -56,10 +56,10 @@ impl<V> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn into_values(&self) -> IntoValues<V> {
+    pub const fn into_values(&self) -> IntoValues<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't into_values() non-initialized Map");
-        IntoValues { current: self.first_used, head: self.head }
+        IntoValues { current: self.first_used, head: self.head, _marker: PhantomData }
     }
 }
 

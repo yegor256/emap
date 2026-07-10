@@ -44,7 +44,7 @@ impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
     }
 }
 
-impl<V: Clone> Iterator for IntoIter<V> {
+impl<'a, V: Clone + 'a> Iterator for IntoIter<'a, V> {
     type Item = (usize, V);
 
     #[inline]
@@ -60,13 +60,13 @@ impl<V: Clone> Iterator for IntoIter<V> {
     }
 }
 
-impl<V: Clone> IntoIterator for &Map<V> {
+impl<'a, V: Clone> IntoIterator for &'a Map<V> {
     type Item = (usize, V);
-    type IntoIter = IntoIter<V>;
+    type IntoIter = IntoIter<'a, V>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IntoIter { current: self.first_used, head: self.head }
+        IntoIter { current: self.first_used, head: self.head, _marker: PhantomData }
     }
 }
 
@@ -117,10 +117,10 @@ impl<V: Clone> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn into_iter(&self) -> IntoIter<V> {
+    pub const fn into_iter(&self) -> IntoIter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't into_iter() non-initialized Map");
-        IntoIter { current: self.first_used, head: self.head }
+        IntoIter { current: self.first_used, head: self.head, _marker: PhantomData }
     }
 }
 

@@ -66,9 +66,10 @@ pub struct IterMut<'a, V> {
 }
 
 /// Into-iterator over the [`Map`].
-pub struct IntoIter<V> {
+pub struct IntoIter<'a, V> {
     current: NodeId,
     head: *mut Node<V>,
+    _marker: PhantomData<&'a Map<V>>,
 }
 
 pub struct Values<'a, V> {
@@ -78,15 +79,17 @@ pub struct Values<'a, V> {
 }
 
 /// Into-iterator over the values of a [`Map`].
-pub struct IntoValues<V> {
+pub struct IntoValues<'a, V> {
     current: NodeId,
     head: *mut Node<V>,
+    _marker: PhantomData<&'a Map<V>>,
 }
 
 /// Iterator over the keys of a [`Map`].
-pub struct Keys<V> {
+pub struct Keys<'a, V> {
     current: NodeId,
     head: *mut Node<V>,
+    _marker: PhantomData<&'a Map<V>>,
 }
 
 #[cfg(test)]
@@ -110,7 +113,8 @@ fn perf() {
         for i in 0..cap {
             m.remove(i);
         }
-        for (k, _) in m.into_iter() {
+        let keys: Vec<usize> = m.into_iter().map(|(k, _)| k).collect();
+        for k in keys {
             m.remove(k);
         }
         for i in 0..cap {

@@ -4,8 +4,9 @@
 use crate::Keys;
 use crate::Map;
 use std::mem;
+use std::marker::PhantomData;
 
-impl<V> Iterator for Keys<V> {
+impl<'a, V> Iterator for Keys<'a, V> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -27,10 +28,10 @@ impl<V> Map<V> {
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    pub const fn keys(&self) -> Keys<V> {
+    pub const fn keys(&self) -> Keys<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't keys() non-initialized Map");
-        Keys { current: self.first_used, head: self.head }
+        Keys { current: self.first_used, head: self.head, _marker: PhantomData }
     }
 }
 
@@ -144,5 +145,16 @@ mod tests {
 
         let actual_keys: HashSet<_> = map.keys().collect();
         assert_eq!(actual_keys, expected_keys);
+    }
+
+    #[test]
+    fn keys_iterator_does_not_drop_stored_value() {
+        let mut m: Map<String> = Map::with_capacity_none(16);
+        m.insert(0, String::from("hello"));
+
+        let keys: Vec<usize> = m.keys().collect();
+        assert_eq!(keys, vec![0]);
+
+        assert_eq!(m.get(0).unwrap(), "hello");
     }
 }
