@@ -7,8 +7,8 @@ use std::hint::black_box;
 use std::time::Duration;
 
 use criterion::{
-    criterion_group, criterion_main, measurement::WallTime, BatchSize, BenchmarkGroup, BenchmarkId,
-    Criterion, SamplingMode, Throughput,
+    BatchSize, BenchmarkGroup, BenchmarkId, Criterion, SamplingMode, Throughput, criterion_group,
+    criterion_main, measurement::WallTime,
 };
 use emap::Map;
 
@@ -48,7 +48,7 @@ fn bench_remove_safe<T: Copy + 'static>(
             || setup_prefilled_map(value),
             |mut m| {
                 for i in 0..CAPACITY {
-                    let _ = m.remove(i);
+                    m.remove(i);
                 }
                 black_box(m);
             },

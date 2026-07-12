@@ -344,15 +344,17 @@ mod tests {
     impl PanicOnClone {
         fn new(panic_after: usize, clones: Rc<Cell<usize>>, active: Rc<Cell<usize>>) -> Self {
             active.set(active.get() + 1);
-            Self { clones, active, panic_after }
+            Self {
+                clones,
+                active,
+                panic_after,
+            }
         }
     }
 
     impl Clone for PanicOnClone {
         fn clone(&self) -> Self {
-            if self.clones.get() >= self.panic_after {
-                panic!("clone limit reached");
-            }
+            assert!(self.clones.get() < self.panic_after, "clone limit reached");
             self.clones.set(self.clones.get() + 1);
             self.active.set(self.active.get() + 1);
             Self {

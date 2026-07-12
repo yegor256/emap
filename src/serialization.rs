@@ -42,7 +42,7 @@ impl<'de, V: Clone + Deserialize<'de>> Visitor<'de> for Vi<V> {
             map.insert(key, value);
         }
         let mut m: Self::Value = Map::with_capacity_none(map.len());
-        for (k, v) in map.iter() {
+        for (k, v) in &map {
             m.insert(*k, v.clone());
         }
         Ok(m)
