@@ -4,7 +4,7 @@
 use crate::{IntoIter, Iter, IterMut, Map};
 use std::marker::PhantomData;
 
-impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
+impl<'a, V> Iterator for Iter<'a, V> {
     type Item = (usize, &'a V);
 
     /// This is an implementation of the `next` function that returns the next item in an iterator if it
@@ -28,7 +28,7 @@ impl<'a, V: Clone + 'a> Iterator for Iter<'a, V> {
     }
 }
 
-impl<'a, V: Clone + 'a> Iterator for IterMut<'a, V> {
+impl<'a, V> Iterator for IterMut<'a, V> {
     type Item = (usize, &'a mut V);
 
     #[inline]
@@ -74,14 +74,20 @@ impl<'a, V: Clone> IntoIterator for &'a Map<V> {
     }
 }
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Make an iterator over all items.
+    ///
+    /// The `IntoIterator` implementation for `&Map<V>` yields owned values and
+    /// therefore requires `V: Clone`, while this method borrows them and works
+    /// for any `V`. The two cannot share an item type until that implementation
+    /// is changed, so the `iter_without_into_iter` lint is muted here.
     ///
     /// # Panics
     ///
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
+    #[allow(clippy::iter_without_into_iter)]
     pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
@@ -212,4 +218,33 @@ fn iterate_and_mutate() {
         sum += v;
     }
     assert_eq!(115, sum);
+}
+
+#[cfg(test)]
+struct NoClone {
+    id: usize,
+}
+
+#[test]
+fn iterates_values_that_are_not_clonable() {
+    let mut m: Map<NoClone> = Map::with_capacity_none(4);
+    m.insert(0, NoClone { id: 1 });
+    m.insert(1, NoClone { id: 3 });
+    let mut sum = 0;
+    for (k, v) in m.iter() {
+        sum += k + v.id;
+    }
+    assert_eq!(5, sum);
+}
+
+#[test]
+fn mutates_values_that_are_not_clonable() {
+    let mut m: Map<NoClone> = Map::with_capacity_none(4);
+    m.insert(0, NoClone { id: 1 });
+    m.insert(1, NoClone { id: 3 });
+    for (k, v) in m.iter_mut() {
+        v.id += k;
+    }
+    assert_eq!(1, m.get(0).unwrap().id);
+    assert_eq!(4, m.get(1).unwrap().id);
 }
