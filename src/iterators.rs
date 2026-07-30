@@ -226,7 +226,7 @@ struct NoClone {
 }
 
 #[test]
-fn iterates_values_that_are_not_clonable() {
+fn iterates_values_that_are_not_cloneable() {
     let mut m: Map<NoClone> = Map::with_capacity_none(4);
     m.insert(0, NoClone { id: 1 });
     m.insert(1, NoClone { id: 3 });
@@ -238,7 +238,7 @@ fn iterates_values_that_are_not_clonable() {
 }
 
 #[test]
-fn mutates_values_that_are_not_clonable() {
+fn mutates_values_that_are_not_cloneable() {
     let mut m: Map<NoClone> = Map::with_capacity_none(4);
     m.insert(0, NoClone { id: 1 });
     m.insert(1, NoClone { id: 3 });
