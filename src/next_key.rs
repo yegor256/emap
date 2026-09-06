@@ -57,7 +57,7 @@ fn reset_next_key_on_clear() {
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "No more keys available left")]
 fn panics_on_end_of_keys() {
     let mut m: Map<u32> = Map::with_capacity_none(1);
     m.insert(0, 42);
