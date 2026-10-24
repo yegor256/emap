@@ -23,7 +23,6 @@ fn map_can_be_cloned() {
 }
 
 #[test]
-#[ignore]
 #[allow(clippy::redundant_clone)]
 fn empty_clone() {
     let m: Map<u8> = Map::with_capacity_none(16);
@@ -31,7 +30,6 @@ fn empty_clone() {
 }
 
 #[test]
-#[ignore]
 fn larger_map_can_be_cloned() {
     let cap = 16;
     let mut m: Map<u8> = Map::with_capacity_none(cap);
@@ -48,7 +46,6 @@ struct Foo {
 }
 
 #[test]
-#[ignore]
 fn clone_of_wrapper() {
     let mut f: Foo = Foo {
         m: Map::with_capacity_none(16),
