@@ -5,6 +5,7 @@ use crate::{Map, Node, NodeId};
 use std::alloc::{Layout, alloc, dealloc, handle_alloc_error};
 use std::mem;
 use std::ptr;
+use std::ptr::NonNull;
 
 impl<V> Drop for Map<V> {
     fn drop(&mut self) {
@@ -20,14 +21,20 @@ impl<V> Drop for Map<V> {
             self.drop_used_nodes();
         }
 
-        unsafe {
-            dealloc(self.head.cast(), self.layout);
+        if self.layout.size() != 0 {
+            unsafe {
+                dealloc(self.head.cast(), self.layout);
+            }
         }
     }
 }
 
 impl<V> Map<V> {
     /// Create a map with the given capacity without initializing values.
+    ///
+    /// A capacity of zero produces a layout of zero size. Calling the global
+    /// allocator with such a layout is forbidden, so a dangling but correctly
+    /// aligned pointer is used instead and nothing is allocated.
     ///
     /// # Panics
     ///
@@ -36,6 +43,17 @@ impl<V> Map<V> {
     #[must_use]
     fn with_capacity(cap: usize) -> Self {
         let layout = Layout::array::<Node<V>>(cap).expect("invalid layout");
+        if layout.size() == 0 {
+            return Self {
+                first_free: NodeId::new(NodeId::UNDEF),
+                first_used: NodeId::new(NodeId::UNDEF),
+                layout,
+                head: NonNull::<Node<V>>::dangling().as_ptr(),
+                len: 0,
+                #[cfg(debug_assertions)]
+                initialized: false,
+            };
+        }
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
             handle_alloc_error(layout);
@@ -74,7 +92,7 @@ impl<V> Map<V> {
     #[inline]
     fn init_with_none(&mut self) {
         let cap = self.capacity();
-        self.first_free = NodeId::new(0);
+        self.first_free = NodeId::new(if cap == 0 { NodeId::UNDEF } else { 0 });
         let mut p = self.head;
         for i in 0..cap {
             let free_next = if i + 1 == cap { NodeId::UNDEF } else { i + 1 };
@@ -114,13 +132,22 @@ impl<V: Clone> Map<V> {
     }
 
     /// Fill all slots with `Some(v.clone())` and build the used-list.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `cap` is greater than [`Map::capacity`], since the extra nodes
+    /// would be written outside of the allocated buffer.
     #[inline]
     pub fn init_with_some(&mut self, cap: usize, v: V) {
+        let capacity = self.capacity();
+        assert!(
+            cap <= capacity,
+            "The bound {cap} is over the capacity {capacity}"
+        );
         let mut previous_used = NodeId::new(NodeId::UNDEF);
         self.first_free = NodeId::new(NodeId::UNDEF);
         self.first_used = NodeId::new(NodeId::UNDEF);
         self.len = 0;
-
         for index in 0..cap {
             let cloned = v.clone();
             let node = Node::new(NodeId::UNDEF, previous_used.get(), Some(cloned));
@@ -233,6 +260,40 @@ mod tests {
     fn returns_capacity() {
         let m: Map<&str> = Map::with_capacity_none(16);
         assert_eq!(16, m.capacity());
+    }
+
+    /// A map of zero capacity must stay usable and must not allocate.
+    #[test]
+    fn builds_zero_capacity_map() {
+        let mut m: Map<u8> = Map::with_capacity_none(0);
+        assert_eq!(0, m.capacity());
+        assert_eq!(0, m.len());
+        assert!(m.is_empty());
+        m.clear();
+        assert_eq!(0, m.len());
+    }
+
+    /// A map of zero capacity must report that no key is available.
+    #[test]
+    #[should_panic(expected = "No more keys available left")]
+    fn zero_capacity_map_has_no_free_key() {
+        let m: Map<u8> = Map::with_capacity_none(0);
+        let _ = m.next_key();
+    }
+
+    /// Dropping a map of zero capacity must not touch the allocator.
+    #[test]
+    fn drops_zero_capacity_map() {
+        let m: Map<Vec<u8>> = Map::with_capacity_none(0);
+        drop(m);
+    }
+
+    /// Initialization beyond the capacity must be rejected.
+    #[test]
+    #[should_panic(expected = "over the capacity")]
+    fn rejects_initialization_over_capacity() {
+        let mut m: Map<u8> = Map::with_capacity_none(1);
+        m.init_with_some(2, 7);
     }
 
     /// Contains check must return false for uninitialized slot.
