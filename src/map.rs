@@ -104,8 +104,8 @@ impl<V> Map<V> {
 
         self.first_free = NodeId::new(k);
         let previous = node.replace_value(None);
-        drop(previous);
         self.len -= 1;
+        drop(previous);
     }
 
     /// Push to the rightmost position and return the key.
@@ -113,7 +113,6 @@ impl<V> Map<V> {
     pub fn push(&mut self, v: V) -> usize {
         let k = self.next_key();
         self.insert(k, v);
-        self.len += 1;
         k
     }
 
@@ -368,6 +367,32 @@ fn replacing_value_drops_old_reference() {
     assert_eq!(Rc::strong_count(&replacement), 1);
 }
 
+#[test]
+fn remove_preserves_length_if_value_drop_panics() {
+    use std::cell::Cell;
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::rc::Rc;
+
+    struct PanicOnDrop(Rc<Cell<bool>>);
+
+    impl Drop for PanicOnDrop {
+        fn drop(&mut self) {
+            assert!(!self.0.replace(false), "drop panic");
+        }
+    }
+
+    let mut map = Map::with_capacity_none(1);
+    map.insert(0, PanicOnDrop(Rc::new(Cell::new(true))));
+
+    let result = catch_unwind(AssertUnwindSafe(|| map.remove(0)));
+
+    assert!(result.is_err());
+    assert_eq!(0, map.len());
+    assert!(map.is_empty());
+    assert!(!map.contains_key(0));
+    assert_eq!(0, map.next_key());
+}
+
 #[cfg(test)]
 #[derive(Clone, Copy)]
 struct Foo {
@@ -400,7 +425,14 @@ fn clears_it_up() {
 fn pushes_into() {
     let mut m: Map<&str> = Map::with_capacity_none(16);
     assert_eq!(0, m.push("one"));
+    assert_eq!(1, m.len());
     assert_eq!(1, m.push("two"));
+    assert_eq!(2, m.len());
+    assert_eq!(m.len(), m.iter().count());
+    m.remove(0);
+    assert_eq!(1, m.len());
+    m.clear();
+    assert_eq!(0, m.len());
 }
 
 #[test]
