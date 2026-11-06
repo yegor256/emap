@@ -4,16 +4,16 @@
   "extends": [
     "config:base"
   ],
-  "platformAutomerge": false,
   "packageRules": [
     {
+      "allowedVersions": "<2",
       "matchManagers": [
         "cargo"
       ],
       "matchPackageNames": [
         "bincode"
-      ],
-      "allowedVersions": "<2"
+      ]
     }
-  ]
+  ],
+  "platformAutomerge": false
 }
