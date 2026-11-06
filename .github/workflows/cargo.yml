@@ -7,7 +7,7 @@ name: cargo
   push:
   pull_request:
 concurrency:
-  group: ${{ github.ref }}
+  group: cargo-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build:
@@ -15,3 +15,19 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
+      - name: Install Rust tooling
+        run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+      - name: Check formatting
+        run: cargo +stable fmt --check
+      - name: Test without optional features
+        run: cargo +stable test --no-default-features --locked
+      - name: Test all features
+        run: cargo +stable test --all-features --locked
+      - name: Test release build
+        run: cargo +stable test --release --all-features --locked
+      - name: Check all targets
+        run: cargo +stable clippy --no-deps --all-targets --all-features --locked
+      - name: Build documentation
+        run: cargo +stable doc --no-deps --all-features --locked
+      - name: Compile benchmarks
+        run: cargo +stable bench --all-features --no-run --locked

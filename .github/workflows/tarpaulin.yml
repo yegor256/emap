@@ -8,7 +8,13 @@ name: tarpaulin
   pull_request:
 jobs:
   check:
-    timeout-minutes: 15
+    timeout-minutes: 30
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal
+      - name: Install coverage tool
+        run: cargo +stable install cargo-tarpaulin --locked
+      - name: Measure coverage
+        run: cargo +stable tarpaulin --all-features --locked --out Xml
