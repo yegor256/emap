@@ -8,7 +8,7 @@ impl<V: Clone> Clone for Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't clone() non-initialized Map");
         let mut m = Self::with_capacity_none(self.capacity());
-        for (k, v) in self.iter() {
+        for (k, v) in self {
             m.insert(k, v.clone());
         }
         m
