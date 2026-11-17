@@ -18,7 +18,7 @@ impl<V: Clone + Serialize> Serialize for Map<V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't serialize() non-initialized Map");
         let mut map = serializer.serialize_map(Some(self.len()))?;
-        for (a, v) in self.iter() {
+        for (a, v) in self {
             map.serialize_entry(&a, &v)?;
         }
         map.end()
