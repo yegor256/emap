@@ -116,6 +116,36 @@ fn bench_insert_u64(c: &mut Criterion) {
     group.finish();
 }
 
+/// Batch-throughput benchmark: CAP pushes of a u64.
+///
+/// Setup and destruction stay outside the timed routine.
+fn bench_push_u64(c: &mut Criterion) {
+    let mut group = c.benchmark_group("emap_push_u64");
+    group.sampling_mode(SamplingMode::Flat);
+
+    let val: u64 = 42;
+
+    for &cap in SIZES {
+        group.throughput(Throughput::Elements(cap as u64));
+
+        group.bench_with_input(BenchmarkId::from_parameter(cap), &cap, |b, &n| {
+            b.iter_batched_ref(
+                || Map::<u64>::with_capacity_none(n),
+                |m| {
+                    let v = black_box(val);
+                    for _ in 0..n {
+                        m.push(v);
+                    }
+                    black_box(m);
+                },
+                BatchSize::SmallInput,
+            );
+        });
+    }
+
+    group.finish();
+}
+
 /// Batch-throughput benchmark: CAP inserts of an owned `String`.
 ///
 /// This includes allocation and memcpy cost for the value payload.
@@ -189,6 +219,7 @@ criterion_group! {
     targets =
         bench_insert_str,
         bench_insert_u64,
+        bench_push_u64,
         bench_insert_string,
         bench_single_insert_latency
 }

@@ -26,7 +26,7 @@ for cap in ${caps}; do
 done
 
 {
-    echo -n '| |'
+    echo -n '| Case |'
     for cap in ${caps}; do
         echo -n " ${cap} |"
     done
@@ -41,7 +41,7 @@ done
         for cap in ${caps}; do
             dv=$(grep "${script}" "target/benchmark/${cap}.out" | cut -f 2)
             dm=$(grep "${script}" "target/benchmark/${cap}.out" | cut -f 3)
-            perl -e "printf(\"%.02f\", ${dv} / ${dm});"
+            perl -e "printf(\" %.02f\", ${dv} / ${dm});"
             echo -n ' |'
         done
         echo ''

@@ -61,14 +61,14 @@ while the numbers below 1.0 demonstrate performance loss.
 
 <!-- benchmark -->
 
-| Case                    |   4 |   16 |  256 | 4096 |
-|------------------------|----:|-----:|-----:|-----:|
-| insert_str             | 6.33| 16.46| 23.98| 24.08|
-| insert_unicode_vals    | 4.59|  5.80|  1.02|  0.91|
-| insert_u64_scan_keys   | 7.51|  7.03|  1.15|  0.90|
-| insert_u64_scan_vals   | 6.31|  6.13|  0.94|  0.76|
-| insert_u64_clear_len   | 4.52|  8.74|  9.45| 10.67|
-| insert_u64_remove_rev  | 5.32| 12.26| 15.57| 14.62|
+| Case | 4 | 16 | 256 | 4096 |
+| --- | ---: | ---: | ---: | ---: |
+| insert_str | 6.33 | 16.46 | 23.98 | 24.08 |
+| insert_unicode_vals | 4.59 | 5.80 | 1.02 | 0.91 |
+| insert_u64_scan_keys | 7.51 | 7.03 | 1.15 | 0.90 |
+| insert_u64_scan_vals | 6.31 | 6.13 | 0.94 | 0.76 |
+| insert_u64_clear_len | 4.52 | 8.74 | 9.45 | 10.67 |
+| insert_u64_remove_rev | 5.32 | 12.26 | 15.57 | 14.62 |
 
 ### Cases
 

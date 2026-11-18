@@ -60,13 +60,27 @@ impl<'a, V: Clone + 'a> Iterator for IntoIter<'a, V> {
     }
 }
 
-impl<'a, V: Clone> IntoIterator for &'a Map<V> {
-    type Item = (usize, V);
-    type IntoIter = IntoIter<'a, V>;
+impl<'a, V> IntoIterator for &'a Map<V> {
+    type Item = (usize, &'a V);
+    type IntoIter = Iter<'a, V>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
+        Iter {
+            current: self.first_used,
+            head: self.head,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'a, V> IntoIterator for &'a mut Map<V> {
+    type Item = (usize, &'a mut V);
+    type IntoIter = IterMut<'a, V>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        IterMut {
             current: self.first_used,
             head: self.head,
             _marker: PhantomData,
@@ -77,17 +91,11 @@ impl<'a, V: Clone> IntoIterator for &'a Map<V> {
 impl<V> Map<V> {
     /// Make an iterator over all items.
     ///
-    /// The `IntoIterator` implementation for `&Map<V>` yields owned values and
-    /// therefore requires `V: Clone`, while this method borrows them and works
-    /// for any `V`. The two cannot share an item type until that implementation
-    /// is changed, so the `iter_without_into_iter` lint is muted here.
-    ///
     /// # Panics
     ///
     /// It may panic in debug mode, if the [`Map`] is not initialized.
     #[inline]
     #[must_use]
-    #[allow(clippy::iter_without_into_iter)]
     pub const fn iter(&self) -> Iter<'_, V> {
         #[cfg(debug_assertions)]
         assert!(self.initialized, "Can't iter() non-initialized Map");
@@ -169,7 +177,7 @@ fn insert_and_iterate() {
     m.insert(2, "three");
     let mut sum = 0;
     let mut count = 0;
-    for (k, _v) in m.iter() {
+    for (k, _v) in &m {
         sum += k;
         count += 1;
     }
@@ -226,12 +234,47 @@ struct NoClone {
 }
 
 #[test]
+fn borrowed_map_yields_references() {
+    let mut m: Map<NoClone> = Map::with_capacity_none(4);
+    m.insert(0, NoClone { id: 1 });
+    m.insert(1, NoClone { id: 3 });
+    let mut sum = 0;
+    for (k, v) in &m {
+        sum += k + v.id;
+    }
+    assert_eq!(5, sum);
+    assert_eq!(2, m.len());
+}
+
+#[test]
+fn mutable_borrowed_map_yields_mutable_references() {
+    let mut m: Map<u64> = Map::with_capacity_none(4);
+    m.insert(0, 16);
+    m.insert(1, 32);
+    for (_, v) in &mut m {
+        *v += 1;
+    }
+    assert_eq!(17, *m.get(0).unwrap());
+    assert_eq!(33, *m.get(1).unwrap());
+}
+
+#[test]
+fn owned_walk_still_clones() {
+    let mut m: Map<String> = Map::with_capacity_none(4);
+    m.insert(0, "zero".to_string());
+    let owned: Vec<(usize, String)> = m.into_iter().collect();
+    assert_eq!(vec![(0, "zero".to_string())], owned);
+    assert_eq!(1, m.len());
+}
+
+#[test]
 fn iterates_values_that_are_not_cloneable() {
     let mut m: Map<NoClone> = Map::with_capacity_none(4);
     m.insert(0, NoClone { id: 1 });
     m.insert(1, NoClone { id: 3 });
     let mut sum = 0;
-    for (k, v) in m.iter() {
+    let mut it = m.iter();
+    while let Some((k, v)) = it.next() {
         sum += k + v.id;
     }
     assert_eq!(5, sum);
