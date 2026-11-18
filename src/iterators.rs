@@ -88,7 +88,7 @@ impl<'a, V> IntoIterator for &'a mut Map<V> {
     }
 }
 
-impl<V: Clone> Map<V> {
+impl<V> Map<V> {
     /// Make an iterator over all items.
     ///
     /// # Panics
@@ -265,4 +265,29 @@ fn owned_walk_still_clones() {
     let owned: Vec<(usize, String)> = m.into_iter().collect();
     assert_eq!(vec![(0, "zero".to_string())], owned);
     assert_eq!(1, m.len());
+}
+
+#[test]
+fn iterates_values_that_are_not_cloneable() {
+    let mut m: Map<NoClone> = Map::with_capacity_none(4);
+    m.insert(0, NoClone { id: 1 });
+    m.insert(1, NoClone { id: 3 });
+    let mut sum = 0;
+    let mut it = m.iter();
+    while let Some((k, v)) = it.next() {
+        sum += k + v.id;
+    }
+    assert_eq!(5, sum);
+}
+
+#[test]
+fn mutates_values_that_are_not_cloneable() {
+    let mut m: Map<NoClone> = Map::with_capacity_none(4);
+    m.insert(0, NoClone { id: 1 });
+    m.insert(1, NoClone { id: 3 });
+    for (k, v) in m.iter_mut() {
+        v.id += k;
+    }
+    assert_eq!(1, m.get(0).unwrap().id);
+    assert_eq!(4, m.get(1).unwrap().id);
 }
